@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>郑啸博客 | 管理后台</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" rel="stylesheet">
+    <link href="../../style.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#165DFF',
+                        secondary: '#0E2E91',
+                        accent: '#36BFFA',
+                        dark: '#1D2939',
+                        light: '#F9FAFB'
+                    },
+                    fontFamily: {
+                        inter: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    <!-- 引入富文本编辑器 -->
+    <script src="https://cdn.tiny.cloud/1/no-api-key/tinymce/6/tinymce.min.js" referrerpolicy="origin"></script>
+</head>
+<body class="font-inter bg-light text-dark antialiased overflow-x-hidden">
+    <!-- 登录表单 -->
+    <div id="login-container" class="min-h-screen flex items-center justify-center">
+        <div class="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
+            <div class="text-center mb-8">
+                <a href="../../index.html" class="text-2xl font-bold text-primary flex items-center justify-center">
+                    <span class="mr-2"><i class="fa-solid fa-code"></i></span>
+                    <span>郑啸博客</span>
+                </a>
+                <h2 class="text-2xl font-bold mt-4">管理员登录</h2>
+                <p class="text-gray-500 mt-2">请输入您的管理员凭据</p>
+            </div>
+            <div id="login-error" class="bg-red-100 border border-red-300 text-red-500 p-3 rounded-lg mb-4 hidden">
+                用户名或密码错误
+            </div>
+            <form id="login-form">
+                <div class="mb-4">
+                    <label class="block text-gray-700 mb-2" for="username">用户名</label>
+                    <input 
+                        type="text" 
+                        id="username" 
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
+                        required
+                    >
+                </div>
+                <div class="mb-6">
+                    <label class="block text-gray-700 mb-2" for="password">密码</label>
+                    <input 
+                        type="password" 
+                        id="password" 
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
+                        required
+                    >
+                </div>
+                <button 
+                    type="submit" 
+                    class="w-full bg-primary hover:bg-primary/90 text-white font-medium py-2 px-4 rounded-lg transition-all hover:shadow-lg"
+                >
+                    登录
+                </button>
+            </form>
+            <div class="mt-4 text-center">
+                <a href="../../blog.html" class="text-primary hover:text-secondary">返回博客首页</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- 管理界面 -->
+    <div id="admin-container" class="hidden">
+        <!-- 导航栏 -->
+        <header class="bg-dark text-white shadow-md">
+            <div class="container mx-auto px-4 py-3">
+                <div class="flex justify-between items-center">
+                    <a href="../../index.html" class="text-xl font-bold text-white flex items-center">
+                        <span class="mr-2"><i class="fa-solid fa-code"></i></span>
+                        <span>郑啸博客</span>
+                    </a>
+                    <div class="flex items-center">
+                        <span class="mr-4">欢迎回来，管理员</span>
+                        <button id="logout-btn" class="text-white hover:text-primary transition-colors">
+                            <i class="fa-solid fa-sign-out-alt mr-1"></i> 退出
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <div class="flex min-h-screen">
+            <!-- 侧边栏 -->
+            <aside class="w-64 bg-white shadow-md">
+                <div class="p-4">
+                    <h3 class="text-lg font-bold mb-6">博客管理</h3>
+                    <nav>
+                        <ul class="space-y-2">
+                            <li>
+                                <button id="dashboard-btn" class="w-full text-left px-4 py-2 rounded-lg bg-primary/10 text-primary font-medium">
+                                    <i class="fa-solid fa-tachometer-alt mr-2"></i> 仪表盘
+                                </button>
+                            </li>
+                            <li>
+                                <button id="posts-btn" class="w-full text-left px-4 py-2 rounded-lg hover:bg-gray-100 transition-colors">
+                                    <i class="fa-solid fa-file-alt mr-2"></i> 所有文章
+                                </button>
+                            </li>
+                            <li>
+                                <button id="new-post-btn" class="w-full text-left px-4 py-2 rounded-lg hover:bg-gray-100 transition-colors">
+                                    <i class="fa-solid fa-plus mr-2"></i> 写新文章
+                                </button>
+                            </li>
+                        </ul>
+                    </nav>
+                </div>
+            </aside>
+
+            <!-- 主内容区 -->
+            <main class="flex-grow p-8 bg-gray-50">
+                <!-- 仪表盘 -->
+                <div id="dashboard-section" class="animate-fadeIn">
+                    <h2 class="text-2xl font-bold mb-8">仪表盘</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div class="bg-white rounded-lg shadow-sm p-6">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <p class="text-gray-500 mb-1">总文章数</p>
+                                    <h3 id="total-posts" class="text-3xl font-bold">0</h3>
+                                </div>
+                                <div class="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center text-primary">
+                                    <i class="fa-solid fa-file-alt text-xl"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-white rounded-lg shadow-sm p-6">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <p class="text-gray-500 mb-1">本月新增</p>
+                                    <h3 id="month-posts" class="text-3xl font-bold">0</h3>
+                                </div>
+                                <div class="w-12 h-12 bg-accent/10 rounded-full flex items-center justify-center text-accent">
+                                    <i class="fa-solid fa-calendar-alt text-xl"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-white rounded-lg shadow-sm p-6">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <p class="text-gray-500 mb-1">草稿数</p>
+                                    <h3 id="draft-posts" class="text-3xl font-bold">0</h3>
+                                </div>
+                                <div class="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center text-gray-500">
+                                    <i class="fa-solid fa-edit text-xl"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-8">
+                        <h3 class="text-xl font-bold mb-4">最近文章</h3>
+                        <div class="bg-white rounded-lg shadow-sm overflow-hidden">
+                            <table class="w-full">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">标题</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">分类</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">发布日期</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">状态</th>
+                                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="recent-posts-table" class="divide-y divide-gray-200">
+                                    <!-- 文章列表将通过 JavaScript 动态生成 -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 所有文章 -->
+                <div id="posts-section" class="animate-fadeIn hidden">
+                    <div class="flex justify-between items-center mb-8">
+                        <h2 class="text-2xl font-bold">所有文章</h2>
+                        <button id="new-post-btn2" class="bg-primary hover:bg-primary/90 text-white font-medium py-2 px-4 rounded-lg transition-all hover:shadow-lg flex items-center">
+                            <i class="fa-solid fa-plus mr-2"></i> 写新文章
+                        </button>
+                    </div>
+
+                    <div class="bg-white rounded-lg shadow-sm overflow-hidden">
+                        <div class="p-4 border-b flex justify-between items-center">
+                            <div class="relative w-64">
+                                <input 
+                                    type="text" 
+                                    id="admin-search-input" 
+                                    placeholder="搜索文章..." 
+                                    class="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
+                                >
+                                <i class="fa-solid fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                            </div>
+                            <div class="flex items-center">
+                                <select id="filter-category" class="mr-2 border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary">
+                                    <option value="">所有分类</option>
+                                    <option value="技术分享">技术分享</option>
+                                    <option value="经验总结">经验总结</option>
+                                    <option value="项目心得">项目心得</option>
+                                </select>
+                                <select id="filter-status" class="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary">
+                                    <option value="">所有状态</option>
+                                    <option value="已发布">已发布</option>
+                                    <option value="草稿">草稿</option>
+                                </select>
+                            </div>
+                        </div>
+                        <table class="w-full">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">标题</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">分类</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">发布日期</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">状态</th>
+                                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="all-posts-table" class="divide-y divide-gray-200">
+                                <!-- 文章列表将通过 JavaScript 动态生成 -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- 写新文章/编辑文章 -->
+                <div id="editor-section" class="animate-fadeIn hidden">
+                    <div class="flex justify-between items-center mb-8">
+                        <h2 id="editor-title" class="text-2xl font-bold">写新文章</h2>
+                        <button id="back-btn" class="text-gray-500 hover:text-dark flex items-center">
+                            <i class="fa-solid fa-arrow-left mr-2"></i> 返回
+                        </button>
+                    </div>
+
+                    <form id="post-form">
+                        <input type="hidden" id="post-id">
+                        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                            <div class="lg:col-span-2">
+                                <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
+                                    <div class="mb-6">
+                                        <label class="block text-gray-700 mb-2" for="post-title">文章标题</label>
+                                        <input 
+                                            type="text" 
+                                            id="post-title" 
+                                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
+                                            required
+                                        >
+                                    </div>
+                                    <div>
+                                        <label class="block text-gray-700 mb-2" for="post-content">文章内容</label>
+                                        <textarea id="post-content" class="w-full"></textarea>
+                                    </div>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
+                                    <h3 class="font-bold text-lg mb-4">发布设置</h3>
+                                    <div class="mb-4">
+                                        <label class="block text-gray-700 mb-2" for="post-status">状态</label>
+                                        <select 
+                                            id="post-status" 
+                                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
+                                        >
+                                            <option value="已发布">已发布</option>
+                                            <option value="草稿">草稿</option>
+                                        </select>
+                                    </div>
+                                    <div class="mb-4">
+                                        <label class="block text-gray-700 mb-2" for="post-category">分类</label>
+                                        <select 
+                                            id="post-category" 
+                                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
+                                        >
+                                            <option value="技术分享">技术分享</option>
+                                            <option value="经验总结">经验总结</option>
+                                            <option value="项目心得">项目心得</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-gray-700 mb-2" for="post-date">发布日期</label>
+                                        <input 
+                                            type="date" 
+                                            id="post-date" 
+                                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
+                                        >
+                                    </div>
+                                </div>
+                                <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
+                                    <h3 class="font-bold text-lg mb-4">配图设置</h3>
+                                    <div class="mb-4">
+                                        <label class="block text-gray-700 mb-2" for="post-image">文章配图链接</label>
+                                        <input 
+                                            type="text" 
+                                            id="post-image" 
+                                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
+                                            placeholder="请输入图片URL链接"
+                                        >
+                                    </div>
+                                    <div class="mb-4">
+                                        <label class="block text-gray-700 mb-2" for="post-summary">文章摘要</label>
+                                        <textarea 
+                                            id="post-summary" 
+                                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
+                                            rows="3"
+                                        ></textarea>
+                                    </div>
+                                </div>
+                                <div class="flex space-x-4">
+                                    <button 
+                                        type="submit" 
+                                        class="flex-1 bg-primary hover:bg-primary/90 text-white font-medium py-2 px-4 rounded-lg transition-all hover:shadow-lg"
+                                    >
+                                        保存
+                                    </button>
+                                    <button 
+                                        type="button" 
+                                        id="cancel-btn"
+                                        class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-4 rounded-lg transition-all"
+                                    >
+                                        取消
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- 删除确认对话框 -->
+    <div id="delete-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-md p-6">
+            <h3 class="text-xl font-bold mb-4">确认删除</h3>
+            <p class="text-gray-600 mb-6">您确定要删除这篇文章吗？此操作不可撤销。</p>
+            <div class="flex justify-end space-x-4">
+                <button id="cancel-delete" class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">取消</button>
+                <button id="confirm-delete" class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600">删除</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="../js/admin.js"></script>
+</body>
+</html> 
