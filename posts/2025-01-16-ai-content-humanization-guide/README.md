@@ -11,8 +11,6 @@
 
 > 在AI内容泛滥的时代，如何让机器写出的文字具备人类的温度？本文将揭秘通过智能体配置和提示词工程，让AI生成内容巧妙规避检测的实战技巧。
 
-![AI写作反检测指南封面](./cover.png)
-
 ## 🔍 为什么要关心AIGC检测率？
 
 随着ChatGPT、Claude等AI工具的普及，各大平台都部署了AIGC检测系统：
@@ -66,7 +64,7 @@
 - 会在适当位置加入反问句
 ```
 
-![人格化智能体配置示例](./persona-config.png)
+![人格化智能体配置示例](posts/2025-01-16-ai-content-humanization-guide/persona-config.png)
 
 ### 策略二：多层次提示词架构
 
