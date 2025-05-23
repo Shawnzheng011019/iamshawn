@@ -1,0 +1,26 @@
+{
+  "name": "zhengxiao-portfolio",
+  "version": "1.0.0",
+  "description": "郑啸的个人主页和博客系统",
+  "main": "index.html",
+  "scripts": {
+    "dev": "python3 -m http.server 8000",
+    "build": "echo 'Static site, no build needed'",
+    "start": "echo 'Static site deployed on Vercel'"
+  },
+  "keywords": [
+    "portfolio",
+    "blog",
+    "personal-website",
+    "static-site"
+  ],
+  "author": "郑啸 (Zheng Xiao)",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Shawnzheng011019/iamshawn"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  }
+} 
