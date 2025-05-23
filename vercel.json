@@ -40,7 +40,7 @@
       ]
     },
     {
-      "source": "/api/posts.json",
+      "source": "/api-posts.json",
       "headers": [
         {
           "key": "Content-Type",
