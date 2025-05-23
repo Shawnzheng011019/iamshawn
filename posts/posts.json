@@ -1,41 +1,5 @@
 [
   {
-    "id": "ai-agent-protocols-comparison",
-    "title": "AI代理协议大对决：Function Calling vs MCP vs A2A",
-    "date": "2025-01-02",
-    "category": "人工智能",
-    "tags": ["AI代理", "MCP", "Function Calling", "A2A", "大语言模型", "协议对比"],
-    "summary": "深入分析三大AI代理协议：OpenAI的Function Calling、Anthropic的MCP和Google的A2A，为开发者选择最适合的AI代理架构提供指导。",
-    "cover": "posts/2025-01-02-ai-agent-protocols-comparison/cover.jpg",
-    "readingTime": "18 分钟",
-    "path": "posts/2025-01-02-ai-agent-protocols-comparison/README.md",
-    "status": "published"
-  },
-  {
-    "id": "rag-system-deep-dive",
-    "title": "深入理解RAG系统：检索增强生成在实际应用中的实现",
-    "date": "2024-01-15",
-    "category": "人工智能",
-    "tags": ["RAG", "向量数据库", "LLM", "检索增强生成"],
-    "summary": "详细探讨RAG（Retrieval-Augmented Generation）系统的核心原理，从向量数据库到检索策略，再到生成模型的融合，分享在构建企业级RAG应用中的实践经验。",
-    "cover": "posts/2024-01-15-rag-system-deep-dive/cover.jpg",
-    "readingTime": "15 分钟",
-    "path": "posts/2024-01-15-rag-system-deep-dive/README.md",
-    "status": "published"
-  },
-  {
-    "id": "llm-fine-tuning-lora-qlora",
-    "title": "大语言模型微调实战：从LoRA到QLoRA的演进",
-    "date": "2024-01-10",
-    "category": "机器学习",
-    "tags": ["LLM", "微调", "LoRA", "QLoRA", "参数高效"],
-    "summary": "分享在大语言模型微调过程中的技术选型和优化策略，重点对比LoRA和QLoRA两种参数高效微调方法的实际效果。",
-    "cover": "posts/2024-01-10-llm-fine-tuning-lora-qlora/cover.jpg",
-    "readingTime": "12 分钟",
-    "path": "posts/2024-01-10-llm-fine-tuning-lora-qlora/README.md",
-    "status": "published"
-  },
-  {
     "id": "mcp-protocol-deep-analysis",
     "title": "MCP协议深度解析：构建AI Agent的新标准",
     "date": "2024-01-05",
