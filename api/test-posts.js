@@ -1,43 +1,54 @@
-import fs from 'fs';
-import path from 'path';
+export default async function handler(req, res) {
+  // 设置CORS头部
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
-export default function handler(req, res) {
+  if (req.method === 'OPTIONS') {
+    res.status(200).end();
+    return;
+  }
+
   try {
-    // 尝试读取posts.json文件
-    const postsPath = path.join(process.cwd(), 'posts', 'posts.json');
-    console.log('尝试读取文件路径:', postsPath);
+    // 尝试直接访问posts.json文件
+    const response = await fetch('https://iamshawn.vercel.app/posts/posts.json');
     
-    if (fs.existsSync(postsPath)) {
-      const postsContent = fs.readFileSync(postsPath, 'utf8');
+    if (response.ok) {
+      const data = await response.json();
       res.status(200).json({
         success: true,
-        message: 'posts.json文件存在并可读取',
-        filePath: postsPath,
-        contentLength: postsContent.length,
-        data: JSON.parse(postsContent)
+        message: 'posts.json可以通过URL访问',
+        url: 'https://iamshawn.vercel.app/posts/posts.json',
+        dataCount: data.length,
+        data: data
       });
     } else {
-      // 列出posts目录内容
-      const postsDir = path.join(process.cwd(), 'posts');
-      let dirContents = [];
-      if (fs.existsSync(postsDir)) {
-        dirContents = fs.readdirSync(postsDir);
-      }
+      // 尝试访问Gitee镜像
+      const giteeResponse = await fetch('https://gitee.com/Shawnzheng011019/iamshawn/raw/master/posts/posts.json');
       
-      res.status(404).json({
-        success: false,
-        message: 'posts.json文件不存在',
-        filePath: postsPath,
-        postsDir,
-        dirContents
-      });
+      if (giteeResponse.ok) {
+        const giteeData = await giteeResponse.json();
+        res.status(200).json({
+          success: true,
+          message: 'posts.json可以通过Gitee镜像访问',
+          url: 'https://gitee.com/Shawnzheng011019/iamshawn/raw/master/posts/posts.json',
+          dataCount: giteeData.length,
+          data: giteeData
+        });
+      } else {
+        res.status(404).json({
+          success: false,
+          message: '无法从任何源访问posts.json',
+          vercelStatus: response.status,
+          giteeStatus: giteeResponse.status
+        });
+      }
     }
   } catch (error) {
     res.status(500).json({
       success: false,
       message: 'API错误',
-      error: error.message,
-      stack: error.stack
+      error: error.message
     });
   }
 } 

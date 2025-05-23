@@ -9,16 +9,17 @@ const POSTS_PER_PAGE = 6; // 每页显示的文章数
 // 多数据源配置 - 按优先级排序
 const DATA_SOURCES = [
     {
-        name: 'Local Vercel',
-        baseUrl: '',
+        name: 'Vercel API',
+        baseUrl: '/api',
         priority: 1,
-        description: 'Vercel 本地部署'
+        description: 'Vercel API 端点',
+        isApi: true
     },
     {
-        name: 'Gitee Mirror',
-        baseUrl: 'https://gitee.com/Shawnzheng011019/iamshawn/raw/master',
+        name: 'Local Vercel',
+        baseUrl: '',
         priority: 2,
-        description: 'Gitee 国内镜像'
+        description: 'Vercel 本地部署'
     },
     {
         name: 'jsDelivr CDN',
@@ -39,9 +40,15 @@ const DATA_SOURCES = [
         description: 'CDN 备用节点'
     },
     {
+        name: 'Gitee Mirror',
+        baseUrl: 'https://gitee.com/Shawnzheng011019/iamshawn/raw/master',
+        priority: 6,
+        description: 'Gitee 国内镜像'
+    },
+    {
         name: 'GitHub Proxy',
         baseUrl: 'https://ghproxy.com/https://raw.githubusercontent.com/Shawnzheng011019/iamshawn/main',
-        priority: 6,
+        priority: 7,
         description: 'GitHub 代理'
     }
 ];
@@ -585,7 +592,16 @@ async function fetchPostsData(source) {
     const timeoutId = setTimeout(() => controller.abort(), 10000); // 10秒超时
     
     try {
-        const response = await fetch(`${source.baseUrl}/posts/posts.json`, {
+        let url;
+        if (source.isApi) {
+            // API端点直接返回数据
+            url = `${source.baseUrl}/posts`;
+        } else {
+            // 静态文件端点
+            url = `${source.baseUrl}/posts/posts.json`;
+        }
+        
+        const response = await fetch(url, {
             signal: controller.signal,
             cache: 'no-cache',
             headers: {
