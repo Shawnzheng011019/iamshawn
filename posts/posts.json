@@ -132,15 +132,15 @@
     "status": "published"
   },
   {
-    "id": "mcp-protocol-deep-analysis",
+    "id": "mcp-protocol-comprehensive-guide",
     "title": "MCP协议深度解析：构建AI Agent的新标准",
-    "date": "2025-01-05",
+    "date": "2025-05-09",
     "category": "AI协议",
-    "tags": ["MCP", "AI Agent", "协议", "通信标准"],
-    "summary": "Model Context Protocol (MCP) 作为新兴的AI Agent通信标准，为构建更加智能和互联的AI系统提供了新的可能性。本文深入分析MCP的技术细节。",
-    "cover": "posts/2024-01-05-mcp-protocol-deep-analysis/cover.png",
-    "readingTime": "10 分钟",
-    "path": "posts/2024-01-05-mcp-protocol-deep-analysis/README.md",
+    "tags": ["MCP", "AI Agent", "协议", "通信标准", "Anthropic", "Model Context Protocol"],
+    "summary": "Model Context Protocol (MCP) 作为新兴的AI Agent通信标准，正在重新定义AI应用与外部系统的集成方式。本文深入解析MCP的技术细节、架构设计和实际应用场景，涵盖从基础概念到高级实现的完整指南。",
+    "cover": "posts/2025-05-09-mcp-protocol-comprehensive-guide/cover.png",
+    "readingTime": "35 分钟",
+    "path": "posts/2025-05-09-mcp-protocol-comprehensive-guide/README.md",
     "status": "published"
   }
 ] 
