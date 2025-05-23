@@ -1,12 +1,38 @@
 /**
- * 博客前端脚本 - GitHub版本
- * 从GitHub仓库读取markdown文章，支持实时更新
+ * 博客前端脚本 - 多源版本
+ * 支持多数据源和智能降级，适配中国网络环境
  */
 
 // 常量定义
 const POSTS_PER_PAGE = 6; // 每页显示的文章数
-const GITHUB_API_BASE = 'https://api.github.com/repos/Shawnzheng011019/iamshawn/contents';
-const GITHUB_RAW_BASE = 'https://raw.githubusercontent.com/Shawnzheng011019/iamshawn/main';
+
+// 多数据源配置 - 按优先级排序
+const DATA_SOURCES = [
+    {
+        name: 'jsDelivr CDN',
+        baseUrl: 'https://cdn.jsdelivr.net/gh/Shawnzheng011019/iamshawn@main',
+        priority: 1,
+        description: '国内 CDN 加速'
+    },
+    {
+        name: 'GitHub Raw',
+        baseUrl: 'https://raw.githubusercontent.com/Shawnzheng011019/iamshawn/main',
+        priority: 2,
+        description: '官方 GitHub'
+    },
+    {
+        name: 'jsDelivr Backup',
+        baseUrl: 'https://fastly.jsdelivr.net/gh/Shawnzheng011019/iamshawn@main',
+        priority: 3,
+        description: 'CDN 备用节点'
+    },
+    {
+        name: 'GitHub Proxy',
+        baseUrl: 'https://ghproxy.com/https://raw.githubusercontent.com/Shawnzheng011019/iamshawn/main',
+        priority: 4,
+        description: 'GitHub 代理'
+    }
+];
 
 // DOM 元素缓存
 let domCache = {};
@@ -16,9 +42,18 @@ let allPosts = [];
 let currentPage = 1;
 let filteredPosts = [];
 let isLoading = false;
+let currentDataSource = null;
 
 // 图片懒加载Observer
 let imageObserver = null;
+
+// 缓存配置
+const CACHE_KEYS = {
+    POSTS: 'blog_posts_cache',
+    POSTS_TIMESTAMP: 'blog_posts_timestamp',
+    DATA_SOURCE: 'preferred_data_source'
+};
+const CACHE_DURATION = 5 * 60 * 1000; // 5分钟缓存
 
 /**
  * 初始化DOM元素缓存
@@ -77,7 +112,7 @@ function initBlog() {
     setupEventListeners();
     
     // 加载博客文章
-    loadPostsFromGitHub();
+    loadPostsWithFallback();
     
     isLoading = false;
 }
@@ -114,33 +149,254 @@ function setupEventListeners() {
 }
 
 /**
- * 从GitHub加载文章列表
+ * 检测数据源可达性
+ * @param {Object} source - 数据源配置
+ * @returns {Promise<boolean>} - 是否可达
  */
-async function loadPostsFromGitHub() {
+async function testDataSource(source) {
+    try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 3000); // 3秒超时
+        
+        const response = await fetch(`${source.baseUrl}/posts/posts.json`, {
+            method: 'HEAD',
+            signal: controller.signal,
+            cache: 'no-cache'
+        });
+        
+        clearTimeout(timeoutId);
+        return response.ok;
+    } catch (error) {
+        console.warn(`数据源 ${source.name} 不可达:`, error.message);
+        return false;
+    }
+}
+
+/**
+ * 获取最佳数据源
+ * @returns {Promise<Object>} - 最佳数据源
+ */
+async function getBestDataSource() {
+    // 检查是否有缓存的首选数据源
+    const cachedSource = localStorage.getItem(CACHE_KEYS.DATA_SOURCE);
+    if (cachedSource) {
+        const source = DATA_SOURCES.find(s => s.name === cachedSource);
+        if (source && await testDataSource(source)) {
+            console.log(`使用缓存的数据源: ${source.name}`);
+            return source;
+        }
+    }
+    
+    // 并行测试所有数据源
+    console.log('正在测试数据源可达性...');
+    const testPromises = DATA_SOURCES.map(async (source) => ({
+        source,
+        available: await testDataSource(source)
+    }));
+    
+    const results = await Promise.all(testPromises);
+    const availableSources = results
+        .filter(r => r.available)
+        .map(r => r.source)
+        .sort((a, b) => a.priority - b.priority);
+    
+    if (availableSources.length === 0) {
+        throw new Error('所有数据源都不可达');
+    }
+    
+    const bestSource = availableSources[0];
+    console.log(`选择最佳数据源: ${bestSource.name} (${bestSource.description})`);
+    
+    // 缓存首选数据源
+    localStorage.setItem(CACHE_KEYS.DATA_SOURCE, bestSource.name);
+    
+    return bestSource;
+}
+
+/**
+ * 从缓存加载数据
+ * @returns {Array|null} - 缓存的文章数据
+ */
+function loadFromCache() {
+    try {
+        const cachedPosts = localStorage.getItem(CACHE_KEYS.POSTS);
+        const cachedTimestamp = localStorage.getItem(CACHE_KEYS.POSTS_TIMESTAMP);
+        
+        if (cachedPosts && cachedTimestamp) {
+            const timestamp = parseInt(cachedTimestamp);
+            const now = Date.now();
+            
+            if (now - timestamp < CACHE_DURATION) {
+                console.log('使用缓存数据');
+                return JSON.parse(cachedPosts);
+            }
+        }
+    } catch (error) {
+        console.warn('缓存加载失败:', error);
+    }
+    
+    return null;
+}
+
+/**
+ * 保存数据到缓存
+ * @param {Array} posts - 文章数据
+ */
+function saveToCache(posts) {
+    try {
+        localStorage.setItem(CACHE_KEYS.POSTS, JSON.stringify(posts));
+        localStorage.setItem(CACHE_KEYS.POSTS_TIMESTAMP, Date.now().toString());
+        console.log('数据已缓存');
+    } catch (error) {
+        console.warn('缓存保存失败:', error);
+    }
+}
+
+/**
+ * 带降级策略的文章加载
+ */
+async function loadPostsWithFallback() {
     try {
         showLoadingState();
         
-        // 获取文章索引
-        const response = await fetch(`${GITHUB_RAW_BASE}/posts/posts.json`);
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+        // 尝试从缓存加载
+        const cachedPosts = loadFromCache();
+        if (cachedPosts) {
+            allPosts = cachedPosts.filter(post => post.status === 'published');
+            allPosts.sort((a, b) => new Date(b.date) - new Date(a.date));
+            filteredPosts = [...allPosts];
+            renderPosts();
+            hideLoadingState();
+            
+            // 后台更新数据
+            updatePostsInBackground();
+            return;
         }
         
-        const postsData = await response.json();
+        // 获取最佳数据源
+        currentDataSource = await getBestDataSource();
+        
+        // 从最佳数据源加载
+        const postsData = await fetchPostsData(currentDataSource);
+        
         allPosts = postsData.filter(post => post.status === 'published');
         allPosts.sort((a, b) => new Date(b.date) - new Date(a.date));
+        
+        // 更新图片URL为当前数据源
+        allPosts.forEach(post => {
+            if (post.cover && !post.cover.startsWith('http')) {
+                post.cover = `${currentDataSource.baseUrl}/${post.cover}`;
+            }
+            if (post.path && !post.path.startsWith('http')) {
+                post.path = `${currentDataSource.baseUrl}/${post.path}`;
+            }
+        });
+        
+        // 缓存数据
+        saveToCache(allPosts);
         
         // 初始化显示
         filteredPosts = [...allPosts];
         renderPosts();
-        
         hideLoadingState();
+        
+        showSuccessMessage(`已连接到数据源: ${currentDataSource.name}`);
         
     } catch (error) {
         console.error('加载文章失败:', error);
-        showErrorMessage('加载文章失败，请检查网络连接或稍后重试');
-        showOfflineMessage();
+        handleLoadingError();
     }
+}
+
+/**
+ * 后台更新数据
+ */
+async function updatePostsInBackground() {
+    try {
+        console.log('后台更新数据中...');
+        const source = await getBestDataSource();
+        const postsData = await fetchPostsData(source);
+        
+        // 静默更新缓存
+        const updatedPosts = postsData.filter(post => post.status === 'published');
+        updatedPosts.sort((a, b) => new Date(b.date) - new Date(a.date));
+        
+        updatedPosts.forEach(post => {
+            if (post.cover && !post.cover.startsWith('http')) {
+                post.cover = `${source.baseUrl}/${post.cover}`;
+            }
+            if (post.path && !post.path.startsWith('http')) {
+                post.path = `${source.baseUrl}/${post.path}`;
+            }
+        });
+        
+        saveToCache(updatedPosts);
+        console.log('后台数据更新完成');
+        
+    } catch (error) {
+        console.warn('后台更新失败:', error);
+    }
+}
+
+/**
+ * 从指定数据源获取文章数据
+ * @param {Object} source - 数据源配置
+ * @returns {Promise<Array>} - 文章数据
+ */
+async function fetchPostsData(source) {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10秒超时
+    
+    try {
+        const response = await fetch(`${source.baseUrl}/posts/posts.json`, {
+            signal: controller.signal,
+            cache: 'no-cache',
+            headers: {
+                'Accept': 'application/json',
+                'Cache-Control': 'no-cache'
+            }
+        });
+        
+        clearTimeout(timeoutId);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+        const data = await response.json();
+        return data;
+        
+    } catch (error) {
+        clearTimeout(timeoutId);
+        throw error;
+    }
+}
+
+/**
+ * 处理加载错误
+ */
+function handleLoadingError() {
+    // 尝试从本地存储加载任何可用的缓存数据
+    try {
+        const lastCachedPosts = localStorage.getItem(CACHE_KEYS.POSTS);
+        if (lastCachedPosts) {
+            console.log('使用过期缓存数据');
+            const posts = JSON.parse(lastCachedPosts);
+            allPosts = posts.filter(post => post.status === 'published');
+            allPosts.sort((a, b) => new Date(b.date) - new Date(a.date));
+            filteredPosts = [...allPosts];
+            renderPosts();
+            hideLoadingState();
+            showWarningMessage('网络连接问题，显示缓存内容');
+            return;
+        }
+    } catch (error) {
+        console.warn('缓存数据加载失败:', error);
+    }
+    
+    // 显示离线消息
+    showOfflineMessage();
+    hideLoadingState();
 }
 
 /**
@@ -152,7 +408,8 @@ function showLoadingState() {
             <div class="col-span-full flex justify-center items-center py-12">
                 <div class="text-center">
                     <div class="loading-spinner mx-auto mb-4"></div>
-                    <p class="text-gray-500">正在从GitHub加载文章...</p>
+                    <p class="text-gray-500">正在智能选择最佳数据源...</p>
+                    <p class="text-sm text-gray-400 mt-2">支持多CDN加速，确保稳定访问</p>
                 </div>
             </div>
         `;
@@ -179,14 +436,29 @@ function showOfflineMessage() {
             <div class="col-span-full text-center py-12">
                 <div class="text-5xl text-gray-300 mb-4"><i class="fa-solid fa-wifi-slash"></i></div>
                 <h3 class="text-xl font-bold text-gray-500 mb-2">网络连接问题</h3>
-                <p class="text-gray-400 mb-4">无法从GitHub加载文章，请检查网络连接</p>
-                <button onclick="loadPostsFromGitHub()" class="bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors">
+                <p class="text-gray-400 mb-4">无法从任何数据源加载文章</p>
+                <div class="text-sm text-gray-500 mb-4">
+                    <p>已尝试以下数据源：</p>
+                    <ul class="mt-2 space-y-1">
+                        ${DATA_SOURCES.map(source => `<li>• ${source.name} (${source.description})</li>`).join('')}
+                    </ul>
+                </div>
+                <button onclick="retryLoading()" class="bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors">
                     重新加载
                 </button>
             </div>
         `;
     }
 }
+
+/**
+ * 重试加载
+ */
+window.retryLoading = function() {
+    // 清除缓存的数据源偏好
+    localStorage.removeItem(CACHE_KEYS.DATA_SOURCE);
+    loadPostsWithFallback();
+};
 
 /**
  * 过滤文章
@@ -285,7 +557,7 @@ function renderPostCard(post) {
     
     // 优化图片加载
     const coverImage = post.cover || `https://picsum.photos/600/400?random=${post.id}`;
-    elements.image.dataset.src = `${GITHUB_RAW_BASE}/${coverImage}`;
+    elements.image.dataset.src = coverImage;
     elements.image.alt = post.title;
     
     // 添加到懒加载观察器
@@ -336,15 +608,10 @@ async function openArticle(post) {
         // 显示模态框加载状态
         showModalLoading(post);
         
-        // 从GitHub获取markdown内容
-        const response = await fetch(`${GITHUB_RAW_BASE}/${post.path}`);
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
+        // 尝试从多数据源获取markdown内容
+        const markdownContent = await fetchArticleContent(post);
         
-        const markdownContent = await response.text();
-        
-        // 解析markdown为HTML（简单解析）
+        // 解析markdown为HTML
         const htmlContent = parseMarkdownToHTML(markdownContent);
         
         // 更新模态框内容
@@ -359,6 +626,46 @@ async function openArticle(post) {
         showErrorMessage('加载文章内容失败，请稍后重试');
         closeModal();
     }
+}
+
+/**
+ * 从多数据源获取文章内容
+ * @param {Object} post - 文章对象
+ * @returns {Promise<string>} - Markdown内容
+ */
+async function fetchArticleContent(post) {
+    const sources = currentDataSource ? [currentDataSource, ...DATA_SOURCES.filter(s => s !== currentDataSource)] : DATA_SOURCES;
+    
+    for (const source of sources) {
+        try {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 8000); // 8秒超时
+            
+            let url;
+            if (post.path.startsWith('http')) {
+                url = post.path;
+            } else {
+                url = `${source.baseUrl}/${post.path}`;
+            }
+            
+            const response = await fetch(url, {
+                signal: controller.signal,
+                cache: 'default'
+            });
+            
+            clearTimeout(timeoutId);
+            
+            if (response.ok) {
+                console.log(`从 ${source.name} 加载文章成功`);
+                return await response.text();
+            }
+        } catch (error) {
+            console.warn(`从 ${source.name} 加载文章失败:`, error.message);
+            continue;
+        }
+    }
+    
+    throw new Error('所有数据源都无法加载文章内容');
 }
 
 /**
@@ -379,7 +686,7 @@ function showModalLoading(post) {
     
     // 设置封面图片
     if (domCache.modalImage && post.cover) {
-        domCache.modalImage.src = `${GITHUB_RAW_BASE}/${post.cover}`;
+        domCache.modalImage.src = post.cover;
         domCache.modalImage.alt = post.title;
         domCache.modalImage.style.display = 'block';
     } else if (domCache.modalImage) {
@@ -484,6 +791,7 @@ function addArticleMetadata(post) {
         <p class="text-sm text-gray-500">
             发布于 ${formatDate(post.date)} · ${post.readingTime || '预计阅读时间未知'}
         </p>
+        ${currentDataSource ? `<p class="text-xs text-gray-400 mt-2">数据源: ${currentDataSource.name}</p>` : ''}
     `;
     
     domCache.modalContent.appendChild(metadata);
@@ -667,18 +975,60 @@ function debounce(func, wait) {
 }
 
 /**
+ * 显示成功消息
+ * @param {string} message - 成功消息
+ */
+function showSuccessMessage(message) {
+    showNotification(message, 'success');
+}
+
+/**
+ * 显示警告消息
+ * @param {string} message - 警告消息
+ */
+function showWarningMessage(message) {
+    showNotification(message, 'warning');
+}
+
+/**
  * 显示错误消息
  * @param {string} message - 错误消息
  */
 function showErrorMessage(message) {
-    const errorDiv = document.createElement('div');
-    errorDiv.className = 'fixed top-20 right-4 bg-red-500 text-white p-4 rounded-lg shadow-lg z-50';
-    errorDiv.textContent = message;
+    showNotification(message, 'error');
+}
+
+/**
+ * 显示通知
+ * @param {string} message - 消息内容
+ * @param {string} type - 消息类型
+ */
+function showNotification(message, type = 'info') {
+    const colors = {
+        success: 'bg-green-500',
+        warning: 'bg-yellow-500',
+        error: 'bg-red-500',
+        info: 'bg-blue-500'
+    };
     
-    document.body.appendChild(errorDiv);
+    const icons = {
+        success: 'fa-check-circle',
+        warning: 'fa-exclamation-triangle',
+        error: 'fa-times-circle',
+        info: 'fa-info-circle'
+    };
+    
+    const notificationDiv = document.createElement('div');
+    notificationDiv.className = `fixed top-20 right-4 ${colors[type]} text-white p-4 rounded-lg shadow-lg z-50 flex items-center`;
+    notificationDiv.innerHTML = `
+        <i class="fa-solid ${icons[type]} mr-2"></i>
+        <span>${message}</span>
+    `;
+    
+    document.body.appendChild(notificationDiv);
     
     setTimeout(() => {
-        errorDiv.remove();
+        notificationDiv.remove();
     }, 5000);
 }
 

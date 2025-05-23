@@ -133,9 +133,10 @@
                     <h1 class="text-4xl md:text-5xl font-bold mb-6">我的博客</h1>
                     <p class="text-lg text-gray-600 max-w-2xl mx-auto mb-8">分享我在人工智能、大语言模型和开发领域的思考与经验</p>
                     <div class="flex justify-center items-center space-x-6 text-sm text-gray-500">
-                        <span><i class="fa-solid fa-rss mr-2"></i>基于GitHub更新</span>
+                        <span><i class="fa-solid fa-rocket mr-2"></i>智能多源加载</span>
+                        <span><i class="fa-solid fa-globe mr-2"></i>国内网络优化</span>
                         <span><i class="fa-solid fa-markdown mr-2"></i>Markdown驱动</span>
-                        <span><i class="fa-solid fa-rocket mr-2"></i>实时同步</span>
+                        <span><i class="fa-solid fa-shield-alt mr-2"></i>离线缓存支持</span>
                     </div>
                 </div>
             </div>
@@ -147,7 +148,7 @@
                 <div class="mb-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                     <div>
                         <h2 class="text-2xl font-bold mb-2">最新文章</h2>
-                        <p class="text-gray-600">直接从GitHub仓库读取，保持内容实时更新</p>
+                        <p class="text-gray-600">多CDN加速访问，确保国内外用户都能稳定阅读</p>
                     </div>
                     <div class="relative">
                         <input 
@@ -285,11 +286,22 @@
             document.body.appendChild(script);
         }
         
-        // 页面加载完成后加载博客脚本
+        function loadNetworkMonitor() {
+            const script = document.createElement('script');
+            script.src = 'blog/js/network-status.js';
+            script.async = true;
+            document.body.appendChild(script);
+        }
+        
+        // 页面加载完成后加载脚本
         if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', loadBlogScript);
+            document.addEventListener('DOMContentLoaded', () => {
+                loadBlogScript();
+                loadNetworkMonitor();
+            });
         } else {
             loadBlogScript();
+            loadNetworkMonitor();
         }
     </script>
     

@@ -62,7 +62,7 @@
         },
         {
           "key": "Content-Security-Policy",
-          "value": "default-src 'self' 'unsafe-inline' 'unsafe-eval' https: data: blob:; img-src 'self' https: data: blob: picsum.photos raw.githubusercontent.com; font-src 'self' https: data:; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.tailwindcss.com https://cdnjs.cloudflare.com;"
+          "value": "default-src 'self' 'unsafe-inline' 'unsafe-eval' https: data: blob:; img-src 'self' https: data: blob: picsum.photos raw.githubusercontent.com cdn.jsdelivr.net fastly.jsdelivr.net ghproxy.com; font-src 'self' https: data:; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.tailwindcss.com https://cdnjs.cloudflare.com; connect-src 'self' https: raw.githubusercontent.com cdn.jsdelivr.net fastly.jsdelivr.net ghproxy.com;"
         },
         {
           "key": "Referrer-Policy",
