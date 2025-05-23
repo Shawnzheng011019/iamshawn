@@ -452,15 +452,15 @@
                     `https://raw.githubusercontent.com/Shawnzheng011019/iamshawn/main/docs/${docName}.md`
                 ];
                 
-                let response = null;
                 let markdown = null;
                 let finalUrl = '';
+                let lastError = null;
                 
                 // 尝试多个URL直到找到有效的markdown内容
                 for (const url of possibleUrls) {
                     try {
                         console.log('📥 尝试URL:', url);
-                        response = await fetch(url, {
+                        const response = await fetch(url, {
                             method: 'GET',
                             headers: {
                                 'Cache-Control': 'no-cache',
@@ -483,20 +483,25 @@
                                 text.length > 100) {
                                 markdown = text;
                                 finalUrl = url;
-                                console.log('✅ 找到有效的markdown内容');
+                                console.log('✅ 找到有效的markdown内容，使用URL:', url);
                                 break;
                             } else {
                                 console.log('⚠️ 响应内容似乎是HTML页面，尝试下一个URL');
+                                lastError = new Error(`URL ${url} 返回HTML而不是markdown`);
                             }
+                        } else {
+                            lastError = new Error(`HTTP ${response.status}: ${response.statusText}`);
+                            console.log('⚠️ HTTP错误:', response.status, response.statusText, '- 尝试下一个URL');
                         }
                     } catch (urlError) {
-                        console.log('❌ URL失败:', url, urlError.message);
+                        lastError = urlError;
+                        console.log('❌ URL失败:', url, '-', urlError.message, '- 尝试下一个URL');
                         continue;
                     }
                 }
                 
                 if (!markdown) {
-                    throw new Error('无法从任何URL获取有效的markdown内容');
+                    throw new Error(`无法从任何URL获取有效的markdown内容。最后一个错误: ${lastError?.message || '未知错误'}`);
                 }
                 
                 console.log('📥 最终使用URL:', finalUrl);
@@ -571,10 +576,10 @@
                         <div class="space-y-2">
                             <p class="text-sm text-gray-500">可能的原因：</p>
                             <ul class="text-sm text-gray-500 text-left inline-block">
-                                <li>• 服务器将markdown请求重写为HTML</li>
+                                <li>• 服务器配置问题</li>
                                 <li>• 文件路径配置问题</li>
+                                <li>• 网络连接问题</li>
                                 <li>• 缓存问题</li>
-                                <li>• CDN或代理服务器配置问题</li>
                             </ul>
                         </div>
                         <div class="mt-6 space-x-4">
@@ -584,8 +589,8 @@
                             <button onclick="goHome()" class="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors">
                                 返回主页
                             </button>
-                            <button onclick="window.open('debug-marked.html', '_blank')" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors">
-                                调试页面
+                            <button onclick="window.open('https://raw.githubusercontent.com/Shawnzheng011019/iamshawn/main/docs/${docName}.md', '_blank')" class="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-colors">
+                                直接查看原文件
                             </button>
                         </div>
                     </div>
