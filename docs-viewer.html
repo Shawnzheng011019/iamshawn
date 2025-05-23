@@ -6,7 +6,7 @@
     <title>技术文档 | 郑啸</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked@9.1.6/marked.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-core.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
@@ -32,6 +32,21 @@
         .markdown-body table { width: 100%; border-collapse: collapse; margin-bottom: 1em; }
         .markdown-body th, .markdown-body td { border: 1px solid #e2e8f0; padding: 0.5rem; text-align: left; }
         .markdown-body th { background-color: #f7fafc; font-weight: 600; }
+        
+        /* 激活状态样式 */
+        .nav-item.active {
+            background-color: #165DFF;
+            color: white;
+        }
+        
+        /* 移动端横向滚动 */
+        .horizontal-scroll {
+            overflow-x: auto;
+            scrollbar-width: none;
+        }
+        .horizontal-scroll::-webkit-scrollbar {
+            display: none;
+        }
     </style>
     <script>
         tailwind.config = {
@@ -64,34 +79,42 @@
         </div>
     </header>
 
-    <div class="container mx-auto px-4 py-8 flex flex-col lg:flex-row gap-8">
-        <!-- 侧边栏 -->
-        <aside class="lg:w-1/4">
-            <div class="bg-white rounded-lg shadow-md p-6 sticky top-24">
-                <h3 class="text-lg font-bold mb-4 text-gray-800">技术文档</h3>
-                <nav class="space-y-2">
-                    <a href="#" onclick="loadDoc('mcp-pymilvus-code-generate-helper')" class="block p-3 rounded-lg text-gray-700 hover:bg-primary hover:text-white transition-colors cursor-pointer">
-                        <i class="fa-solid fa-code mr-2"></i>
-                        MCP PyMilvus代码生成器
-                    </a>
-                    <a href="#" onclick="loadDoc('deep-searcher')" class="block p-3 rounded-lg text-gray-700 hover:bg-primary hover:text-white transition-colors cursor-pointer">
-                        <i class="fa-solid fa-search mr-2"></i>
-                        Deep Searcher
-                    </a>
-                    <a href="#" onclick="loadDoc('mcp-server-milvus')" class="block p-3 rounded-lg text-gray-700 hover:bg-primary hover:text-white transition-colors cursor-pointer">
-                        <i class="fa-solid fa-database mr-2"></i>
-                        MCP Server Milvus
-                    </a>
-                </nav>
+    <!-- 横版文档导航栏 -->
+    <div class="bg-white border-b shadow-sm">
+        <div class="container mx-auto px-4">
+            <div class="flex items-center justify-between py-4">
+                <h1 class="text-xl font-bold text-gray-800">技术文档</h1>
+                <div class="horizontal-scroll">
+                    <nav class="flex space-x-2 min-w-max">
+                        <button onclick="loadDoc('mcp-pymilvus-code-generate-helper')" 
+                                class="nav-item flex items-center px-4 py-2 rounded-lg text-gray-700 hover:bg-primary hover:text-white transition-colors whitespace-nowrap">
+                            <i class="fa-solid fa-code mr-2"></i>
+                            MCP PyMilvus代码生成器
+                        </button>
+                        <button onclick="loadDoc('deep-searcher')" 
+                                class="nav-item flex items-center px-4 py-2 rounded-lg text-gray-700 hover:bg-primary hover:text-white transition-colors whitespace-nowrap">
+                            <i class="fa-solid fa-search mr-2"></i>
+                            Deep Searcher
+                        </button>
+                        <button onclick="loadDoc('mcp-server-milvus')" 
+                                class="nav-item flex items-center px-4 py-2 rounded-lg text-gray-700 hover:bg-primary hover:text-white transition-colors whitespace-nowrap">
+                            <i class="fa-solid fa-database mr-2"></i>
+                            MCP Server Milvus
+                        </button>
+                    </nav>
+                </div>
             </div>
-        </aside>
+        </div>
+    </div>
 
-        <!-- 主内容区 -->
-        <main class="lg:w-3/4">
+    <!-- 主内容区 -->
+    <div class="container mx-auto px-4 py-8">
+        <main class="max-w-none">
             <div class="bg-white rounded-lg shadow-md">
                 <div id="loading" class="p-8 text-center">
-                    <i class="fa-solid fa-spinner fa-spin text-2xl text-primary mb-4"></i>
-                    <p class="text-gray-600">请选择要查看的技术文档</p>
+                    <i class="fa-solid fa-file-text text-4xl text-gray-300 mb-4"></i>
+                    <h3 class="text-xl font-bold text-gray-800 mb-2">选择技术文档</h3>
+                    <p class="text-gray-600">请从上方导航栏选择要查看的技术文档</p>
                 </div>
                 <div id="doc-content" class="p-8 markdown-body hidden"></div>
             </div>
@@ -99,16 +122,35 @@
     </div>
 
     <script>
-        // 设置marked配置
-        marked.setOptions({
-            highlight: function(code, lang) {
-                if (Prism.languages[lang]) {
-                    return Prism.highlight(code, Prism.languages[lang], lang);
-                } else {
-                    return code;
+        // 配置marked选项
+        if (typeof marked !== 'undefined') {
+            try {
+                // 尝试新的API
+                marked.use({
+                    highlight: function(code, lang) {
+                        if (typeof Prism !== 'undefined' && Prism.languages[lang]) {
+                            return Prism.highlight(code, Prism.languages[lang], lang);
+                        } else {
+                            return code;
+                        }
+                    }
+                });
+            } catch (e) {
+                // 如果新API失败，尝试旧的API
+                console.log('使用旧版marked API');
+                if (marked.setOptions) {
+                    marked.setOptions({
+                        highlight: function(code, lang) {
+                            if (typeof Prism !== 'undefined' && Prism.languages[lang]) {
+                                return Prism.highlight(code, Prism.languages[lang], lang);
+                            } else {
+                                return code;
+                            }
+                        }
+                    });
                 }
             }
-        });
+        }
 
         async function loadDoc(docName) {
             const loading = document.getElementById('loading');
@@ -119,13 +161,35 @@
             content.classList.add('hidden');
             
             try {
+                console.log(`尝试加载文档: docs/${docName}.md`);
+                
                 const response = await fetch(`docs/${docName}.md`);
+                console.log('Fetch响应状态:', response.status, response.statusText);
+                
                 if (!response.ok) {
-                    throw new Error('文档加载失败');
+                    throw new Error(`HTTP错误: ${response.status} ${response.statusText}`);
                 }
                 
                 const markdown = await response.text();
-                const html = marked.parse(markdown);
+                console.log('Markdown内容长度:', markdown.length);
+                
+                if (markdown.length === 0) {
+                    throw new Error('文档内容为空');
+                }
+                
+                // 使用marked解析markdown
+                let html;
+                if (typeof marked === 'function') {
+                    // 新版API
+                    html = marked(markdown);
+                } else if (marked && typeof marked.parse === 'function') {
+                    // 新版API - 使用parse方法
+                    html = marked.parse(markdown);
+                } else {
+                    throw new Error('marked库加载失败');
+                }
+                
+                console.log('HTML解析完成，长度:', html.length);
                 
                 content.innerHTML = html;
                 
@@ -134,26 +198,45 @@
                 content.classList.remove('hidden');
                 
                 // 高亮代码
-                Prism.highlightAll();
+                if (typeof Prism !== 'undefined') {
+                    Prism.highlightAll();
+                }
                 
-                // 更新活跃状态
-                document.querySelectorAll('aside a').forEach(a => {
-                    a.classList.remove('bg-primary', 'text-white');
-                    a.classList.add('text-gray-700');
-                });
-                event.target.closest('a').classList.add('bg-primary', 'text-white');
-                event.target.closest('a').classList.remove('text-gray-700');
+                // 更新导航栏活跃状态
+                updateActiveNav(event ? event.target.closest('button') : document.querySelector(`button[onclick="loadDoc('${docName}')"]`));
+                
+                // 滚动到顶部
+                window.scrollTo({ top: 0, behavior: 'smooth' });
                 
             } catch (error) {
+                console.error('文档加载错误:', error);
                 content.innerHTML = `
-                    <div class="text-center py-8">
+                    <div class="text-center py-12">
                         <i class="fa-solid fa-exclamation-triangle text-4xl text-red-500 mb-4"></i>
                         <h3 class="text-xl font-bold text-gray-800 mb-2">文档加载失败</h3>
-                        <p class="text-gray-600">请检查网络连接或稍后重试</p>
+                        <p class="text-gray-600 mb-4">错误信息: ${error.message}</p>
+                        <p class="text-sm text-gray-500">请检查网络连接或联系管理员</p>
+                        <button onclick="location.reload()" class="mt-4 bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors">
+                            重新加载
+                        </button>
                     </div>
                 `;
                 loading.classList.add('hidden');
                 content.classList.remove('hidden');
+            }
+        }
+        
+        function updateActiveNav(activeButton) {
+            // 移除所有按钮的激活状态
+            document.querySelectorAll('.nav-item').forEach(btn => {
+                btn.classList.remove('active', 'bg-primary', 'text-white');
+                btn.classList.add('text-gray-700');
+            });
+            
+            // 添加当前按钮的激活状态
+            if (activeButton) {
+                activeButton.classList.add('active', 'bg-primary', 'text-white');
+                activeButton.classList.remove('text-gray-700');
             }
         }
 
@@ -163,6 +246,19 @@
             const doc = urlParams.get('doc');
             if (doc) {
                 loadDoc(doc);
+            }
+        });
+        
+        // 测试依赖库是否正确加载
+        window.addEventListener('load', function() {
+            console.log('marked库状态:', typeof marked);
+            console.log('Prism库状态:', typeof Prism);
+            
+            if (typeof marked === 'undefined') {
+                console.error('marked库未加载');
+            }
+            if (typeof Prism === 'undefined') {
+                console.error('Prism库未加载');
             }
         });
     </script>
