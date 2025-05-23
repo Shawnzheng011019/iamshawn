@@ -1,64 +1,22 @@
 {
   "headers": [
     {
-      "source": "/docs/(.*\\.md)",
+      "source": "/(.*\\.md)",
       "headers": [
         {
           "key": "Content-Type",
           "value": "text/plain; charset=utf-8"
-        },
-        {
-          "key": "Cache-Control",
-          "value": "public, max-age=3600"
         }
       ]
     },
     {
-      "source": "/posts/(.*\\.md)",
-      "headers": [
-        {
-          "key": "Content-Type",
-          "value": "text/plain; charset=utf-8"
-        },
-        {
-          "key": "Cache-Control",
-          "value": "public, max-age=3600"
-        }
-      ]
-    },
-    {
-      "source": "/posts/posts.json",
+      "source": "/(.*\\.json)",
       "headers": [
         {
           "key": "Content-Type",
           "value": "application/json; charset=utf-8"
-        },
-        {
-          "key": "Cache-Control",
-          "value": "public, max-age=300"
-        }
-      ]
-    },
-    {
-      "source": "/api-posts.json",
-      "headers": [
-        {
-          "key": "Content-Type",
-          "value": "application/json; charset=utf-8"
-        },
-        {
-          "key": "Cache-Control",
-          "value": "public, max-age=300"
         }
       ]
     }
-  ],
-  "rewrites": [
-    {
-      "source": "/blog",
-      "destination": "/blog.html"
-    }
-  ],
-  "cleanUrls": false,
-  "trailingSlash": false
+  ]
 } 
