@@ -37,4 +37,9 @@ node_modules/
 .idea/
 
 # Vercel
-.vercel 
+.vercel
+
+# Build output
+public/
+dist/
+.deployment-trigger 

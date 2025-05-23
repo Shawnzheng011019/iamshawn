@@ -5,7 +5,7 @@
   "main": "index.html",
   "scripts": {
     "dev": "python3 -m http.server 8000",
-    "build": "echo 'Static site - no build required'",
+    "build": "mkdir -p public && cp -r *.html *.js *.css assets blog posts public/ 2>/dev/null || true",
     "start": "echo 'Static site deployed'",
     "test": "echo 'No tests specified'"
   },
@@ -24,5 +24,14 @@
   "engines": {
     "node": ">=18.0.0"
   },
+  "files": [
+    "index.html",
+    "blog.html",
+    "script.js",
+    "style.css",
+    "assets/",
+    "blog/",
+    "posts/"
+  ],
   "type": "module"
 } 
