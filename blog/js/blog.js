@@ -3,6 +3,118 @@
  * 支持多数据源和智能降级，适配中国网络环境
  */
 
+// 内嵌博客数据 - 避免网络请求问题
+const EMBEDDED_POSTS_DATA = [
+  {
+    "id": "vector-database-selection-guide",
+    "title": "向量数据库选型指南：选择最适合您需求的解决方案",
+    "date": "2025-01-20",
+    "category": "数据库技术",
+    "tags": ["向量数据库", "Milvus", "Pinecone", "Qdrant", "Weaviate", "RAG", "AI应用"],
+    "summary": "深入对比主流向量数据库的性能、功能和成本，为不同规模的AI应用提供详细的选型建议和部署指南。涵盖Milvus、Pinecone、Qdrant、Weaviate等主流方案的优缺点分析。",
+    "cover": "https://picsum.photos/600/400?random=1",
+    "readingTime": "25 分钟",
+    "path": "posts/2025-01-20-vector-database-selection-guide/README.md",
+    "status": "published"
+  },
+  {
+    "id": "ai-content-humanization-guide",
+    "title": "AI写作反检测终极指南：让你的内容人味儿十足",
+    "date": "2025-01-16",
+    "category": "AI工具技巧",
+    "tags": ["AI写作", "AIGC检测", "提示词工程", "智能体配置", "内容创作", "反检测技巧"],
+    "summary": "在AI内容泛滥的时代，如何让机器写出的文字具备人类的温度？本文将揭秘通过智能体配置和提示词工程，让AI生成内容巧妙规避检测的实战技巧。",
+    "cover": "https://picsum.photos/600/400?random=2",
+    "readingTime": "20 分钟",
+    "path": "posts/2025-01-16-ai-content-humanization-guide/README.md",
+    "status": "published"
+  },
+  {
+    "id": "milvus-integration-deepseacher",
+    "title": "深度集成：Milvus与DeepSearcher结合实现高性能向量检索与智能分析",
+    "date": "2025-05-15",
+    "category": "技术实践",
+    "tags": ["Milvus", "DeepSearcher", "向量数据库", "RAG", "大语言模型", "性能优化"],
+    "summary": "本文深入探讨Milvus向量数据库与DeepSearcher的集成方案，包括架构设计、性能优化和实际应用案例，帮助开发者构建高性能的智能搜索系统。",
+    "cover": "https://picsum.photos/600/400?random=3",
+    "readingTime": "22 分钟",
+    "path": "posts/2024-05-15-milvus-integration-deepseacher/README.md",
+    "status": "published"
+  },
+  {
+    "id": "deepseacher-model-comparison",
+    "title": "大模型对决：DeepSearcher中的GPT-4.1、o3-mini与DeepSeek R1性能评测",
+    "date": "2025-05-10",
+    "category": "人工智能",
+    "tags": ["大语言模型", "DeepSearcher", "GPT-4.1", "o3-mini", "DeepSeek R1", "性能评测"],
+    "summary": "通过实际测试对比分析GPT-4.1、o3-mini与DeepSeek R1三款大模型在DeepSearcher框架下的表现，为企业和开发者提供模型选择参考。",
+    "cover": "https://picsum.photos/600/400?random=4",
+    "readingTime": "15 分钟",
+    "path": "posts/2024-05-10-deepseacher-model-comparison/README.md",
+    "status": "published"
+  },
+  {
+    "id": "deepseek-langchain-milvus",
+    "title": "本地部署实战：DeepSeek R1结合LangChain与Milvus打造私有AI助手",
+    "date": "2025-05-05",
+    "category": "技术教程",
+    "tags": ["DeepSeek R1", "LangChain", "Milvus", "本地部署", "私有化部署", "向量数据库"],
+    "summary": "详细介绍如何在本地环境中部署DeepSeek R1模型，并结合LangChain与Milvus向量数据库构建一个功能完整的私有AI助手系统。",
+    "cover": "https://picsum.photos/600/400?random=5",
+    "readingTime": "18 分钟",
+    "path": "posts/2024-05-05-deepseek-langchain-milvus/README.md",
+    "status": "published"
+  },
+  {
+    "id": "deepseacher-open-source",
+    "title": "重磅开源：DeepSearcher——告别传统RAG，打造本地版私有数据智能助手",
+    "date": "2025-04-30",
+    "category": "开源项目",
+    "tags": ["DeepSearcher", "开源", "RAG", "向量数据库", "私有数据", "大语言模型"],
+    "summary": "DeepSearcher正式开源！这是一款基于Agentic RAG架构的智能搜索与报告生成工具，能够基于私有数据执行复杂推理和生成专业报告，支持多种大语言模型和向量数据库。",
+    "cover": "https://picsum.photos/600/400?random=6",
+    "readingTime": "12 分钟",
+    "path": "posts/2024-04-30-deepseacher-open-source/README.md",
+    "status": "published"
+  },
+  {
+    "id": "deepseek-tesla-analysis",
+    "title": "AI智能分析：DeepSeek如何评估特斯拉的市场底部与投资价值",
+    "date": "2025-04-25",
+    "category": "人工智能应用",
+    "tags": ["DeepSeek", "特斯拉", "市场分析", "AI投资", "大语言模型", "智能分析"],
+    "summary": "本文探讨如何利用DeepSeek大模型分析特斯拉的市场状况和投资价值，展示AI在金融分析领域的应用潜力和实际效果。",
+    "cover": "https://picsum.photos/600/400?random=7",
+    "readingTime": "14 分钟",
+    "path": "posts/2024-04-25-deepseek-tesla-analysis/README.md",
+    "status": "published"
+  },
+  {
+    "id": "deepseacher-silicon-flow",
+    "title": "开源实践：DeepSearcher结合Silicon Flow构建企业级私有化DeepResearch",
+    "date": "2025-04-20",
+    "category": "技术实践",
+    "tags": ["DeepSearcher", "Silicon Flow", "私有化部署", "企业应用", "大语言模型", "工作流自动化"],
+    "summary": "详细介绍如何结合DeepSearcher与Silicon Flow工作流引擎，构建一个功能完整的企业级私有化DeepResearch系统，实现智能数据分析、报告生成和工作流自动化。",
+    "cover": "https://picsum.photos/600/400?random=8",
+    "readingTime": "20 分钟",
+    "path": "posts/2024-04-20-deepseacher-silicon-flow/README.md",
+    "status": "published"
+  },
+  {
+    "id": "mcp-protocol-comprehensive-guide",
+    "title": "MCP协议深度解析：构建AI Agent的新标准",
+    "date": "2025-05-09",
+    "category": "AI协议",
+    "tags": ["MCP", "AI Agent", "协议", "通信标准", "Anthropic", "Model Context Protocol"],
+    "summary": "Model Context Protocol (MCP) 作为新兴的AI Agent通信标准，正在重新定义AI应用与外部系统的集成方式。本文深入解析MCP的技术细节、架构设计和实际应用场景，涵盖从基础概念到高级实现的完整指南。",
+    "cover": "https://picsum.photos/600/400?random=9",
+    "readingTime": "35 分钟",
+    "path": "posts/2025-05-09-mcp-protocol-comprehensive-guide/README.md",
+    "status": "published"
+  }
+];
+
 // 常量定义
 const POSTS_PER_PAGE = 6; // 每页显示的文章数
 
@@ -493,6 +605,18 @@ function saveToCache(posts) {
 async function loadPostsWithFallback() {
     try {
         showLoadingState();
+        
+        // 优先使用内嵌数据
+        if (EMBEDDED_POSTS_DATA && EMBEDDED_POSTS_DATA.length > 0) {
+            console.log('使用内嵌博客数据');
+            allPosts = EMBEDDED_POSTS_DATA.filter(post => post.status === 'published');
+            allPosts.sort((a, b) => new Date(b.date) - new Date(a.date));
+            filteredPosts = [...allPosts];
+            renderPosts();
+            hideLoadingState();
+            showSuccessMessage('博客数据加载完成');
+            return;
+        }
         
         // 尝试从缓存加载
         const cachedPosts = loadFromCache();
