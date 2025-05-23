@@ -1,5 +1,17 @@
 [
   {
+    "id": "vector-database-selection-guide",
+    "title": "向量数据库选型指南：选择最适合您需求的解决方案",
+    "date": "2025-01-20",
+    "category": "数据库技术",
+    "tags": ["向量数据库", "Milvus", "Pinecone", "Qdrant", "Weaviate", "RAG", "AI应用"],
+    "summary": "深入对比主流向量数据库的性能、功能和成本，为不同规模的AI应用提供详细的选型建议和部署指南。涵盖Milvus、Pinecone、Qdrant、Weaviate等主流方案的优缺点分析。",
+    "cover": "posts/2025-01-20-vector-database-selection-guide/cover.png",
+    "readingTime": "25 分钟",
+    "path": "posts/2025-01-20-vector-database-selection-guide/README.md",
+    "status": "published"
+  },
+  {
     "id": "ai-content-humanization-guide",
     "title": "AI写作反检测终极指南：让你的内容人味儿十足",
     "date": "2025-01-16",
@@ -18,7 +30,7 @@
     "category": "技术实践",
     "tags": ["Milvus", "DeepSearcher", "向量数据库", "RAG", "大语言模型", "性能优化"],
     "summary": "本文深入探讨Milvus向量数据库与DeepSearcher的集成方案，包括架构设计、性能优化和实际应用案例，帮助开发者构建高性能的智能搜索系统。",
-    "cover": "posts/2024-05-15-milvus-integration-deepseacher/cover",
+    "cover": "posts/2024-05-15-milvus-integration-deepseacher/cover.png",
     "readingTime": "22 分钟",
     "path": "posts/2024-05-15-milvus-integration-deepseacher/README.md",
     "status": "published"
@@ -129,18 +141,6 @@
     "cover": "posts/2024-01-05-mcp-protocol-deep-analysis/cover.png",
     "readingTime": "10 分钟",
     "path": "posts/2024-01-05-mcp-protocol-deep-analysis/README.md",
-    "status": "published"
-  },
-  {
-    "id": "vector-database-comparison",
-    "title": "向量数据库选型指南：Milvus vs Pinecone vs Weaviate",
-    "date": "2025-04-28",
-    "category": "数据库",
-    "tags": ["向量数据库", "Milvus", "Pinecone", "Weaviate"],
-    "summary": "全面对比主流向量数据库的性能、功能和成本，为不同规模的AI应用提供选型建议。",
-    "cover": "posts/2023-12-28-vector-database-comparison/cover.png",
-    "readingTime": "8 分钟",
-    "path": "posts/2023-12-28-vector-database-comparison/README.md",
     "status": "published"
   }
 ] 
