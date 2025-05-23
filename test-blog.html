@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>博客测试页面</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-result { padding: 10px; margin: 10px 0; border-radius: 5px; }
+        .success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .info { background-color: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+    </style>
+</head>
+<body>
+    <h1>博客功能测试</h1>
+    
+    <div id="test-results"></div>
+    
+    <h2>测试链接</h2>
+    <ul>
+        <li><a href="blog.html" target="_blank">博客页面</a></li>
+        <li><a href="index.html" target="_blank">主页</a></li>
+        <li><a href="favicon.ico" target="_blank">Favicon</a></li>
+    </ul>
+
+    <script>
+        const resultsDiv = document.getElementById('test-results');
+        
+        function addResult(message, type = 'info') {
+            const div = document.createElement('div');
+            div.className = `test-result ${type}`;
+            div.textContent = message;
+            resultsDiv.appendChild(div);
+        }
+        
+        async function runTests() {
+            addResult('开始测试博客功能...', 'info');
+            
+            // 测试favicon
+            try {
+                const faviconResponse = await fetch('/favicon.ico');
+                if (faviconResponse.ok) {
+                    addResult('✓ Favicon 可以正常访问', 'success');
+                } else {
+                    addResult('✗ Favicon 访问失败: ' + faviconResponse.status, 'error');
+                }
+            } catch (error) {
+                addResult('✗ Favicon 访问错误: ' + error.message, 'error');
+            }
+            
+            // 测试博客数据
+            try {
+                const postsResponse = await fetch('/posts/posts.json');
+                if (postsResponse.ok) {
+                    const posts = await postsResponse.json();
+                    addResult(`✓ 博客数据加载成功，共 ${posts.length} 篇文章`, 'success');
+                } else {
+                    addResult('✗ 博客数据加载失败: ' + postsResponse.status, 'error');
+                }
+            } catch (error) {
+                addResult('✗ 博客数据加载错误: ' + error.message, 'error');
+            }
+            
+            // 测试API数据
+            try {
+                const apiResponse = await fetch('/api-posts.json');
+                if (apiResponse.ok) {
+                    const apiPosts = await apiResponse.json();
+                    addResult(`✓ API数据加载成功，共 ${apiPosts.length} 篇文章`, 'success');
+                } else {
+                    addResult('✗ API数据加载失败: ' + apiResponse.status, 'error');
+                }
+            } catch (error) {
+                addResult('✗ API数据加载错误: ' + error.message, 'error');
+            }
+            
+            // 测试博客JavaScript
+            try {
+                const jsResponse = await fetch('/blog/js/blog.js');
+                if (jsResponse.ok) {
+                    addResult('✓ 博客JavaScript文件可以正常访问', 'success');
+                } else {
+                    addResult('✗ 博客JavaScript文件访问失败: ' + jsResponse.status, 'error');
+                }
+            } catch (error) {
+                addResult('✗ 博客JavaScript文件访问错误: ' + error.message, 'error');
+            }
+            
+            // 测试具体文章
+            try {
+                const articleResponse = await fetch('/posts/2025-01-20-vector-database-selection-guide/README.md');
+                if (articleResponse.ok) {
+                    addResult('✓ 文章内容可以正常访问', 'success');
+                } else {
+                    addResult('✗ 文章内容访问失败: ' + articleResponse.status, 'error');
+                }
+            } catch (error) {
+                addResult('✗ 文章内容访问错误: ' + error.message, 'error');
+            }
+            
+            addResult('测试完成！', 'info');
+        }
+        
+        // 页面加载后运行测试
+        document.addEventListener('DOMContentLoaded', runTests);
+    </script>
+</body>
+</html> 

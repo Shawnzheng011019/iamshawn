@@ -1002,8 +1002,35 @@ function renderPostCard(post) {
  * @param {Object} post - 文章对象
  */
 async function openArticle(post) {
-    // 导航到文章详情页，使用 /文章名.md 格式
-    window.location.href = `/${post.id}.md`;
+    // 在模态框中显示文章内容，而不是导航到单独页面
+    if (!domCache.articleModal) return;
+    
+    showModalLoading(post);
+    domCache.articleModal.classList.remove('hidden');
+    document.body.style.overflow = 'hidden'; // 禁用背景滚动
+    
+    try {
+        const markdownContent = await fetchArticleContent(post);
+        const htmlContent = parseMarkdownToHTML(markdownContent);
+        
+        updateModalContent(post, htmlContent);
+        
+        // 预加载文章内图片
+        preloadArticleImages(markdownContent);
+        
+    } catch (error) {
+        console.error('加载文章失败:', error);
+        updateModalContent(post, `
+            <div class="text-center py-8">
+                <div class="text-red-500 text-5xl mb-4"><i class="fa-solid fa-exclamation-triangle"></i></div>
+                <h3 class="text-xl font-bold text-gray-800 mb-2">文章加载失败</h3>
+                <p class="text-gray-600 mb-4">${error.message}</p>
+                <button onclick="closeModal()" class="bg-primary text-white px-4 py-2 rounded hover:bg-primary/90 transition-colors">
+                    关闭
+                </button>
+            </div>
+        `);
+    }
 }
 
 /**
@@ -1184,6 +1211,9 @@ function closeModal() {
         document.body.style.overflow = ''; // 恢复滚动
     }
 }
+
+// 将closeModal函数添加到全局作用域，以便在模态框内容中可以调用
+window.closeModal = closeModal;
 
 /**
  * 渲染分页
