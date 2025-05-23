@@ -248,21 +248,20 @@
         function getArticleIdFromURL() {
             const pathname = window.location.pathname;
             
-            // 如果URL格式是 /文章名.md，直接提取文章名
+            // URL格式: /文章名.md
             if (pathname.endsWith('.md')) {
                 return pathname.substring(1, pathname.length - 3); // 去掉开头的/和结尾的.md
             }
             
-            // 兼容旧的 /blog/文章ID 格式
-            const pathParts = pathname.split('/');
-            return pathParts[pathParts.length - 1] || pathParts[pathParts.length - 2];
+            // 如果URL格式不正确，返回null
+            return null;
         }
         
         // 加载文章详情
         async function loadArticleDetail() {
             const articleId = getArticleIdFromURL();
             if (!articleId) {
-                showErrorState('未找到文章ID');
+                showErrorState('URL格式错误，请使用正确的文章链接格式（如：/文章名.md）');
                 return;
             }
             
