@@ -11,7 +11,7 @@
 
 ## 重磅宣布：DeepSearcher正式开源！
 
-今天，我非常激动地宣布，我在实习期间参与开发的项目——DeepSearcher正式开源了！这是一款基于Agentic RAG架构的智能搜索与报告生成工具，能够基于私有数据执行复杂推理和生成专业报告，支持多种大语言模型和向量数据库。
+DeepSearcher正式开源了！这是一款基于Agentic RAG架构的智能搜索与报告生成工具，能够基于私有数据执行复杂推理和生成专业报告，支持多种大语言模型和向量数据库。
 
 GitHub仓库地址：[https://github.com/zilliztech/deep-searcher](https://github.com/zilliztech/deep-searcher)
 
