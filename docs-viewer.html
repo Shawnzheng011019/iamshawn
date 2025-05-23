@@ -429,6 +429,8 @@
             
             currentDoc = docName;
             
+            console.log('🔄 开始加载文档:', docName);
+            
             // 关闭移动端侧边栏
             if (isMobileSidebarOpen) {
                 toggleMobileSidebar();
@@ -439,6 +441,7 @@
             content.classList.add('hidden');
             
             try {
+                console.log('📥 正在获取markdown文件...');
                 const response = await fetch(`docs/${docName}.md`);
                 
                 if (!response.ok) {
@@ -446,19 +449,43 @@
                 }
                 
                 const markdown = await response.text();
+                console.log('📥 文件获取成功，长度:', markdown.length);
+                console.log('📥 文件前100字符:', markdown.substring(0, 100));
                 
                 if (markdown.length === 0) {
                     throw new Error('文档内容为空');
                 }
                 
                 // 解析markdown为HTML
+                console.log('🔄 开始解析markdown...');
                 const html = renderMarkdown(markdown);
+                console.log('🔄 解析完成，HTML长度:', html?.length || 0);
+                console.log('🔄 HTML前200字符:', html?.substring(0, 200) || '无内容');
                 
                 if (!html || html.length === 0) {
                     throw new Error('Markdown解析失败');
                 }
                 
+                // 确保内容是HTML而不是原始文本
+                if (html === markdown) {
+                    console.warn('⚠️ 解析结果与原始内容相同，可能解析失败');
+                    throw new Error('Markdown解析没有生成HTML，输出与输入相同');
+                }
+                
+                if (!html.includes('<')) {
+                    console.warn('⚠️ 解析结果不包含HTML标签');
+                    throw new Error('解析结果不包含HTML标签，可能解析失败');
+                }
+                
+                console.log('✅ 解析验证通过，准备插入DOM');
+                
+                // 清空内容区域并插入新内容
+                content.innerHTML = '';
                 content.innerHTML = html;
+                
+                console.log('✅ DOM插入完成');
+                console.log('📊 content.innerHTML长度:', content.innerHTML.length);
+                console.log('📊 content.children数量:', content.children.length);
                 
                 // 隐藏加载状态，显示内容
                 loading.classList.add('hidden');
@@ -470,6 +497,7 @@
                 // 高亮代码
                 if (typeof Prism !== 'undefined' && Prism.highlightAll) {
                     setTimeout(() => {
+                        console.log('🎨 执行代码高亮');
                         Prism.highlightAll();
                     }, 200);
                 }
@@ -480,8 +508,10 @@
                 // 滚动到顶部
                 window.scrollTo({ top: 0, behavior: 'smooth' });
                 
+                console.log('✅ 文档加载完成');
+                
             } catch (error) {
-                console.error('文档加载错误:', error);
+                console.error('❌ 文档加载错误:', error);
                 content.innerHTML = `
                     <div class="text-center py-12">
                         <i class="fa-solid fa-exclamation-triangle text-4xl text-red-500 mb-4"></i>
@@ -493,6 +523,7 @@
                                 <li>• 网络连接问题</li>
                                 <li>• 文档文件不存在</li>
                                 <li>• Markdown解析器加载失败</li>
+                                <li>• 解析结果验证失败</li>
                             </ul>
                         </div>
                         <div class="mt-6 space-x-4">
@@ -501,6 +532,9 @@
                             </button>
                             <button onclick="goHome()" class="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors">
                                 返回主页
+                            </button>
+                            <button onclick="window.open('debug-marked.html', '_blank')" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors">
+                                调试页面
                             </button>
                         </div>
                     </div>

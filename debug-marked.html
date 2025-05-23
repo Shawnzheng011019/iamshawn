@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Marked.js 调试测试</title>
+    <script src="https://cdn.jsdelivr.net/npm/marked@15.0.7/marked.min.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 20px; border: 1px solid #ccc; }
+        .result { background: #f5f5f5; padding: 10px; margin: 10px 0; }
+        .error { color: red; }
+        .success { color: green; }
+    </style>
+</head>
+<body>
+    <h1>Marked.js 调试测试</h1>
+    
+    <div class="test-section">
+        <h2>1. 检查marked库加载状态</h2>
+        <div id="library-status"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>2. 基本markdown解析测试</h2>
+        <div id="basic-test"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>3. 从文件加载测试</h2>
+        <button onclick="testFileLoad()">测试加载markdown文件</button>
+        <div id="file-test"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>4. 完整测试</h2>
+        <div id="full-test"></div>
+    </div>
+
+    <script>
+        // 1. 检查marked库状态
+        function checkMarkedLibrary() {
+            const statusDiv = document.getElementById('library-status');
+            let status = '';
+            
+            status += `<p>typeof marked: <code>${typeof marked}</code></p>`;
+            
+            if (typeof marked !== 'undefined') {
+                status += `<p class="success">✅ marked库已加载</p>`;
+                status += `<p>marked对象属性: <code>${Object.keys(marked).join(', ')}</code></p>`;
+                
+                if (marked.parse && typeof marked.parse === 'function') {
+                    status += `<p class="success">✅ marked.parse方法可用</p>`;
+                } else if (typeof marked === 'function') {
+                    status += `<p class="success">✅ marked函数形式可用</p>`;
+                } else {
+                    status += `<p class="error">❌ 无法找到可用的解析方法</p>`;
+                }
+            } else {
+                status += `<p class="error">❌ marked库未加载</p>`;
+            }
+            
+            statusDiv.innerHTML = status;
+        }
+        
+        // 2. 基本解析测试
+        function testBasicParsing() {
+            const testDiv = document.getElementById('basic-test');
+            const testMarkdown = `# 测试标题
+
+这是一个**粗体**文本和一个*斜体*文本。
+
+- 列表项 1
+- 列表项 2
+
+\`\`\`javascript
+console.log('Hello World');
+\`\`\`
+
+[链接](https://example.com)`;
+            
+            let result = '';
+            
+            try {
+                let html;
+                if (typeof marked !== 'undefined') {
+                    if (marked.parse && typeof marked.parse === 'function') {
+                        html = marked.parse(testMarkdown);
+                        result += `<p class="success">✅ 使用 marked.parse() 解析成功</p>`;
+                    } else if (typeof marked === 'function') {
+                        html = marked(testMarkdown);
+                        result += `<p class="success">✅ 使用 marked() 解析成功</p>`;
+                    } else {
+                        throw new Error('无法找到可用的解析方法');
+                    }
+                    
+                    result += `<h4>原始输入：</h4><pre>${testMarkdown}</pre>`;
+                    result += `<h4>解析输出：</h4><pre>${html}</pre>`;
+                    result += `<h4>渲染效果：</h4><div class="result">${html}</div>`;
+                } else {
+                    throw new Error('marked库未加载');
+                }
+            } catch (error) {
+                result += `<p class="error">❌ 解析失败: ${error.message}</p>`;
+            }
+            
+            testDiv.innerHTML = result;
+        }
+        
+        // 3. 文件加载测试
+        async function testFileLoad() {
+            const testDiv = document.getElementById('file-test');
+            testDiv.innerHTML = '<p>正在加载文件...</p>';
+            
+            try {
+                const response = await fetch('docs/mcp-pymilvus-code-generate-helper.md');
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP错误: ${response.status} ${response.statusText}`);
+                }
+                
+                const markdown = await response.text();
+                
+                let result = `<p class="success">✅ 文件加载成功，长度: ${markdown.length}</p>`;
+                result += `<h4>文件前200字符：</h4><pre>${markdown.substring(0, 200)}...</pre>`;
+                
+                // 尝试解析
+                if (typeof marked !== 'undefined') {
+                    let html;
+                    if (marked.parse && typeof marked.parse === 'function') {
+                        html = marked.parse(markdown.substring(0, 500));
+                    } else if (typeof marked === 'function') {
+                        html = marked(markdown.substring(0, 500));
+                    }
+                    
+                    result += `<h4>解析结果前500字符：</h4><pre>${html.substring(0, 500)}...</pre>`;
+                    result += `<h4>渲染效果：</h4><div class="result">${html.substring(0, 1000)}</div>`;
+                }
+                
+                testDiv.innerHTML = result;
+                
+            } catch (error) {
+                testDiv.innerHTML = `<p class="error">❌ 文件加载失败: ${error.message}</p>`;
+            }
+        }
+        
+        // 4. 完整测试
+        function runFullTest() {
+            const testDiv = document.getElementById('full-test');
+            
+            // 模拟docs-viewer.html中的renderMarkdown函数
+            function renderMarkdown(text) {
+                console.log('开始markdown解析，输入长度:', text.length);
+                
+                if (typeof marked === 'undefined') {
+                    console.error('marked库未加载');
+                    return '手动解析将在这里执行...';
+                }
+                
+                try {
+                    let result;
+                    
+                    if (marked.parse && typeof marked.parse === 'function') {
+                        console.log('使用 marked.parse() 方法');
+                        result = marked.parse(text);
+                    } else if (typeof marked === 'function') {
+                        console.log('使用 marked() 直接调用');
+                        result = marked(text);
+                    } else {
+                        throw new Error('找不到可用的marked解析方法');
+                    }
+                    
+                    console.log('marked解析结果长度:', result?.length || 0);
+                    
+                    if (!result || result.length === 0) {
+                        throw new Error('marked解析返回空结果');
+                    }
+                    
+                    if (!result.includes('<') || result === text) {
+                        throw new Error('marked解析可能失败，输出与输入相同或不包含HTML标签');
+                    }
+                    
+                    console.log('✅ marked解析成功');
+                    return result;
+                    
+                } catch (error) {
+                    console.error('❌ marked解析失败:', error.message);
+                    return '手动解析将在这里执行...';
+                }
+            }
+            
+            const testMarkdown = `# 完整测试
+
+## 功能测试
+
+这是一个**完整的测试**，包含：
+
+1. 标题
+2. **粗体文本**
+3. *斜体文本*
+4. 代码：\`console.log('test')\`
+
+\`\`\`python
+def test_function():
+    return "Hello World"
+\`\`\`
+
+> 这是一个引用块
+
+- 无序列表项 1
+- 无序列表项 2
+
+[测试链接](https://example.com)`;
+            
+            const html = renderMarkdown(testMarkdown);
+            
+            let result = `<h4>测试输入：</h4><pre>${testMarkdown}</pre>`;
+            result += `<h4>解析输出：</h4><pre>${html}</pre>`;
+            result += `<h4>最终渲染：</h4><div class="result">${html}</div>`;
+            
+            testDiv.innerHTML = result;
+        }
+        
+        // 页面加载完成后运行测试
+        window.addEventListener('load', function() {
+            checkMarkedLibrary();
+            testBasicParsing();
+            runFullTest();
+        });
+    </script>
+</body>
+</html> 
