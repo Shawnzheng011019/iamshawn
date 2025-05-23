@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>技术文档 | 郑啸</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-core.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+    <style>
+        .markdown-body {
+            line-height: 1.6;
+        }
+        .markdown-body h1, .markdown-body h2, .markdown-body h3, .markdown-body h4, .markdown-body h5, .markdown-body h6 {
+            margin-top: 1.5em;
+            margin-bottom: 0.5em;
+            font-weight: 600;
+        }
+        .markdown-body h1 { font-size: 2em; }
+        .markdown-body h2 { font-size: 1.5em; }
+        .markdown-body h3 { font-size: 1.25em; }
+        .markdown-body p { margin-bottom: 1em; }
+        .markdown-body ul, .markdown-body ol { margin-bottom: 1em; padding-left: 2em; }
+        .markdown-body li { margin-bottom: 0.5em; }
+        .markdown-body pre { background-color: #2d3748; border-radius: 0.375rem; padding: 1rem; overflow-x: auto; margin-bottom: 1em; }
+        .markdown-body code { background-color: #f7fafc; padding: 0.125rem 0.25rem; border-radius: 0.25rem; font-size: 0.875em; }
+        .markdown-body pre code { background-color: transparent; padding: 0; }
+        .markdown-body blockquote { border-left: 4px solid #e2e8f0; padding-left: 1rem; margin: 1em 0; color: #718096; }
+        .markdown-body table { width: 100%; border-collapse: collapse; margin-bottom: 1em; }
+        .markdown-body th, .markdown-body td { border: 1px solid #e2e8f0; padding: 0.5rem; text-align: left; }
+        .markdown-body th { background-color: #f7fafc; font-weight: 600; }
+    </style>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#165DFF',
+                        secondary: '#0E2E91',
+                        accent: '#36BFFA',
+                        dark: '#1D2939',
+                        light: '#F9FAFB'
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-50 text-gray-900">
+    <!-- 导航栏 -->
+    <header class="bg-white shadow-sm sticky top-0 z-10">
+        <div class="container mx-auto px-4 py-4 flex items-center justify-between">
+            <a href="index.html" class="text-2xl font-bold text-primary flex items-center">
+                <span class="mr-2"><i class="fa-solid fa-rocket"></i></span>
+                <span>郑啸</span>
+            </a>
+            <nav class="flex items-center space-x-6">
+                <a href="index.html" class="text-gray-600 hover:text-primary transition-colors">返回主页</a>
+                <a href="index.html#internship" class="text-gray-600 hover:text-primary transition-colors">实习经历</a>
+            </nav>
+        </div>
+    </header>
+
+    <div class="container mx-auto px-4 py-8 flex flex-col lg:flex-row gap-8">
+        <!-- 侧边栏 -->
+        <aside class="lg:w-1/4">
+            <div class="bg-white rounded-lg shadow-md p-6 sticky top-24">
+                <h3 class="text-lg font-bold mb-4 text-gray-800">技术文档</h3>
+                <nav class="space-y-2">
+                    <a href="#" onclick="loadDoc('mcp-pymilvus-code-generate-helper')" class="block p-3 rounded-lg text-gray-700 hover:bg-primary hover:text-white transition-colors cursor-pointer">
+                        <i class="fa-solid fa-code mr-2"></i>
+                        MCP PyMilvus代码生成器
+                    </a>
+                    <a href="#" onclick="loadDoc('deep-searcher')" class="block p-3 rounded-lg text-gray-700 hover:bg-primary hover:text-white transition-colors cursor-pointer">
+                        <i class="fa-solid fa-search mr-2"></i>
+                        Deep Searcher
+                    </a>
+                    <a href="#" onclick="loadDoc('mcp-server-milvus')" class="block p-3 rounded-lg text-gray-700 hover:bg-primary hover:text-white transition-colors cursor-pointer">
+                        <i class="fa-solid fa-database mr-2"></i>
+                        MCP Server Milvus
+                    </a>
+                </nav>
+            </div>
+        </aside>
+
+        <!-- 主内容区 -->
+        <main class="lg:w-3/4">
+            <div class="bg-white rounded-lg shadow-md">
+                <div id="loading" class="p-8 text-center">
+                    <i class="fa-solid fa-spinner fa-spin text-2xl text-primary mb-4"></i>
+                    <p class="text-gray-600">请选择要查看的技术文档</p>
+                </div>
+                <div id="doc-content" class="p-8 markdown-body hidden"></div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // 设置marked配置
+        marked.setOptions({
+            highlight: function(code, lang) {
+                if (Prism.languages[lang]) {
+                    return Prism.highlight(code, Prism.languages[lang], lang);
+                } else {
+                    return code;
+                }
+            }
+        });
+
+        async function loadDoc(docName) {
+            const loading = document.getElementById('loading');
+            const content = document.getElementById('doc-content');
+            
+            // 显示加载状态
+            loading.classList.remove('hidden');
+            content.classList.add('hidden');
+            
+            try {
+                const response = await fetch(`docs/${docName}.md`);
+                if (!response.ok) {
+                    throw new Error('文档加载失败');
+                }
+                
+                const markdown = await response.text();
+                const html = marked.parse(markdown);
+                
+                content.innerHTML = html;
+                
+                // 隐藏加载状态，显示内容
+                loading.classList.add('hidden');
+                content.classList.remove('hidden');
+                
+                // 高亮代码
+                Prism.highlightAll();
+                
+                // 更新活跃状态
+                document.querySelectorAll('aside a').forEach(a => {
+                    a.classList.remove('bg-primary', 'text-white');
+                    a.classList.add('text-gray-700');
+                });
+                event.target.closest('a').classList.add('bg-primary', 'text-white');
+                event.target.closest('a').classList.remove('text-gray-700');
+                
+            } catch (error) {
+                content.innerHTML = `
+                    <div class="text-center py-8">
+                        <i class="fa-solid fa-exclamation-triangle text-4xl text-red-500 mb-4"></i>
+                        <h3 class="text-xl font-bold text-gray-800 mb-2">文档加载失败</h3>
+                        <p class="text-gray-600">请检查网络连接或稍后重试</p>
+                    </div>
+                `;
+                loading.classList.add('hidden');
+                content.classList.remove('hidden');
+            }
+        }
+
+        // 检查URL参数，自动加载文档
+        window.addEventListener('load', function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const doc = urlParams.get('doc');
+            if (doc) {
+                loadDoc(doc);
+            }
+        });
+    </script>
+</body>
+</html> 
