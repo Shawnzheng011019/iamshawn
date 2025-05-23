@@ -40,10 +40,6 @@
       ]
     }
   ],
-  "routes": [
-    {
-      "src": "/posts/(.*)",
-      "dest": "/posts/$1"
-    }
-  ]
+  "cleanUrls": false,
+  "trailingSlash": false
 } 
