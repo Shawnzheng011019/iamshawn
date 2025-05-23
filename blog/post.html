@@ -8,9 +8,6 @@
     <!-- 预加载关键资源 -->
     <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" as="style">
     <link rel="preload" href="../style.css" as="style">
-    <link rel="dns-prefetch" href="//cdn.tailwindcss.com">
-    <link rel="dns-prefetch" href="//cdnjs.cloudflare.com">
-    <link rel="dns-prefetch" href="//raw.githubusercontent.com">
     
     <!-- 关键CSS内联 -->
     <style>
@@ -21,50 +18,43 @@
         .text-primary { color: #165DFF; }
         .bg-primary { background-color: #165DFF; }
         .hidden { display: none; }
-        .animate-pulse { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
-        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .5; } }
-        .loading-skeleton { background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%); background-size: 200% 100%; animation: loading 1.5s infinite; }
-        @keyframes loading { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
-        .loading-spinner {
-            border: 2px solid #f3f3f3;
-            border-top: 2px solid #165DFF;
-            border-radius: 50%;
-            width: 20px;
-            height: 20px;
-            animation: spin 1s linear infinite;
-        }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         
         /* 文章内容样式 */
-        .prose { max-width: none; }
-        .prose h1 { font-size: 2rem; font-weight: bold; margin: 1.5rem 0 1rem 0; color: #1D2939; }
-        .prose h2 { font-size: 1.5rem; font-weight: bold; margin: 1.25rem 0 0.75rem 0; color: #1D2939; }
-        .prose h3 { font-size: 1.25rem; font-weight: bold; margin: 1rem 0 0.5rem 0; color: #1D2939; }
-        .prose p { margin: 1rem 0; line-height: 1.6; color: #374151; }
-        .prose code { background: #f3f4f6; padding: 0.125rem 0.25rem; border-radius: 0.25rem; font-size: 0.875rem; }
-        .prose pre { background: #1f2937; color: #f9fafb; padding: 1rem; border-radius: 0.5rem; overflow-x: auto; margin: 1rem 0; }
-        .prose pre code { background: none; padding: 0; }
-        .prose blockquote { border-left: 4px solid #165DFF; padding-left: 1rem; margin: 1rem 0; font-style: italic; color: #6b7280; }
-        .prose ul, .prose ol { margin: 1rem 0; padding-left: 1.5rem; }
+        .prose { max-width: none; line-height: 1.7; }
+        .prose h1 { font-size: 2.5rem; font-weight: bold; margin: 2rem 0 1rem 0; color: #1D2939; border-bottom: 3px solid #165DFF; padding-bottom: 0.5rem; }
+        .prose h2 { font-size: 2rem; font-weight: bold; margin: 1.5rem 0 0.75rem 0; color: #1D2939; }
+        .prose h3 { font-size: 1.5rem; font-weight: bold; margin: 1.25rem 0 0.5rem 0; color: #1D2939; }
+        .prose h4 { font-size: 1.25rem; font-weight: 600; margin: 1rem 0 0.5rem 0; color: #374151; }
+        .prose p { margin: 1rem 0; color: #374151; }
+        .prose strong { font-weight: bold; color: #1D2939; }
+        .prose em { font-style: italic; }
+        .prose code { background: #f3f4f6; padding: 0.125rem 0.25rem; border-radius: 0.25rem; font-size: 0.875rem; color: #e11d48; }
+        .prose pre { background: #1f2937; color: #f9fafb; padding: 1rem; border-radius: 0.5rem; overflow-x: auto; margin: 1.5rem 0; }
+        .prose pre code { background: none; padding: 0; color: inherit; }
+        .prose blockquote { border-left: 4px solid #165DFF; padding-left: 1rem; margin: 1.5rem 0; font-style: italic; color: #6b7280; background: #f8fafc; padding: 1rem; border-radius: 0.25rem; }
+        .prose ul, .prose ol { margin: 1rem 0; padding-left: 2rem; }
         .prose li { margin: 0.5rem 0; }
         .prose a { color: #165DFF; text-decoration: underline; }
         .prose a:hover { color: #0E2E91; }
+        .prose img { max-width: 100%; height: auto; margin: 1.5rem auto; border-radius: 0.5rem; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
+        .prose table { width: 100%; border-collapse: collapse; margin: 1.5rem 0; }
+        .prose th, .prose td { border: 1px solid #e5e7eb; padding: 0.5rem; text-align: left; }
+        .prose th { background: #f9fafb; font-weight: 600; }
+        
+        /* 加载状态 */
+        .loading { opacity: 0.6; pointer-events: none; }
+        .error-message { background: #fef2f2; border: 1px solid #fecaca; color: #dc2626; padding: 1rem; border-radius: 0.5rem; margin: 1rem 0; }
     </style>
     
-    <!-- 字体加载 -->
+    <!-- 字体和样式 -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    
-    <!-- 样式表 -->
     <link href="../style.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
     
-    <!-- 异步加载非关键CSS -->
-    <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"></noscript>
-    
-    <!-- 延迟加载Tailwind CSS -->
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
     <script>
-        // 优化的Tailwind配置
-        window.tailwindConfig = {
+        tailwind.config = {
             theme: {
                 extend: {
                     colors: {
@@ -80,29 +70,11 @@
                 }
             }
         };
-        
-        // 延迟加载Tailwind
-        function loadTailwind() {
-            const script = document.createElement('script');
-            script.src = 'https://cdn.tailwindcss.com';
-            script.async = true;
-            document.head.appendChild(script);
-        }
-        
-        // 页面关键内容加载后再加载Tailwind
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', loadTailwind);
-        } else {
-            loadTailwind();
-        }
     </script>
 </head>
-<body class="font-inter bg-light text-dark antialiased overflow-x-hidden">
-    <!-- 加载指示器 -->
-    <div id="loading-indicator" class="fixed top-0 left-0 w-full h-1 bg-primary z-50 transform -translate-x-full transition-transform duration-300"></div>
-    
+<body class="font-inter bg-light text-dark antialiased">
     <!-- 导航栏 -->
-    <header id="navbar" class="fixed w-full top-0 z-50 transition-all duration-300">
+    <header id="navbar" class="fixed w-full top-0 z-50 bg-white/95 backdrop-blur-sm shadow-sm transition-all duration-300">
         <div class="container mx-auto px-4 py-3 flex items-center justify-between">
             <a href="../index.html" class="text-2xl font-bold text-primary flex items-center">
                 <span class="mr-2"><i class="fa-solid fa-rocket"></i></span>
@@ -152,54 +124,26 @@
                     </a>
                 </div>
                 
-                <!-- 文章头部 -->
-                <header id="article-header" class="mb-8">
-                    <!-- 加载状态 -->
-                    <div id="header-loading" class="space-y-4">
-                        <div class="loading-skeleton h-12 w-3/4"></div>
-                        <div class="loading-skeleton h-4 w-1/2"></div>
-                        <div class="loading-skeleton h-64 w-full"></div>
+                <!-- 文章内容容器 -->
+                <div id="article-container" class="prose prose-lg max-w-none">
+                    <div id="loading-state" class="text-center py-12">
+                        <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                        <p class="mt-4 text-gray-500">正在加载文章内容...</p>
                     </div>
                     
-                    <!-- 实际内容 -->
-                    <div id="header-content" class="hidden">
-                        <h1 id="article-title" class="text-4xl font-bold mb-4"></h1>
-                        <div class="flex items-center text-sm text-gray-500 mb-6">
-                            <span id="article-date"></span>
-                            <span class="mx-2">•</span>
-                            <span id="article-category" class="text-primary"></span>
-                            <span class="mx-2">•</span>
-                            <span id="article-reading-time"></span>
+                    <div id="error-state" class="hidden">
+                        <div class="error-message">
+                            <h3 class="font-bold mb-2">文章加载失败</h3>
+                            <p id="error-message">无法加载文章内容，请稍后重试。</p>
+                            <button onclick="loadArticle()" class="mt-4 bg-primary text-white px-4 py-2 rounded hover:bg-primary/90 transition-colors">
+                                重新加载
+                            </button>
                         </div>
-                        <img id="article-cover" src="" alt="" class="w-full h-64 object-cover rounded-lg mb-6 hidden">
-                        <div id="article-tags" class="flex flex-wrap gap-2 mb-6"></div>
-                    </div>
-                </header>
-                
-                <!-- 文章内容 -->
-                <div id="article-content" class="prose lg:prose-lg">
-                    <!-- 加载状态 -->
-                    <div id="content-loading" class="space-y-4">
-                        <div class="loading-skeleton h-4 w-full"></div>
-                        <div class="loading-skeleton h-4 w-5/6"></div>
-                        <div class="loading-skeleton h-4 w-4/5"></div>
-                        <div class="loading-skeleton h-32 w-full"></div>
-                        <div class="loading-skeleton h-4 w-full"></div>
-                        <div class="loading-skeleton h-4 w-3/4"></div>
                     </div>
                     
-                    <!-- 实际内容将通过JavaScript插入这里 -->
-                    <div id="content-body" class="hidden"></div>
-                </div>
-                
-                <!-- 错误状态 -->
-                <div id="error-state" class="hidden text-center py-12">
-                    <div class="text-5xl text-gray-300 mb-4"><i class="fa-solid fa-exclamation-triangle"></i></div>
-                    <h3 class="text-xl font-bold text-gray-500 mb-2">文章加载失败</h3>
-                    <p class="text-gray-400 mb-4">无法从任何数据源加载文章内容</p>
-                    <button onclick="retryLoadArticle()" class="bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors">
-                        重新加载
-                    </button>
+                    <div id="article-content" class="hidden">
+                        <!-- 文章内容将在这里显示 -->
+                    </div>
                 </div>
             </div>
         </article>
@@ -237,189 +181,164 @@
             </div>
         </div>
     </footer>
-
-    <!-- JavaScript -->
-    <script src="js/blog.js"></script>
+    
+    <!-- 简化的JavaScript -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script>
-        // 文章详情页面专用脚本
-        let currentArticle = null;
-        
+        // 数据源配置
+        const DATA_SOURCES = [
+            'https://cdn.jsdelivr.net/gh/Shawnzheng011019/iamshawn@main',
+            'https://fastly.jsdelivr.net/gh/Shawnzheng011019/iamshawn@main',
+            'https://gitee.com/Shawnzheng011019/iamshawn/raw/master',
+            'https://raw.githubusercontent.com/Shawnzheng011019/iamshawn/main'
+        ];
+
         // 从URL获取文章ID
         function getArticleIdFromURL() {
             const pathname = window.location.pathname;
-            
-            // URL格式: /文章名.md
             if (pathname.endsWith('.md')) {
-                return pathname.substring(1, pathname.length - 3); // 去掉开头的/和结尾的.md
+                return pathname.substring(1, pathname.length - 3);
             }
-            
-            // 如果URL格式不正确，返回null
             return null;
         }
-        
-        // 加载文章详情
-        async function loadArticleDetail() {
+
+        // 加载文章
+        async function loadArticle() {
             const articleId = getArticleIdFromURL();
             if (!articleId) {
-                showErrorState('URL格式错误，请使用正确的文章链接格式（如：/文章名.md）');
+                showError('URL格式错误，请使用正确的文章链接格式');
                 return;
             }
+
+            showLoading();
             
             try {
-                showLoadingState();
-                
-                // 获取最佳数据源
-                const source = await getBestDataSource();
-                
-                // 获取文章列表以找到对应文章
-                const postsData = await fetchPostsData(source);
-                const article = postsData.find(post => post.id === articleId);
-                
+                // 首先获取文章列表找到对应文章
+                const article = await findArticle(articleId);
                 if (!article) {
-                    showErrorState('未找到指定文章');
+                    showError('未找到指定文章');
                     return;
                 }
-                
-                currentArticle = article;
-                
-                // 获取文章内容
-                const content = await fetchArticleContent(article);
+
+                // 加载文章内容
+                const content = await fetchArticleContent(article.path);
                 
                 // 显示文章
                 displayArticle(article, content);
-                hideLoadingState();
                 
             } catch (error) {
                 console.error('加载文章失败:', error);
-                showErrorState('文章加载失败：' + error.message);
+                showError('文章加载失败：' + error.message);
             }
         }
-        
-        // 显示文章内容
+
+        // 查找文章
+        async function findArticle(articleId) {
+            for (const source of DATA_SOURCES) {
+                try {
+                    const response = await fetch(`${source}/posts/posts.json`);
+                    if (response.ok) {
+                        const posts = await response.json();
+                        return posts.find(post => post.id === articleId);
+                    }
+                } catch (error) {
+                    console.warn(`从 ${source} 获取文章列表失败:`, error);
+                }
+            }
+            return null;
+        }
+
+        // 获取文章内容
+        async function fetchArticleContent(path) {
+            for (const source of DATA_SOURCES) {
+                try {
+                    const url = path.startsWith('http') ? path : `${source}/${path}`;
+                    const response = await fetch(url);
+                    if (response.ok) {
+                        console.log(`从 ${source} 加载文章成功`);
+                        return await response.text();
+                    }
+                } catch (error) {
+                    console.warn(`从 ${source} 加载文章失败:`, error);
+                }
+            }
+            throw new Error('所有数据源都无法加载文章内容');
+        }
+
+        // 显示文章
         function displayArticle(article, content) {
             // 更新页面标题
             document.getElementById('page-title').textContent = `${article.title} | 郑啸`;
             
-            // 更新文章头部
-            document.getElementById('article-title').textContent = article.title;
-            document.getElementById('article-date').textContent = formatDate(article.date);
-            document.getElementById('article-category').textContent = article.category;
-            document.getElementById('article-reading-time').textContent = article.readingTime || '预计阅读时间未知';
+            // 处理markdown内容
+            const processedContent = processMarkdown(content);
+            const htmlContent = marked.parse(processedContent);
             
-            // 设置封面图片 - 使用智能加载
-            const coverImg = document.getElementById('article-cover');
-            if (article.cover) {
-                // 显示加载状态
-                coverImg.style.backgroundColor = '#f3f4f6';
-                coverImg.style.minHeight = '256px';
-                coverImg.classList.remove('hidden');
-                
-                // 使用智能图片加载器
-                if (window.smartImageLoader) {
-                    window.smartImageLoader.preloadImage(article.cover).then(loadedImg => {
-                        if (loadedImg && coverImg.isConnected) {
-                            coverImg.src = loadedImg.src;
-                            coverImg.alt = article.title;
-                            
-                            // 添加加载完成动画
-                            coverImg.style.opacity = '0';
-                            coverImg.style.transition = 'opacity 0.5s ease-in-out';
-                            requestAnimationFrame(() => {
-                                coverImg.style.opacity = '1';
-                            });
-                        }
-                    }).catch(error => {
-                        console.warn('封面图片加载失败:', error);
-                        coverImg.style.display = 'none';
-                    });
-                } else {
-                    // 降级处理
-                    coverImg.src = article.cover;
-                    coverImg.alt = article.title;
-                }
-            }
+            // 显示内容
+            const contentDiv = document.getElementById('article-content');
+            contentDiv.innerHTML = `
+                <div class="mb-8 p-6 bg-gradient-to-r from-primary/5 to-secondary/5 rounded-lg border-l-4 border-primary">
+                    <h1 class="text-3xl font-bold mb-4">${article.title}</h1>
+                    <div class="flex flex-wrap gap-4 text-sm text-gray-600">
+                        <span><i class="fa-solid fa-calendar mr-1"></i>${formatDate(article.date)}</span>
+                        <span><i class="fa-solid fa-folder mr-1"></i>${article.category}</span>
+                        <span><i class="fa-solid fa-clock mr-1"></i>${article.readingTime || '5 分钟阅读'}</span>
+                    </div>
+                    ${article.tags ? `
+                        <div class="flex flex-wrap gap-2 mt-4">
+                            ${article.tags.map(tag => `<span class="px-2 py-1 bg-primary/10 text-primary text-sm rounded">${tag}</span>`).join('')}
+                        </div>
+                    ` : ''}
+                </div>
+                ${htmlContent}
+            `;
             
-            // 设置标签
-            const tagsContainer = document.getElementById('article-tags');
-            if (article.tags && article.tags.length > 0) {
-                tagsContainer.innerHTML = article.tags.map(tag => 
-                    `<span class="px-2 py-1 bg-primary/10 text-primary text-sm rounded">${tag}</span>`
-                ).join('');
-            }
-            
-            // 设置文章内容
-            const contentBody = document.getElementById('content-body');
-            contentBody.innerHTML = parseMarkdownToHTML(content);
-            contentBody.classList.remove('hidden');
-            
-            // 预加载文章内图片
-            if (window.preloadArticleImages) {
-                preloadArticleImages(content);
-            }
-            
-            // 显示头部内容
-            document.getElementById('header-content').classList.remove('hidden');
+            contentDiv.classList.remove('hidden');
+            hideLoading();
         }
-        
-        // 显示加载状态
-        function showLoadingState() {
-            document.getElementById('header-loading').style.display = 'block';
-            document.getElementById('content-loading').style.display = 'block';
-            document.getElementById('header-content').classList.add('hidden');
-            document.getElementById('content-body').classList.add('hidden');
-            document.getElementById('error-state').classList.add('hidden');
+
+        // 处理markdown内容
+        function processMarkdown(content) {
+            // 移除文章信息部分
+            return content.replace(/## 文章信息[\s\S]*?---\s*\n/, '');
         }
-        
-        // 隐藏加载状态
-        function hideLoadingState() {
-            document.getElementById('header-loading').style.display = 'none';
-            document.getElementById('content-loading').style.display = 'none';
-        }
-        
-        // 显示错误状态
-        function showErrorState(message) {
-            hideLoadingState();
-            document.getElementById('error-state').classList.remove('hidden');
-            document.getElementById('error-state').querySelector('p').textContent = message;
-        }
-        
-        // 重试加载文章
-        window.retryLoadArticle = function() {
-            // 清除缓存的数据源偏好
-            localStorage.removeItem('preferred_data_source');
-            loadArticleDetail();
-        };
-        
-        // 页面加载完成后初始化
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', function() {
-                initDOMCache();
-                loadArticleDetail();
+
+        // 格式化日期
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('zh-CN', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
             });
-        } else {
-            initDOMCache();
-            loadArticleDetail();
         }
-        
-        // 导航栏滚动效果
-        window.addEventListener('scroll', function() {
-            const navbar = document.getElementById('navbar');
-            if (window.scrollY > 50) {
-                navbar.classList.add('bg-white/95', 'backdrop-blur-sm', 'shadow-sm');
-            } else {
-                navbar.classList.remove('bg-white/95', 'backdrop-blur-sm', 'shadow-sm');
-            }
-        });
+
+        // 显示加载状态
+        function showLoading() {
+            document.getElementById('loading-state').classList.remove('hidden');
+            document.getElementById('error-state').classList.add('hidden');
+            document.getElementById('article-content').classList.add('hidden');
+        }
+
+        // 隐藏加载状态
+        function hideLoading() {
+            document.getElementById('loading-state').classList.add('hidden');
+        }
+
+        // 显示错误
+        function showError(message) {
+            document.getElementById('error-message').textContent = message;
+            document.getElementById('loading-state').classList.add('hidden');
+            document.getElementById('error-state').classList.remove('hidden');
+        }
 
         // 移动端菜单切换
-        const menuToggle = document.getElementById('menu-toggle');
-        const mobileMenu = document.getElementById('mobile-menu');
-        
-        if (menuToggle && mobileMenu) {
-            menuToggle.addEventListener('click', function() {
-                mobileMenu.classList.toggle('hidden');
-            });
-        }
+        document.getElementById('menu-toggle').addEventListener('click', function() {
+            document.getElementById('mobile-menu').classList.toggle('hidden');
+        });
+
+        // 页面加载时初始化
+        document.addEventListener('DOMContentLoaded', loadArticle);
     </script>
 </body>
 </html> 

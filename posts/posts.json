@@ -134,7 +134,7 @@
   {
     "id": "vector-database-comparison",
     "title": "向量数据库选型指南：Milvus vs Pinecone vs Weaviate",
-    "date": "2025-12-28",
+    "date": "2025-04-28",
     "category": "数据库",
     "tags": ["向量数据库", "Milvus", "Pinecone", "Weaviate"],
     "summary": "全面对比主流向量数据库的性能、功能和成本，为不同规模的AI应用提供选型建议。",
