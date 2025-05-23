@@ -9,11 +9,11 @@ const POSTS_PER_PAGE = 6; // 每页显示的文章数
 // 多数据源配置 - 按优先级排序
 const DATA_SOURCES = [
     {
-        name: 'Vercel API',
-        baseUrl: '/api',
+        name: 'Public API',
+        baseUrl: '',
         priority: 1,
-        description: 'Vercel API 端点',
-        isApi: true
+        description: 'Vercel Public API',
+        isStaticAPI: true
     },
     {
         name: 'Local Vercel',
@@ -596,6 +596,9 @@ async function fetchPostsData(source) {
         if (source.isApi) {
             // API端点直接返回数据
             url = `${source.baseUrl}/posts`;
+        } else if (source.isStaticAPI) {
+            // 静态API文件
+            url = `${source.baseUrl}/api/posts.json`;
         } else {
             // 静态文件端点
             url = `${source.baseUrl}/posts/posts.json`;
