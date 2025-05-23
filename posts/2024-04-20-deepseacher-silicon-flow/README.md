@@ -1,7 +1,7 @@
 # 开源实践：DeepSearcher结合Silicon Flow构建企业级私有化DeepResearch
 
 ## 文章信息
-- **发布日期**: 2024-04-20
+- **发布日期**: 2025-04-20
 - **分类**: 技术实践
 - **标签**: ["DeepSearcher", "Silicon Flow", "私有化部署", "企业应用", "大语言模型", "工作流自动化"]
 - **封面图片**: cover.jpg

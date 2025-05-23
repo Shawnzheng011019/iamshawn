@@ -33,19 +33,46 @@
         .markdown-body th, .markdown-body td { border: 1px solid #e2e8f0; padding: 0.5rem; text-align: left; }
         .markdown-body th { background-color: #f7fafc; font-weight: 600; }
         
+        /* 侧边栏样式 */
+        .sidebar {
+            width: 320px;
+            min-width: 320px;
+            max-width: 320px;
+            height: calc(100vh - 80px);
+            position: sticky;
+            top: 80px;
+            overflow-y: auto;
+            scrollbar-width: thin;
+            scrollbar-color: #cbd5e0 #f7fafc;
+        }
+        
+        .sidebar::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        .sidebar::-webkit-scrollbar-track {
+            background: #f7fafc;
+            border-radius: 3px;
+        }
+        
+        .sidebar::-webkit-scrollbar-thumb {
+            background: #cbd5e0;
+            border-radius: 3px;
+        }
+        
+        .sidebar::-webkit-scrollbar-thumb:hover {
+            background: #a0aec0;
+        }
+        
         /* 激活状态样式 */
         .nav-item.active {
             background-color: #165DFF;
             color: white;
         }
         
-        /* 移动端横向滚动 */
-        .horizontal-scroll {
-            overflow-x: auto;
-            scrollbar-width: none;
-        }
-        .horizontal-scroll::-webkit-scrollbar {
-            display: none;
+        .nav-item:hover {
+            background-color: #165DFF;
+            color: white;
         }
         
         /* 点击外侧关闭功能 */
@@ -74,6 +101,43 @@
             background: rgba(22, 93, 255, 0.9);
             backdrop-filter: blur(10px);
         }
+        
+        /* 主内容区域 */
+        .main-content {
+            flex: 1;
+            min-width: 0;
+        }
+        
+        /* 移动端响应式 */
+        @media (max-width: 768px) {
+            .sidebar {
+                position: fixed;
+                left: -320px;
+                top: 80px;
+                z-index: 20;
+                transition: left 0.3s ease;
+                box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+            }
+            
+            .sidebar.mobile-open {
+                left: 0;
+            }
+            
+            .mobile-overlay {
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(0, 0, 0, 0.5);
+                z-index: 15;
+                display: none;
+            }
+            
+            .mobile-overlay.active {
+                display: block;
+            }
+        }
     </style>
     <script>
         tailwind.config = {
@@ -100,16 +164,25 @@
 
     <!-- 点击外侧关闭的遮罩层 -->
     <div id="doc-overlay" class="doc-overlay" onclick="goHome()"></div>
+    
+    <!-- 移动端遮罩层 -->
+    <div id="mobile-overlay" class="mobile-overlay" onclick="toggleMobileSidebar()"></div>
 
     <!-- 主内容 -->
     <div class="doc-container">
         <!-- 导航栏 -->
         <header class="bg-white shadow-sm sticky top-0 z-10">
             <div class="container mx-auto px-4 py-4 flex items-center justify-between">
-                <a href="index.html" class="text-2xl font-bold text-primary flex items-center">
-                    <span class="mr-2"><i class="fa-solid fa-rocket"></i></span>
-                    <span>郑啸</span>
-                </a>
+                <div class="flex items-center">
+                    <!-- 移动端菜单按钮 -->
+                    <button onclick="toggleMobileSidebar()" class="md:hidden mr-4 text-gray-600 hover:text-primary transition-colors">
+                        <i class="fa-solid fa-bars text-xl"></i>
+                    </button>
+                    <a href="index.html" class="text-2xl font-bold text-primary flex items-center">
+                        <span class="mr-2"><i class="fa-solid fa-rocket"></i></span>
+                        <span>郑啸</span>
+                    </a>
+                </div>
                 <nav class="flex items-center space-x-6">
                     <a href="index.html" class="text-gray-600 hover:text-primary transition-colors">返回主页</a>
                     <a href="index.html#internship" class="text-gray-600 hover:text-primary transition-colors">实习经历</a>
@@ -117,42 +190,76 @@
             </div>
         </header>
 
-        <!-- 横版文档导航栏 -->
-        <div class="bg-white border-b shadow-sm">
-            <div class="container mx-auto px-4">
-                <div class="flex items-center justify-between py-4">
-                    <h1 class="text-xl font-bold text-gray-800">技术文档</h1>
-                    <div class="horizontal-scroll">
-                        <nav class="flex space-x-2 min-w-max">
-                            <button onclick="loadDoc('mcp-pymilvus-code-generate-helper')" 
-                                    class="nav-item flex items-center px-4 py-2 rounded-lg text-gray-700 hover:bg-primary hover:text-white transition-colors whitespace-nowrap">
-                                <i class="fa-solid fa-code mr-2"></i>
-                                MCP PyMilvus代码生成器
-                            </button>
-                            <button onclick="loadDoc('deep-searcher')" 
-                                    class="nav-item flex items-center px-4 py-2 rounded-lg text-gray-700 hover:bg-primary hover:text-white transition-colors whitespace-nowrap">
-                                <i class="fa-solid fa-search mr-2"></i>
-                                Deep Searcher
-                            </button>
-                            <button onclick="loadDoc('mcp-server-milvus')" 
-                                    class="nav-item flex items-center px-4 py-2 rounded-lg text-gray-700 hover:bg-primary hover:text-white transition-colors whitespace-nowrap">
-                                <i class="fa-solid fa-database mr-2"></i>
-                                MCP Server Milvus
-                            </button>
-                        </nav>
+        <!-- 主布局容器 -->
+        <div class="flex">
+            <!-- 左侧边栏 -->
+            <aside id="sidebar" class="sidebar bg-white shadow-lg">
+                <div class="p-6">
+                    <h3 class="text-lg font-bold mb-6 text-gray-800 flex items-center">
+                        <i class="fa-solid fa-file-text mr-2 text-primary"></i>
+                        技术文档
+                    </h3>
+                    <nav class="space-y-2">
+                        <button onclick="loadDoc('mcp-pymilvus-code-generate-helper')" 
+                                class="nav-item w-full text-left p-4 rounded-lg text-gray-700 transition-colors">
+                            <div class="flex items-start">
+                                <i class="fa-solid fa-code mr-3 mt-1 text-primary"></i>
+                                <div>
+                                    <div class="font-medium">MCP PyMilvus代码生成器</div>
+                                    <div class="text-sm text-gray-500 mt-1">基于RAG框架的代码生成工具</div>
+                                </div>
+                            </div>
+                        </button>
+                        
+                        <button onclick="loadDoc('deep-searcher')" 
+                                class="nav-item w-full text-left p-4 rounded-lg text-gray-700 transition-colors">
+                            <div class="flex items-start">
+                                <i class="fa-solid fa-search mr-3 mt-1 text-primary"></i>
+                                <div>
+                                    <div class="font-medium">Deep Searcher</div>
+                                    <div class="text-sm text-gray-500 mt-1">深度搜索引擎功能</div>
+                                </div>
+                            </div>
+                        </button>
+                        
+                        <button onclick="loadDoc('mcp-server-milvus')" 
+                                class="nav-item w-full text-left p-4 rounded-lg text-gray-700 transition-colors">
+                            <div class="flex items-start">
+                                <i class="fa-solid fa-database mr-3 mt-1 text-primary"></i>
+                                <div>
+                                    <div class="font-medium">MCP Server Milvus</div>
+                                    <div class="text-sm text-gray-500 mt-1">Milvus查询功能的MCP服务</div>
+                                </div>
+                            </div>
+                        </button>
+                    </nav>
+                    
+                    <!-- 可以在这里添加更多文档，演示滚动功能 -->
+                    <div class="mt-8 pt-6 border-t border-gray-200">
+                        <h4 class="text-sm font-semibold text-gray-600 uppercase tracking-wide mb-3">其他资源</h4>
+                        <div class="space-y-2">
+                            <a href="https://github.com/Shawnzheng011019" target="_blank" 
+                               class="flex items-center p-2 rounded-lg text-gray-600 hover:bg-gray-50 transition-colors">
+                                <i class="fa-brands fa-github mr-2"></i>
+                                <span class="text-sm">GitHub 仓库</span>
+                            </a>
+                            <a href="index.html#projects" 
+                               class="flex items-center p-2 rounded-lg text-gray-600 hover:bg-gray-50 transition-colors">
+                                <i class="fa-solid fa-folder mr-2"></i>
+                                <span class="text-sm">项目经历</span>
+                            </a>
+                        </div>
                     </div>
                 </div>
-            </div>
-        </div>
+            </aside>
 
-        <!-- 主内容区 -->
-        <div class="container mx-auto px-4 py-8">
-            <main class="max-w-none">
-                <div class="bg-white rounded-lg shadow-md">
+            <!-- 主内容区 -->
+            <main class="main-content p-6">
+                <div class="bg-white rounded-lg shadow-md min-h-screen">
                     <div id="loading" class="p-8 text-center">
                         <i class="fa-solid fa-file-text text-4xl text-gray-300 mb-4"></i>
                         <h3 class="text-xl font-bold text-gray-800 mb-2">选择技术文档</h3>
-                        <p class="text-gray-600">请从上方导航栏选择要查看的技术文档</p>
+                        <p class="text-gray-600">请从左侧目录选择要查看的技术文档</p>
                     </div>
                     <div id="doc-content" class="p-8 markdown-body hidden"></div>
                 </div>
@@ -163,10 +270,27 @@
     <script>
         // 全局变量
         let currentDoc = null;
+        let isMobileSidebarOpen = false;
 
         // 返回主页功能
         function goHome() {
             window.location.href = 'index.html';
+        }
+        
+        // 移动端侧边栏切换
+        function toggleMobileSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('mobile-overlay');
+            
+            isMobileSidebarOpen = !isMobileSidebarOpen;
+            
+            if (isMobileSidebarOpen) {
+                sidebar.classList.add('mobile-open');
+                overlay.classList.add('active');
+            } else {
+                sidebar.classList.remove('mobile-open');
+                overlay.classList.remove('active');
+            }
         }
 
         // 配置marked选项 - 使用稳定版本API
@@ -190,6 +314,11 @@
             const overlay = document.getElementById('doc-overlay');
             
             currentDoc = docName;
+            
+            // 关闭移动端侧边栏
+            if (isMobileSidebarOpen) {
+                toggleMobileSidebar();
+            }
             
             // 显示加载状态
             loading.classList.remove('hidden');
@@ -285,14 +414,12 @@
         function updateActiveNav(activeButton) {
             // 移除所有按钮的激活状态
             document.querySelectorAll('.nav-item').forEach(btn => {
-                btn.classList.remove('active', 'bg-primary', 'text-white');
-                btn.classList.add('text-gray-700');
+                btn.classList.remove('active');
             });
             
             // 添加当前按钮的激活状态
             if (activeButton) {
-                activeButton.classList.add('active', 'bg-primary', 'text-white');
-                activeButton.classList.remove('text-gray-700');
+                activeButton.classList.add('active');
             }
         }
 
@@ -327,7 +454,18 @@
         // 键盘快捷键 - ESC返回主页
         document.addEventListener('keydown', function(event) {
             if (event.key === 'Escape') {
-                goHome();
+                if (isMobileSidebarOpen) {
+                    toggleMobileSidebar();
+                } else {
+                    goHome();
+                }
+            }
+        });
+        
+        // 窗口大小改变时处理移动端侧边栏
+        window.addEventListener('resize', function() {
+            if (window.innerWidth >= 768 && isMobileSidebarOpen) {
+                toggleMobileSidebar();
             }
         });
     </script>
