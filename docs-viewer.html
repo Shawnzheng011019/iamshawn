@@ -6,7 +6,7 @@
     <title>技术文档 | 郑啸</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/marked@5.1.1/marked.min.js"></script>
+    <script src="https://unpkg.com/marked@4.0.10/marked.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-core.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
@@ -184,7 +184,6 @@
                     </a>
                 </div>
                 <nav class="flex items-center space-x-6">
-                    <a href="index.html" class="text-gray-600 hover:text-primary transition-colors">返回主页</a>
                     <a href="index.html#internship" class="text-gray-600 hover:text-primary transition-colors">实习经历</a>
                 </nav>
             </div>
@@ -293,102 +292,15 @@
             }
         }
 
-        // 初始化marked.js配置
-        function initMarked() {
-            if (typeof marked === 'undefined') {
-                console.error('marked.js未加载');
-                return false;
+        // 最简单的markdown解析
+        function renderMarkdown(text) {
+            // 直接调用marked，不进行任何配置
+            if (typeof marked !== 'undefined') {
+                return marked(text);
             }
             
-            // 配置marked选项
-            marked.setOptions({
-                breaks: true,
-                gfm: true,
-                headerIds: false,
-                mangle: false
-            });
-            
-            console.log('marked.js初始化完成');
-            return true;
-        }
-        
-        // 强制解析markdown为HTML
-        function parseMarkdownToHtml(markdownText) {
-            console.log('开始解析markdown，长度:', markdownText.length);
-            
-            // 确保marked已加载并初始化
-            if (!initMarked()) {
-                return fallbackParse(markdownText);
-            }
-            
-            try {
-                // 使用marked v5.1.1的标准方式
-                let htmlResult = marked(markdownText);
-                
-                console.log('marked解析成功，HTML长度:', htmlResult.length);
-                console.log('HTML预览:', htmlResult.substring(0, 100));
-                
-                // 验证解析结果
-                if (!htmlResult || htmlResult === markdownText) {
-                    console.warn('marked解析可能失败，使用备用方案');
-                    return fallbackParse(markdownText);
-                }
-                
-                return htmlResult;
-                
-            } catch (error) {
-                console.error('marked解析出错:', error);
-                return fallbackParse(markdownText);
-            }
-        }
-        
-        // 备用手动解析
-        function fallbackParse(text) {
-            console.log('使用手动解析');
-            
-            // 转义HTML特殊字符
-            text = text.replace(/&/g, '&amp;')
-                      .replace(/</g, '&lt;')
-                      .replace(/>/g, '&gt;');
-            
-            // 解析markdown语法
-            text = text.replace(/^# (.*$)/gm, '<h1>$1</h1>');
-            text = text.replace(/^## (.*$)/gm, '<h2>$1</h2>');
-            text = text.replace(/^### (.*$)/gm, '<h3>$1</h3>');
-            text = text.replace(/^#### (.*$)/gm, '<h4>$1</h4>');
-            
-            // 粗体和斜体
-            text = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-            text = text.replace(/\*(.*?)\*/g, '<em>$1</em>');
-            
-            // 代码
-            text = text.replace(/```([\s\S]*?)```/g, '<pre><code>$1</code></pre>');
-            text = text.replace(/`([^`]+)`/g, '<code>$1</code>');
-            
-            // 链接
-            text = text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank">$1</a>');
-            
-            // 列表
-            text = text.replace(/^[\-\*] (.+)$/gm, '<li>$1</li>');
-            text = text.replace(/^(\d+)\. (.+)$/gm, '<li>$2</li>');
-            
-            // 包裹li标签到ul/ol中
-            text = text.replace(/(<li>.*<\/li>)/gs, '<ul>$1</ul>');
-            text = text.replace(/<\/ul>\s*<ul>/g, '');
-            
-            // 段落
-            text = text.replace(/\n\n+/g, '</p><p>');
-            text = '<p>' + text + '</p>';
-            
-            // 清理标题周围的p标签
-            text = text.replace(/<p>(<h[1-6]>.*?<\/h[1-6]>)<\/p>/g, '$1');
-            text = text.replace(/<p>(<ul>.*?<\/ul>)<\/p>/gs, '$1');
-            text = text.replace(/<p>(<pre>.*?<\/pre>)<\/p>/gs, '$1');
-            
-            // 清理空段落
-            text = text.replace(/<p><\/p>/g, '');
-            
-            return text;
+            // 如果marked不可用，返回原文本
+            return '<pre>' + text + '</pre>';
         }
 
         async function loadDoc(docName) {
@@ -420,15 +332,11 @@
                     throw new Error('文档内容为空');
                 }
                 
-                // 强制解析markdown为HTML
-                console.log('准备解析markdown内容...');
-                const html = parseMarkdownToHtml(markdown);
-                
-                console.log('解析结果HTML长度:', html.length);
-                console.log('解析结果预览:', html.substring(0, 150));
+                // 解析markdown为HTML
+                const html = renderMarkdown(markdown);
                 
                 if (!html || html.length === 0) {
-                    throw new Error('Markdown解析失败：生成的HTML为空');
+                    throw new Error('Markdown解析失败');
                 }
                 
                 content.innerHTML = html;
