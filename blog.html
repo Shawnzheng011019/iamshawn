@@ -4,11 +4,44 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>郑啸 | 博客</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" rel="stylesheet">
+    
+    <!-- 预加载关键资源 -->
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" as="style">
+    <link rel="preload" href="style.css" as="style">
+    <link rel="dns-prefetch" href="//cdn.tailwindcss.com">
+    <link rel="dns-prefetch" href="//cdnjs.cloudflare.com">
+    <link rel="dns-prefetch" href="//picsum.photos">
+    
+    <!-- 关键CSS内联 -->
+    <style>
+        /* 关键样式内联以避免FOUC */
+        .font-inter { font-family: 'Inter', system-ui, -apple-system, sans-serif; }
+        .bg-light { background-color: #F9FAFB; }
+        .text-dark { color: #1D2939; }
+        .text-primary { color: #165DFF; }
+        .bg-primary { background-color: #165DFF; }
+        .hidden { display: none; }
+        .fixed { position: fixed; }
+        .animate-pulse { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .5; } }
+        .loading-skeleton { background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%); background-size: 200% 100%; animation: loading 1.5s infinite; }
+        @keyframes loading { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+    </style>
+    
+    <!-- 字体加载 -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- 样式表 -->
     <link href="style.css" rel="stylesheet">
+    
+    <!-- 异步加载非关键CSS -->
+    <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"></noscript>
+    
+    <!-- 延迟加载Tailwind CSS -->
     <script>
-        tailwind.config = {
+        // 优化的Tailwind配置
+        window.tailwindConfig = {
             theme: {
                 extend: {
                     colors: {
@@ -23,10 +56,28 @@
                     },
                 }
             }
+        };
+        
+        // 延迟加载Tailwind
+        function loadTailwind() {
+            const script = document.createElement('script');
+            script.src = 'https://cdn.tailwindcss.com';
+            script.async = true;
+            document.head.appendChild(script);
+        }
+        
+        // 页面关键内容加载后再加载Tailwind
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', loadTailwind);
+        } else {
+            loadTailwind();
         }
     </script>
 </head>
 <body class="font-inter bg-light text-dark antialiased overflow-x-hidden">
+    <!-- 加载指示器 -->
+    <div id="loading-indicator" class="fixed top-0 left-0 w-full h-1 bg-primary z-50 transform -translate-x-full transition-transform duration-300"></div>
+    
     <!-- 导航栏 -->
     <header id="navbar" class="fixed w-full top-0 z-50 transition-all duration-300">
         <div class="container mx-auto px-4 py-3 flex items-center justify-between">
@@ -67,8 +118,8 @@
     </header>
 
     <main class="pt-20">
-        <!-- 管理员入口 - 地球图标 -->
-        <div class="fixed top-24 right-6 z-40">
+        <!-- 管理员入口 - 地球图标（延迟显示） -->
+        <div id="admin-entry" class="fixed top-24 right-6 z-40 opacity-0 transition-opacity duration-500">
             <a href="blog/admin/index.html" 
                class="w-10 h-10 bg-gray-100 hover:bg-gray-200 text-gray-600 hover:text-primary rounded-full flex items-center justify-center transition-all duration-300 shadow-sm hover:shadow-md"
                title="管理后台">
@@ -104,10 +155,10 @@
                 
                 <!-- 文章卡片容器 -->
                 <div id="blog-posts" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                    <!-- 文章卡片将通过 JavaScript 动态生成 -->
-                    <div class="animate-pulse bg-gray-100 rounded-lg p-4 h-96"></div>
-                    <div class="animate-pulse bg-gray-100 rounded-lg p-4 h-96"></div>
-                    <div class="animate-pulse bg-gray-100 rounded-lg p-4 h-96"></div>
+                    <!-- 优化的加载骨架屏 -->
+                    <div class="loading-skeleton rounded-lg p-4 h-96"></div>
+                    <div class="loading-skeleton rounded-lg p-4 h-96"></div>
+                    <div class="loading-skeleton rounded-lg p-4 h-96"></div>
                 </div>
                 
                 <!-- 分页 -->
@@ -154,7 +205,7 @@
     <!-- 博客文章模板 -->
     <template id="blog-post-template">
         <article class="bg-white rounded-lg shadow-sm overflow-hidden card-hover">
-            <img src="" alt="" class="post-image w-full h-48 object-cover">
+            <img src="" alt="" class="post-image w-full h-48 object-cover lazy-load" loading="lazy">
             <div class="p-6">
                 <div class="flex items-center mb-2">
                     <span class="post-date text-sm text-gray-500"></span>
@@ -186,28 +237,83 @@
                     <span class="mx-2">•</span>
                     <span id="modal-category" class="text-primary"></span>
                 </div>
-                <img id="modal-image" src="" alt="" class="w-full h-64 object-cover rounded-lg mb-6">
+                <img id="modal-image" src="" alt="" class="w-full h-64 object-cover rounded-lg mb-6 lazy-load" loading="lazy">
                 <div id="modal-content" class="prose max-w-none"></div>
             </div>
         </div>
     </div>
 
-    <script src="blog/js/blog.js"></script>
+    <!-- 异步加载JavaScript -->
+    <script>
+        // 显示加载指示器
+        function showLoading() {
+            const indicator = document.getElementById('loading-indicator');
+            if (indicator) {
+                indicator.style.transform = 'translateX(0%)';
+            }
+        }
+        
+        // 隐藏加载指示器
+        function hideLoading() {
+            const indicator = document.getElementById('loading-indicator');
+            if (indicator) {
+                indicator.style.transform = 'translateX(100%)';
+                setTimeout(() => {
+                    indicator.style.transform = 'translateX(-100%)';
+                }, 300);
+            }
+        }
+        
+        // 延迟显示管理员入口
+        setTimeout(() => {
+            const adminEntry = document.getElementById('admin-entry');
+            if (adminEntry) {
+                adminEntry.style.opacity = '1';
+            }
+        }, 1000);
+        
+        showLoading();
+    </script>
+    
+    <!-- 延迟加载博客脚本 -->
+    <script>
+        function loadBlogScript() {
+            const script = document.createElement('script');
+            script.src = 'blog/js/blog.js';
+            script.async = true;
+            script.onload = hideLoading;
+            document.body.appendChild(script);
+        }
+        
+        // 页面加载完成后加载博客脚本
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', loadBlogScript);
+        } else {
+            loadBlogScript();
+        }
+    </script>
+    
+    <!-- 导航栏脚本 -->
     <script>
         // 导航栏滚动效果
         window.addEventListener('scroll', function() {
             const navbar = document.getElementById('navbar');
             if (window.scrollY > 50) {
-                navbar.classList.add('bg-white', 'shadow-md');
+                navbar.classList.add('bg-white/95', 'backdrop-blur-sm', 'shadow-sm');
             } else {
-                navbar.classList.remove('bg-white', 'shadow-md');
+                navbar.classList.remove('bg-white/95', 'backdrop-blur-sm', 'shadow-sm');
             }
         });
-        
+
         // 移动端菜单切换
-        document.getElementById('menu-toggle').addEventListener('click', function() {
-            document.getElementById('mobile-menu').classList.toggle('hidden');
-        });
+        const menuToggle = document.getElementById('menu-toggle');
+        const mobileMenu = document.getElementById('mobile-menu');
+        
+        if (menuToggle && mobileMenu) {
+            menuToggle.addEventListener('click', function() {
+                mobileMenu.classList.toggle('hidden');
+            });
+        }
     </script>
 </body>
 </html> 

@@ -1,5 +1,6 @@
 /**
- * 博客管理系统脚本 - 处理博客文章的管理和编辑
+ * 博客管理系统脚本 - 优化版本
+ * 处理博客文章的管理和编辑，优化性能
  */
 
 // 常量定义
@@ -8,76 +9,91 @@ const ADMIN_KEY = 'blog_admin'; // 管理员凭据键名
 const DEFAULT_USERNAME = 'admin'; // 默认用户名
 const DEFAULT_PASSWORD = 'admin123'; // 默认密码
 
-// DOM 元素 - 登录相关
-const loginContainer = document.getElementById('login-container');
-const loginForm = document.getElementById('login-form');
-const usernameInput = document.getElementById('username');
-const passwordInput = document.getElementById('password');
-const loginError = document.getElementById('login-error');
-
-// DOM 元素 - 管理界面
-const adminContainer = document.getElementById('admin-container');
-const logoutBtn = document.getElementById('logout-btn');
-
-// DOM 元素 - 导航
-const dashboardBtn = document.getElementById('dashboard-btn');
-const postsBtn = document.getElementById('posts-btn');
-const newPostBtn = document.getElementById('new-post-btn');
-const newPostBtn2 = document.getElementById('new-post-btn2');
-
-// DOM 元素 - 内容区域
-const dashboardSection = document.getElementById('dashboard-section');
-const postsSection = document.getElementById('posts-section');
-const editorSection = document.getElementById('editor-section');
-
-// DOM 元素 - 仪表盘
-const totalPostsEl = document.getElementById('total-posts');
-const monthPostsEl = document.getElementById('month-posts');
-const draftPostsEl = document.getElementById('draft-posts');
-const recentPostsTable = document.getElementById('recent-posts-table');
-
-// DOM 元素 - 文章列表
-const allPostsTable = document.getElementById('all-posts-table');
-const adminSearchInput = document.getElementById('admin-search-input');
-const filterCategory = document.getElementById('filter-category');
-const filterStatus = document.getElementById('filter-status');
-
-// DOM 元素 - 编辑器
-const editorTitle = document.getElementById('editor-title');
-const postForm = document.getElementById('post-form');
-const postIdInput = document.getElementById('post-id');
-const postTitleInput = document.getElementById('post-title');
-const postContent = document.getElementById('post-content');
-const postStatusSelect = document.getElementById('post-status');
-const postCategorySelect = document.getElementById('post-category');
-const postDateInput = document.getElementById('post-date');
-const postImageInput = document.getElementById('post-image');
-const postSummaryInput = document.getElementById('post-summary');
-const backBtn = document.getElementById('back-btn');
-const cancelBtn = document.getElementById('cancel-btn');
-
-// DOM 元素 - 删除确认
-const deleteModal = document.getElementById('delete-modal');
-const cancelDeleteBtn = document.getElementById('cancel-delete');
-const confirmDeleteBtn = document.getElementById('confirm-delete');
+// DOM 元素缓存
+let domCache = {};
 
 // 全局变量
 let allPosts = [];
 let currentPostId = null;
 let lastActiveSection = null;
+let tinyMCEInitialized = false;
+let isLoading = false;
+
+/**
+ * 初始化DOM元素缓存
+ */
+function initDOMCache() {
+    domCache = {
+        // 登录相关
+        loginContainer: document.getElementById('login-container'),
+        loginForm: document.getElementById('login-form'),
+        usernameInput: document.getElementById('username'),
+        passwordInput: document.getElementById('password'),
+        loginError: document.getElementById('login-error'),
+        loginBtn: document.getElementById('login-btn'),
+        loginText: document.getElementById('login-text'),
+        loginSpinner: document.getElementById('login-spinner'),
+        
+        // 管理界面
+        adminContainer: document.getElementById('admin-container'),
+        logoutBtn: document.getElementById('logout-btn'),
+        
+        // 导航
+        dashboardBtn: document.getElementById('dashboard-btn'),
+        postsBtn: document.getElementById('posts-btn'),
+        newPostBtn: document.getElementById('new-post-btn'),
+        newPostBtn2: document.getElementById('new-post-btn2'),
+        
+        // 内容区域
+        dashboardSection: document.getElementById('dashboard-section'),
+        postsSection: document.getElementById('posts-section'),
+        postEditorSection: document.getElementById('post-editor-section'),
+        
+        // 仪表盘
+        totalPostsEl: document.getElementById('total-posts'),
+        monthPostsEl: document.getElementById('month-posts'),
+        draftPostsEl: document.getElementById('draft-posts'),
+        recentPostsTable: document.getElementById('recent-posts-table'),
+        
+        // 文章列表
+        postsTable: document.getElementById('posts-table'),
+        searchPosts: document.getElementById('search-posts'),
+        filterCategory: document.getElementById('filter-category'),
+        filterStatus: document.getElementById('filter-status'),
+        
+        // 编辑器
+        editorTitle: document.getElementById('editor-title'),
+        postForm: document.getElementById('post-form'),
+        postTitleInput: document.getElementById('post-title'),
+        postContent: document.getElementById('post-content'),
+        postCategoryInput: document.getElementById('post-category'),
+        postImageInput: document.getElementById('post-image'),
+        postSummaryInput: document.getElementById('post-summary'),
+        backToPostsBtn: document.getElementById('back-to-posts'),
+        cancelEditBtn: document.getElementById('cancel-edit'),
+        saveText: document.getElementById('save-text'),
+        saveSpinner: document.getElementById('save-spinner'),
+        editorLoading: document.getElementById('editor-loading')
+    };
+}
 
 /**
  * 初始化管理系统
  */
 function initAdmin() {
-    // 设置事件监听器
-    setupEventListeners();
-    
-    // 检查登录状态
-    checkLoginStatus();
-    
-    // 初始化富文本编辑器
-    initTinyMCE();
+    try {
+        // 初始化DOM缓存
+        initDOMCache();
+        
+        // 设置事件监听器
+        setupEventListeners();
+        
+        // 检查登录状态
+        checkLoginStatus();
+    } catch (error) {
+        console.error('初始化管理系统失败:', error);
+        showErrorMessage('系统初始化失败，请刷新页面重试');
+    }
 }
 
 /**
@@ -85,93 +101,75 @@ function initAdmin() {
  */
 function setupEventListeners() {
     // 登录表单提交
-    if (loginForm) {
-        loginForm.addEventListener('submit', handleLogin);
+    if (domCache.loginForm) {
+        domCache.loginForm.addEventListener('submit', handleLogin);
     }
     
     // 退出登录
-    if (logoutBtn) {
-        logoutBtn.addEventListener('click', handleLogout);
+    if (domCache.logoutBtn) {
+        domCache.logoutBtn.addEventListener('click', handleLogout);
     }
     
     // 导航按钮
-    if (dashboardBtn) {
-        dashboardBtn.addEventListener('click', () => showSection(dashboardSection));
-    }
-    
-    if (postsBtn) {
-        postsBtn.addEventListener('click', () => {
-            showSection(postsSection);
-            updateNavActive(postsBtn);
+    if (domCache.dashboardBtn) {
+        domCache.dashboardBtn.addEventListener('click', () => {
+            showSection(domCache.dashboardSection);
+            updateNavActive(domCache.dashboardBtn);
         });
     }
     
-    if (newPostBtn) {
-        newPostBtn.addEventListener('click', () => {
+    if (domCache.postsBtn) {
+        domCache.postsBtn.addEventListener('click', () => {
+            showSection(domCache.postsSection);
+            updateNavActive(domCache.postsBtn);
+        });
+    }
+    
+    if (domCache.newPostBtn) {
+        domCache.newPostBtn.addEventListener('click', () => {
             showNewPostEditor();
-            updateNavActive(newPostBtn);
+            updateNavActive(domCache.newPostBtn);
         });
     }
     
-    if (newPostBtn2) {
-        newPostBtn2.addEventListener('click', showNewPostEditor);
+    if (domCache.newPostBtn2) {
+        domCache.newPostBtn2.addEventListener('click', showNewPostEditor);
     }
     
     // 返回按钮
-    if (backBtn) {
-        backBtn.addEventListener('click', () => {
-            if (lastActiveSection) {
-                showSection(lastActiveSection);
-            } else {
-                showSection(dashboardSection);
-                updateNavActive(dashboardBtn);
-            }
+    if (domCache.backToPostsBtn) {
+        domCache.backToPostsBtn.addEventListener('click', () => {
+            showSection(domCache.postsSection);
+            updateNavActive(domCache.postsBtn);
         });
     }
     
     // 取消按钮
-    if (cancelBtn) {
-        cancelBtn.addEventListener('click', () => {
+    if (domCache.cancelEditBtn) {
+        domCache.cancelEditBtn.addEventListener('click', () => {
             if (confirm('确定要取消编辑吗？未保存的更改将丢失。')) {
-                if (lastActiveSection) {
-                    showSection(lastActiveSection);
-                } else {
-                    showSection(dashboardSection);
-                    updateNavActive(dashboardBtn);
-                }
+                showSection(domCache.postsSection);
+                updateNavActive(domCache.postsBtn);
             }
         });
     }
     
     // 文章表单提交
-    if (postForm) {
-        postForm.addEventListener('submit', handleSavePost);
+    if (domCache.postForm) {
+        domCache.postForm.addEventListener('submit', handleSavePost);
     }
     
     // 搜索和筛选
-    if (adminSearchInput) {
-        adminSearchInput.addEventListener('input', debounce(filterAllPosts, 300));
+    if (domCache.searchPosts) {
+        domCache.searchPosts.addEventListener('input', debounce(filterAllPosts, 300));
     }
     
-    if (filterCategory) {
-        filterCategory.addEventListener('change', filterAllPosts);
+    if (domCache.filterCategory) {
+        domCache.filterCategory.addEventListener('change', filterAllPosts);
     }
     
-    if (filterStatus) {
-        filterStatus.addEventListener('change', filterAllPosts);
-    }
-    
-    // 删除确认对话框
-    if (cancelDeleteBtn) {
-        cancelDeleteBtn.addEventListener('click', () => {
-            deleteModal.classList.add('hidden');
-        });
-    }
-    
-    if (confirmDeleteBtn) {
-        confirmDeleteBtn.addEventListener('click', () => {
-            deletePost();
-        });
+    if (domCache.filterStatus) {
+        domCache.filterStatus.addEventListener('change', filterAllPosts);
     }
 }
 
@@ -194,40 +192,61 @@ function checkLoginStatus() {
  * 处理登录请求
  * @param {Event} e - 表单提交事件
  */
-function handleLogin(e) {
+async function handleLogin(e) {
     e.preventDefault();
     
-    const username = usernameInput.value.trim();
-    const password = passwordInput.value.trim();
+    if (isLoading) return;
+    isLoading = true;
     
-    // 获取保存的凭据或使用默认值
-    const storedCredentials = localStorage.getItem(ADMIN_KEY);
-    let adminUsername = DEFAULT_USERNAME;
-    let adminPassword = DEFAULT_PASSWORD;
+    // 显示加载状态
+    if (domCache.loginText) domCache.loginText.textContent = '登录中...';
+    if (domCache.loginSpinner) domCache.loginSpinner.classList.remove('hidden');
+    if (domCache.loginBtn) domCache.loginBtn.disabled = true;
     
-    if (storedCredentials) {
-        const credentials = JSON.parse(storedCredentials);
-        adminUsername = credentials.username;
-        adminPassword = credentials.password;
-    } else {
-        // 保存默认凭据
-        localStorage.setItem(ADMIN_KEY, JSON.stringify({
-            username: adminUsername,
-            password: adminPassword
-        }));
+    try {
+        const username = domCache.usernameInput.value.trim();
+        const password = domCache.passwordInput.value.trim();
+        
+        // 模拟登录延迟
+        await new Promise(resolve => setTimeout(resolve, 800));
+        
+        if (username === DEFAULT_USERNAME && password === DEFAULT_PASSWORD) {
+            sessionStorage.setItem('isLoggedIn', 'true');
+            showAdminPanel();
+            loadPosts();
+            updateDashboard();
+            hideLoginError();
+        } else {
+            showLoginError();
+        }
+    } catch (error) {
+        console.error('登录错误:', error);
+        showLoginError();
+    } finally {
+        // 恢复按钮状态
+        if (domCache.loginText) domCache.loginText.textContent = '登录';
+        if (domCache.loginSpinner) domCache.loginSpinner.classList.add('hidden');
+        if (domCache.loginBtn) domCache.loginBtn.disabled = false;
+        isLoading = false;
     }
-    
-    // 验证凭据
-    if (username === adminUsername && password === adminPassword) {
-        // 登录成功
-        sessionStorage.setItem('isLoggedIn', 'true');
-        showAdminPanel();
-        loadPosts();
-        updateDashboard();
-    } else {
-        // 登录失败
-        loginError.classList.remove('hidden');
-        passwordInput.value = '';
+}
+
+/**
+ * 显示登录错误
+ */
+function showLoginError() {
+    if (domCache.loginError) {
+        domCache.loginError.classList.remove('hidden');
+        domCache.loginError.textContent = '用户名或密码错误';
+    }
+}
+
+/**
+ * 隐藏登录错误
+ */
+function hideLoginError() {
+    if (domCache.loginError) {
+        domCache.loginError.classList.add('hidden');
     }
 }
 
@@ -237,42 +256,46 @@ function handleLogin(e) {
 function handleLogout() {
     sessionStorage.removeItem('isLoggedIn');
     showLoginForm();
+    
+    // 清理TinyMCE
+    if (tinyMCEInitialized && typeof tinymce !== 'undefined') {
+        tinymce.remove('#post-content');
+        tinyMCEInitialized = false;
+    }
 }
 
 /**
  * 显示登录表单
  */
 function showLoginForm() {
-    if (loginContainer && adminContainer) {
-        loginContainer.classList.remove('hidden');
-        adminContainer.classList.add('hidden');
-    }
+    if (domCache.loginContainer) domCache.loginContainer.classList.remove('hidden');
+    if (domCache.adminContainer) domCache.adminContainer.classList.add('hidden');
+    
+    // 清空表单
+    if (domCache.usernameInput) domCache.usernameInput.value = '';
+    if (domCache.passwordInput) domCache.passwordInput.value = '';
+    hideLoginError();
 }
 
 /**
  * 显示管理面板
  */
 function showAdminPanel() {
-    if (loginContainer && adminContainer) {
-        loginContainer.classList.add('hidden');
-        adminContainer.classList.remove('hidden');
-        showSection(dashboardSection);
-        updateNavActive(dashboardBtn);
-    }
+    if (domCache.loginContainer) domCache.loginContainer.classList.add('hidden');
+    if (domCache.adminContainer) domCache.adminContainer.classList.remove('hidden');
+    
+    // 默认显示仪表盘
+    showSection(domCache.dashboardSection);
+    updateNavActive(domCache.dashboardBtn);
 }
 
 /**
- * 显示指定的内容区域
- * @param {HTMLElement} section - 要显示的区域元素
+ * 显示指定区域
+ * @param {HTMLElement} section - 要显示的区域
  */
 function showSection(section) {
-    // 记住上一个活动的区域
-    if (section !== editorSection) {
-        lastActiveSection = section;
-    }
-    
     // 隐藏所有区域
-    const sections = [dashboardSection, postsSection, editorSection];
+    const sections = [domCache.dashboardSection, domCache.postsSection, domCache.postEditorSection];
     sections.forEach(s => {
         if (s) s.classList.add('hidden');
     });
@@ -280,16 +303,17 @@ function showSection(section) {
     // 显示指定区域
     if (section) {
         section.classList.remove('hidden');
+        lastActiveSection = section;
     }
 }
 
 /**
- * 更新导航栏活动状态
- * @param {HTMLElement} activeBtn - 当前活动的按钮
+ * 更新导航按钮状态
+ * @param {HTMLElement} activeBtn - 活动按钮
  */
 function updateNavActive(activeBtn) {
-    const navBtns = [dashboardBtn, postsBtn, newPostBtn];
-    
+    // 重置所有按钮样式
+    const navBtns = [domCache.dashboardBtn, domCache.postsBtn, domCache.newPostBtn];
     navBtns.forEach(btn => {
         if (btn) {
             btn.classList.remove('bg-primary/10', 'text-primary');
@@ -297,6 +321,7 @@ function updateNavActive(activeBtn) {
         }
     });
     
+    // 设置活动按钮样式
     if (activeBtn) {
         activeBtn.classList.add('bg-primary/10', 'text-primary');
         activeBtn.classList.remove('hover:bg-gray-100');
@@ -304,25 +329,57 @@ function updateNavActive(activeBtn) {
 }
 
 /**
- * 初始化富文本编辑器
+ * 延迟初始化富文本编辑器
  */
-function initTinyMCE() {
-    if (typeof tinymce !== 'undefined') {
-        tinymce.init({
-            selector: '#post-content',
-            height: 500,
-            menubar: true,
-            plugins: [
-                'advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'preview',
-                'anchor', 'searchreplace', 'visualblocks', 'code', 'fullscreen',
-                'insertdatetime', 'media', 'table', 'help', 'wordcount'
-            ],
-            toolbar: 'undo redo | formatselect | ' +
-                'bold italic backcolor | alignleft aligncenter ' +
-                'alignright alignjustify | bullist numlist outdent indent | ' +
-                'removeformat | help',
-            content_style: 'body { font-family: "Inter", sans-serif; font-size: 16px; }'
+async function initTinyMCE() {
+    if (tinyMCEInitialized) return;
+    
+    try {
+        // 显示加载指示器
+        if (domCache.editorLoading) domCache.editorLoading.classList.remove('hidden');
+        if (domCache.postContent) domCache.postContent.classList.add('hidden');
+        
+        // 加载TinyMCE
+        await loadTinyMCE();
+        
+        // 初始化编辑器
+        await new Promise((resolve, reject) => {
+            tinymce.init({
+                selector: '#post-content',
+                height: 400,
+                menubar: false,
+                plugins: [
+                    'lists', 'link', 'image', 'charmap', 'preview',
+                    'searchreplace', 'visualblocks', 'code',
+                    'insertdatetime', 'table', 'help', 'wordcount'
+                ],
+                toolbar: 'undo redo | formatselect | ' +
+                    'bold italic backcolor | alignleft aligncenter ' +
+                    'alignright alignjustify | bullist numlist | ' +
+                    'link image | removeformat | help',
+                content_style: 'body { font-family: "Inter", sans-serif; font-size: 16px; }',
+                setup: function(editor) {
+                    editor.on('init', function() {
+                        tinyMCEInitialized = true;
+                        resolve();
+                    });
+                },
+                branding: false,
+                promotion: false
+            });
         });
+        
+        // 隐藏加载指示器
+        if (domCache.editorLoading) domCache.editorLoading.classList.add('hidden');
+        if (domCache.postContent) domCache.postContent.classList.remove('hidden');
+        
+    } catch (error) {
+        console.error('TinyMCE初始化失败:', error);
+        showErrorMessage('编辑器加载失败，请刷新页面重试');
+        
+        // 降级处理：使用普通文本框
+        if (domCache.editorLoading) domCache.editorLoading.classList.add('hidden');
+        if (domCache.postContent) domCache.postContent.classList.remove('hidden');
     }
 }
 
@@ -330,58 +387,92 @@ function initTinyMCE() {
  * 从本地存储加载博客文章
  */
 function loadPosts() {
-    // 从 localStorage 获取文章数据
-    const postsData = localStorage.getItem(STORAGE_KEY);
-    
-    if (postsData) {
-        allPosts = JSON.parse(postsData);
-        allPosts.sort((a, b) => new Date(b.date) - new Date(a.date)); // 按日期降序排序
-    } else {
-        // 示例文章
-        allPosts = generateSamplePosts();
-        savePosts(allPosts);
+    try {
+        // 从 localStorage 获取文章数据
+        const postsData = localStorage.getItem(STORAGE_KEY);
+        
+        if (postsData) {
+            allPosts = JSON.parse(postsData);
+            allPosts.sort((a, b) => new Date(b.date) - new Date(a.date)); // 按日期降序排序
+        } else {
+            // 示例文章
+            allPosts = generateSamplePosts();
+            savePosts(allPosts);
+        }
+        
+        // 更新分类选项
+        updateCategoryOptions();
+        
+        // 更新文章列表
+        renderPostsList();
+    } catch (error) {
+        console.error('加载文章失败:', error);
+        showErrorMessage('加载文章失败，请刷新页面重试');
     }
+}
+
+/**
+ * 更新分类选项
+ */
+function updateCategoryOptions() {
+    if (!domCache.filterCategory) return;
     
-    // 更新文章列表
-    renderPostsList();
+    // 获取所有分类
+    const categories = [...new Set(allPosts.map(post => post.category))];
+    
+    // 清空现有选项（保留"所有分类"）
+    domCache.filterCategory.innerHTML = '<option value="">所有分类</option>';
+    
+    // 添加分类选项
+    categories.forEach(category => {
+        const option = document.createElement('option');
+        option.value = category;
+        option.textContent = category;
+        domCache.filterCategory.appendChild(option);
+    });
 }
 
 /**
  * 更新仪表盘数据
  */
 function updateDashboard() {
-    if (!totalPostsEl || !monthPostsEl || !draftPostsEl || !recentPostsTable) return;
+    if (!domCache.totalPostsEl || !domCache.monthPostsEl || !domCache.draftPostsEl) return;
     
-    // 计算统计数据
-    const totalPosts = allPosts.length;
-    
-    // 本月发布的文章
-    const currentMonth = new Date().getMonth();
-    const currentYear = new Date().getFullYear();
-    const monthPosts = allPosts.filter(post => {
-        const postDate = new Date(post.date);
-        return postDate.getMonth() === currentMonth && postDate.getFullYear() === currentYear;
-    }).length;
-    
-    // 草稿数
-    const draftPosts = allPosts.filter(post => post.status === '草稿').length;
-    
-    // 更新统计数字
-    totalPostsEl.textContent = totalPosts;
-    monthPostsEl.textContent = monthPosts;
-    draftPostsEl.textContent = draftPosts;
-    
-    // 渲染最近文章
-    renderRecentPosts();
+    try {
+        // 计算统计数据
+        const totalPosts = allPosts.length;
+        
+        // 本月发布的文章
+        const currentMonth = new Date().getMonth();
+        const currentYear = new Date().getFullYear();
+        const monthPosts = allPosts.filter(post => {
+            const postDate = new Date(post.date);
+            return postDate.getMonth() === currentMonth && postDate.getFullYear() === currentYear;
+        }).length;
+        
+        // 草稿数
+        const draftPosts = allPosts.filter(post => post.status === '草稿').length;
+        
+        // 更新统计数字
+        domCache.totalPostsEl.textContent = totalPosts;
+        domCache.monthPostsEl.textContent = monthPosts;
+        domCache.draftPostsEl.textContent = draftPosts;
+        
+        // 渲染最近文章
+        renderRecentPosts();
+    } catch (error) {
+        console.error('更新仪表盘失败:', error);
+    }
 }
 
 /**
  * 渲染最近文章列表
  */
 function renderRecentPosts() {
-    if (!recentPostsTable) return;
+    if (!domCache.recentPostsTable) return;
     
-    recentPostsTable.innerHTML = '';
+    // 使用DocumentFragment优化DOM操作
+    const fragment = document.createDocumentFragment();
     
     // 获取最近5篇文章
     const recentPosts = [...allPosts].slice(0, 5);
@@ -393,36 +484,67 @@ function renderRecentPosts() {
                 暂无文章，点击"写新文章"开始创作
             </td>
         `;
-        recentPostsTable.appendChild(emptyRow);
+        fragment.appendChild(emptyRow);
     } else {
         recentPosts.forEach(post => {
             const row = createPostRow(post);
-            recentPostsTable.appendChild(row);
+            fragment.appendChild(row);
         });
     }
+    
+    // 一次性更新DOM
+    domCache.recentPostsTable.innerHTML = '';
+    domCache.recentPostsTable.appendChild(fragment);
 }
 
 /**
  * 渲染所有文章列表
  */
 function renderPostsList() {
-    if (!allPostsTable) return;
+    if (!domCache.postsTable) return;
     
-    allPostsTable.innerHTML = '';
+    // 使用DocumentFragment优化DOM操作
+    const fragment = document.createDocumentFragment();
     
     // 应用过滤
+    const filteredPosts = getFilteredPosts();
+    
+    if (filteredPosts.length === 0) {
+        const emptyRow = document.createElement('tr');
+        emptyRow.innerHTML = `
+            <td colspan="5" class="px-6 py-8 text-center text-gray-500">
+                未找到符合条件的文章
+            </td>
+        `;
+        fragment.appendChild(emptyRow);
+    } else {
+        filteredPosts.forEach(post => {
+            const row = createPostRow(post);
+            fragment.appendChild(row);
+        });
+    }
+    
+    // 一次性更新DOM
+    domCache.postsTable.innerHTML = '';
+    domCache.postsTable.appendChild(fragment);
+}
+
+/**
+ * 获取过滤后的文章
+ * @returns {Array} 过滤后的文章数组
+ */
+function getFilteredPosts() {
     let filteredPosts = [...allPosts];
     
-    const searchQuery = adminSearchInput ? adminSearchInput.value.toLowerCase().trim() : '';
-    const categoryFilter = filterCategory ? filterCategory.value : '';
-    const statusFilter = filterStatus ? filterStatus.value : '';
+    const searchQuery = domCache.searchPosts ? domCache.searchPosts.value.toLowerCase().trim() : '';
+    const categoryFilter = domCache.filterCategory ? domCache.filterCategory.value : '';
+    const statusFilter = domCache.filterStatus ? domCache.filterStatus.value : '';
     
     // 搜索过滤
     if (searchQuery) {
         filteredPosts = filteredPosts.filter(post => {
-            return post.title.toLowerCase().includes(searchQuery) || 
-                   post.content.toLowerCase().includes(searchQuery) || 
-                   post.summary.toLowerCase().includes(searchQuery);
+            const searchFields = [post.title, post.content, post.summary].join(' ').toLowerCase();
+            return searchFields.includes(searchQuery);
         });
     }
     
@@ -436,20 +558,7 @@ function renderPostsList() {
         filteredPosts = filteredPosts.filter(post => post.status === statusFilter);
     }
     
-    if (filteredPosts.length === 0) {
-        const emptyRow = document.createElement('tr');
-        emptyRow.innerHTML = `
-            <td colspan="5" class="px-6 py-8 text-center text-gray-500">
-                未找到符合条件的文章
-            </td>
-        `;
-        allPostsTable.appendChild(emptyRow);
-    } else {
-        filteredPosts.forEach(post => {
-            const row = createPostRow(post);
-            allPostsTable.appendChild(row);
-        });
-    }
+    return filteredPosts;
 }
 
 /**
@@ -475,10 +584,10 @@ function createPostRow(post) {
     
     row.innerHTML = `
         <td class="px-6 py-4 whitespace-nowrap">
-            <div class="text-sm font-medium text-gray-900">${post.title}</div>
+            <div class="text-sm font-medium text-gray-900">${escapeHtml(post.title)}</div>
         </td>
         <td class="px-6 py-4 whitespace-nowrap">
-            <div class="text-sm text-gray-500">${post.category}</div>
+            <div class="text-sm text-gray-500">${escapeHtml(post.category)}</div>
         </td>
         <td class="px-6 py-4 whitespace-nowrap">
             <div class="text-sm text-gray-500">${formatDate(post.date)}</div>
@@ -498,14 +607,14 @@ function createPostRow(post) {
         </td>
     `;
     
-    // 添加编辑按钮事件
+    // 添加事件监听器
     const editBtn = row.querySelector('.edit-btn');
+    const deleteBtn = row.querySelector('.delete-btn');
+    
     if (editBtn) {
         editBtn.addEventListener('click', () => editPost(post.id));
     }
     
-    // 添加删除按钮事件
-    const deleteBtn = row.querySelector('.delete-btn');
     if (deleteBtn) {
         deleteBtn.addEventListener('click', () => showDeleteConfirm(post.id));
     }
@@ -516,180 +625,198 @@ function createPostRow(post) {
 /**
  * 显示新文章编辑器
  */
-function showNewPostEditor() {
-    // 清空编辑器内容
-    resetEditor();
+async function showNewPostEditor() {
+    currentPostId = null;
     
-    // 设置默认日期为今天
-    const today = new Date().toISOString().substring(0, 10);
-    if (postDateInput) {
-        postDateInput.value = today;
+    if (domCache.editorTitle) {
+        domCache.editorTitle.textContent = '写新文章';
     }
     
-    // 显示编辑器
-    showSection(editorSection);
-    editorTitle.textContent = '写新文章';
+    resetEditor();
     
-    // 移除之前的文章ID
-    currentPostId = null;
+    // 延迟初始化TinyMCE
+    await initTinyMCE();
+    
+    showSection(domCache.postEditorSection);
 }
 
 /**
  * 编辑文章
  * @param {string} postId - 文章ID
  */
-function editPost(postId) {
+async function editPost(postId) {
     const post = allPosts.find(p => p.id === postId);
-    
     if (!post) return;
     
-    // 保存当前编辑的文章ID
     currentPostId = postId;
     
-    // 重置编辑器
-    resetEditor();
-    
-    // 填充数据
-    if (postIdInput) postIdInput.value = post.id;
-    if (postTitleInput) postTitleInput.value = post.title;
-    if (tinymce && tinymce.activeEditor) {
-        tinymce.activeEditor.setContent(post.content || '');
+    if (domCache.editorTitle) {
+        domCache.editorTitle.textContent = '编辑文章';
     }
-    if (postStatusSelect) postStatusSelect.value = post.status;
-    if (postCategorySelect) postCategorySelect.value = post.category;
-    if (postDateInput) postDateInput.value = post.date;
-    if (postImageInput) postImageInput.value = post.image || '';
-    if (postSummaryInput) postSummaryInput.value = post.summary || '';
     
-    // 显示编辑器
-    showSection(editorSection);
-    editorTitle.textContent = '编辑文章';
+    // 延迟初始化TinyMCE
+    await initTinyMCE();
+    
+    // 填充表单数据
+    if (domCache.postTitleInput) domCache.postTitleInput.value = post.title;
+    if (domCache.postCategoryInput) domCache.postCategoryInput.value = post.category;
+    if (domCache.postSummaryInput) domCache.postSummaryInput.value = post.summary;
+    if (domCache.postImageInput) domCache.postImageInput.value = post.image || '';
+    
+    // 设置文章状态
+    const statusRadio = document.querySelector(`input[name="post-status"][value="${post.status}"]`);
+    if (statusRadio) statusRadio.checked = true;
+    
+    // 设置富文本内容
+    if (tinyMCEInitialized && typeof tinymce !== 'undefined') {
+        tinymce.get('post-content').setContent(post.content);
+    } else if (domCache.postContent) {
+        domCache.postContent.value = post.content;
+    }
+    
+    showSection(domCache.postEditorSection);
 }
 
 /**
  * 重置编辑器
  */
 function resetEditor() {
-    if (postForm) postForm.reset();
-    if (tinymce && tinymce.activeEditor) {
-        tinymce.activeEditor.setContent('');
+    if (domCache.postForm) {
+        domCache.postForm.reset();
     }
+    
+    // 清空富文本编辑器
+    if (tinyMCEInitialized && typeof tinymce !== 'undefined') {
+        tinymce.get('post-content').setContent('');
+    }
+    
+    // 默认选中"立即发布"
+    const publishRadio = document.querySelector('input[name="post-status"][value="已发布"]');
+    if (publishRadio) publishRadio.checked = true;
 }
 
 /**
  * 处理保存文章
  * @param {Event} e - 表单提交事件
  */
-function handleSavePost(e) {
+async function handleSavePost(e) {
     e.preventDefault();
     
-    // 获取表单数据
-    const title = postTitleInput.value.trim();
-    const content = tinymce.activeEditor.getContent();
-    const status = postStatusSelect.value;
-    const category = postCategorySelect.value;
-    const date = postDateInput.value;
-    const image = postImageInput.value.trim();
-    const summary = postSummaryInput.value.trim();
+    if (isLoading) return;
+    isLoading = true;
     
-    // 验证必填字段
-    if (!title || !content || !date) {
-        alert('请填写标题、内容和日期！');
-        return;
-    }
-    
-    // 生成摘要（如果没有提供）
-    const finalSummary = summary || generateSummary(content);
-    
-    // 创建或更新文章
-    if (currentPostId) {
-        // 更新现有文章
-        const index = allPosts.findIndex(post => post.id === currentPostId);
+    try {
+        // 显示保存状态
+        if (domCache.saveText) domCache.saveText.textContent = '保存中...';
+        if (domCache.saveSpinner) domCache.saveSpinner.classList.remove('hidden');
         
-        if (index !== -1) {
-            allPosts[index] = {
-                ...allPosts[index],
-                title,
-                content,
-                status,
-                category,
-                date,
-                image,
-                summary: finalSummary
-            };
+        // 获取表单数据
+        const title = domCache.postTitleInput ? domCache.postTitleInput.value.trim() : '';
+        const category = domCache.postCategoryInput ? domCache.postCategoryInput.value.trim() : '';
+        const summary = domCache.postSummaryInput ? domCache.postSummaryInput.value.trim() : '';
+        const image = domCache.postImageInput ? domCache.postImageInput.value.trim() : '';
+        const status = document.querySelector('input[name="post-status"]:checked')?.value || '已发布';
+        
+        // 获取富文本内容
+        let content = '';
+        if (tinyMCEInitialized && typeof tinymce !== 'undefined') {
+            content = tinymce.get('post-content').getContent();
+        } else if (domCache.postContent) {
+            content = domCache.postContent.value;
         }
-    } else {
-        // 创建新文章
-        const newPost = {
-            id: generateUniqueId(),
+        
+        // 验证必填字段
+        if (!title || !category || !summary || !content) {
+            showErrorMessage('请填写所有必填字段');
+            return;
+        }
+        
+        // 模拟保存延迟
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        const postData = {
+            id: currentPostId || generateUniqueId(),
             title,
-            content,
-            status,
             category,
-            date,
+            summary: summary || generateSummary(content),
+            content,
             image,
-            summary: finalSummary
+            status,
+            date: currentPostId ? 
+                (allPosts.find(p => p.id === currentPostId)?.date || new Date().toISOString().split('T')[0]) :
+                new Date().toISOString().split('T')[0]
         };
         
-        allPosts.unshift(newPost);
-    }
-    
-    // 保存到本地存储
-    savePosts(allPosts);
-    
-    // 更新UI
-    updateDashboard();
-    renderPostsList();
-    
-    // 返回上一个页面
-    if (lastActiveSection) {
-        showSection(lastActiveSection);
-    } else {
-        showSection(dashboardSection);
-        updateNavActive(dashboardBtn);
-    }
-    
-    // 显示成功提示
-    alert(currentPostId ? '文章已更新！' : '文章已保存！');
-}
-
-/**
- * 显示删除确认对话框
- * @param {string} postId - 文章ID
- */
-function showDeleteConfirm(postId) {
-    currentPostId = postId;
-    deleteModal.classList.remove('hidden');
-}
-
-/**
- * 删除文章
- */
-function deletePost() {
-    if (!currentPostId) return;
-    
-    // 查找文章索引
-    const index = allPosts.findIndex(post => post.id === currentPostId);
-    
-    if (index !== -1) {
-        // 从数组中删除
-        allPosts.splice(index, 1);
+        if (currentPostId) {
+            // 编辑现有文章
+            const index = allPosts.findIndex(p => p.id === currentPostId);
+            if (index !== -1) {
+                allPosts[index] = postData;
+            }
+        } else {
+            // 添加新文章
+            allPosts.unshift(postData);
+        }
         
         // 保存到本地存储
         savePosts(allPosts);
         
-        // 更新UI
+        // 更新界面
+        updateCategoryOptions();
         updateDashboard();
         renderPostsList();
         
-        // 关闭确认对话框
-        deleteModal.classList.add('hidden');
+        // 返回文章列表
+        showSection(domCache.postsSection);
+        updateNavActive(domCache.postsBtn);
         
-        // 清除当前文章ID
-        currentPostId = null;
+        showSuccessMessage(currentPostId ? '文章更新成功！' : '文章发布成功！');
         
-        // 显示成功提示
-        alert('文章已删除！');
+    } catch (error) {
+        console.error('保存文章失败:', error);
+        showErrorMessage('保存失败，请重试');
+    } finally {
+        // 恢复按钮状态
+        if (domCache.saveText) domCache.saveText.textContent = '保存文章';
+        if (domCache.saveSpinner) domCache.saveSpinner.classList.add('hidden');
+        isLoading = false;
+    }
+}
+
+/**
+ * 显示删除确认
+ * @param {string} postId - 文章ID
+ */
+function showDeleteConfirm(postId) {
+    const post = allPosts.find(p => p.id === postId);
+    if (!post) return;
+    
+    if (confirm(`确定要删除文章"${post.title}"吗？此操作不可撤销。`)) {
+        deletePost(postId);
+    }
+}
+
+/**
+ * 删除文章
+ * @param {string} postId - 文章ID
+ */
+function deletePost(postId) {
+    try {
+        const index = allPosts.findIndex(p => p.id === postId);
+        if (index !== -1) {
+            allPosts.splice(index, 1);
+            savePosts(allPosts);
+            
+            // 更新界面
+            updateCategoryOptions();
+            updateDashboard();
+            renderPostsList();
+            
+            showSuccessMessage('文章删除成功！');
+        }
+    } catch (error) {
+        console.error('删除文章失败:', error);
+        showErrorMessage('删除失败，请重试');
     }
 }
 
@@ -698,7 +825,12 @@ function deletePost() {
  * @param {Array} posts - 文章数组
  */
 function savePosts(posts) {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(posts));
+    try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(posts));
+    } catch (error) {
+        console.error('保存文章失败:', error);
+        throw new Error('保存失败，请检查浏览器存储空间');
+    }
 }
 
 /**
@@ -707,12 +839,16 @@ function savePosts(posts) {
  * @returns {string} - 格式化后的日期
  */
 function formatDate(dateString) {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('zh-CN', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-    });
+    try {
+        const date = new Date(dateString);
+        return date.toLocaleDateString('zh-CN', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        });
+    } catch (error) {
+        return dateString;
+    }
 }
 
 /**
@@ -720,7 +856,7 @@ function formatDate(dateString) {
  * @returns {string} - 唯一ID
  */
 function generateUniqueId() {
-    return 'post-' + Date.now() + '-' + Math.floor(Math.random() * 1000);
+    return 'post_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
 }
 
 /**
@@ -729,184 +865,200 @@ function generateUniqueId() {
  * @returns {string} - 摘要文本
  */
 function generateSummary(htmlContent) {
-    // 创建临时元素以解析HTML
-    const tempDiv = document.createElement('div');
-    tempDiv.innerHTML = htmlContent;
-    
-    // 获取纯文本
-    const textContent = tempDiv.textContent || tempDiv.innerText || '';
-    
-    // 截取前100个字符作为摘要
-    const summary = textContent.trim().substring(0, 150);
-    
-    return summary + (textContent.length > 150 ? '...' : '');
+    try {
+        // 创建临时div来提取文本
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = htmlContent;
+        const textContent = tempDiv.textContent || tempDiv.innerText || '';
+        
+        // 返回前150个字符作为摘要
+        return textContent.slice(0, 150).trim() + (textContent.length > 150 ? '...' : '');
+    } catch (error) {
+        return '暂无摘要';
+    }
 }
 
 /**
  * 防抖函数
- * @param {Function} func - 要执行的函数
+ * @param {Function} func - 要防抖的函数
  * @param {number} wait - 等待时间（毫秒）
  * @returns {Function} - 防抖后的函数
  */
 function debounce(func, wait) {
     let timeout;
-    return function() {
-        const context = this;
-        const args = arguments;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func.apply(this, args);
+        };
         clearTimeout(timeout);
-        timeout = setTimeout(() => {
-            func.apply(context, args);
-        }, wait);
+        timeout = setTimeout(later, wait);
     };
 }
 
 /**
- * 生成示例文章（当没有文章时用于展示）
+ * HTML转义
+ * @param {string} text - 原始文本
+ * @returns {string} - 转义后的文本
+ */
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+/**
+ * 显示成功消息
+ * @param {string} message - 成功消息
+ */
+function showSuccessMessage(message) {
+    const successDiv = document.createElement('div');
+    successDiv.className = 'fixed top-20 right-4 bg-green-500 text-white p-4 rounded-lg shadow-lg z-50';
+    successDiv.textContent = message;
+    
+    document.body.appendChild(successDiv);
+    
+    setTimeout(() => {
+        successDiv.remove();
+    }, 3000);
+}
+
+/**
+ * 显示错误消息
+ * @param {string} message - 错误消息
+ */
+function showErrorMessage(message) {
+    const errorDiv = document.createElement('div');
+    errorDiv.className = 'fixed top-20 right-4 bg-red-500 text-white p-4 rounded-lg shadow-lg z-50';
+    errorDiv.textContent = message;
+    
+    document.body.appendChild(errorDiv);
+    
+    setTimeout(() => {
+        errorDiv.remove();
+    }, 5000);
+}
+
+/**
+ * 生成示例文章
  * @returns {Array} - 示例文章数组
  */
 function generateSamplePosts() {
     return [
         {
-            id: 'sample-1',
-            title: 'RAG系统构建：从原理到实践',
-            summary: '这篇文章详细介绍了检索增强生成(RAG)系统的构建，包括嵌入模型选择、向量数据库和大语言模型的集成等关键技术点。',
-            content: `<p>随着大语言模型(LLM)的发展，检索增强生成(RAG)技术已经成为解决专业领域知识和最新信息需求的关键方法。</p>
-                      <h2>什么是RAG?</h2>
-                      <p>RAG结合了检索系统和生成式AI的优势，通过从知识库检索相关信息，然后将这些信息作为上下文提供给LLM，生成更准确、更相关的回答。</p>
-                      <h2>RAG系统的核心组件</h2>
-                      <ol>
-                          <li><strong>文档处理与分块</strong>：将长文档切分成合适大小的块，便于检索</li>
-                          <li><strong>嵌入模型</strong>：将文本转换为向量表示，用于语义搜索</li>
-                          <li><strong>向量数据库</strong>：高效存储和检索文本向量</li>
-                          <li><strong>大语言模型</strong>：基于检索到的上下文生成回答</li>
-                      </ol>
-                      <h2>实践案例</h2>
-                      <p>在我的一个项目中，我们使用了以下技术栈构建了一个高效的RAG系统：</p>
-                      <ul>
-                          <li>文档处理：使用LangChain的文本分割器</li>
-                          <li>嵌入模型：采用OpenAI的text-embedding-3-small</li>
-                          <li>向量数据库：Milvus提供高性能向量搜索</li>
-                          <li>LLM：GLM-4结合检索信息生成最终回答</li>
-                      </ul>
-                      <p>这种架构不仅提高了回答的准确性，还大大减少了幻觉现象的出现。</p>`,
-            category: '技术分享',
-            image: 'https://picsum.photos/600/400?random=1',
-            date: '2024-07-15',
-            status: '已发布'
+            id: 1,
+            title: "深入理解RAG系统：检索增强生成在实际应用中的实现",
+            summary: "详细探讨RAG（Retrieval-Augmented Generation）系统的核心原理，从向量数据库到检索策略，再到生成模型的融合，分享在构建企业级RAG应用中的实践经验。",
+            content: `
+                <h2>什么是RAG系统</h2>
+                <p>RAG（Retrieval-Augmented Generation）是一种结合了检索和生成的AI架构，它通过从大型文档库中检索相关信息来增强语言模型的生成能力。</p>
+                
+                <h2>核心组件</h2>
+                <ul>
+                    <li><strong>向量数据库</strong>：存储文档的向量表示</li>
+                    <li><strong>检索器</strong>：根据查询检索相关文档</li>
+                    <li><strong>生成器</strong>：基于检索结果生成回答</li>
+                </ul>
+                
+                <h2>实现细节</h2>
+                <p>在实际项目中，我们使用了Milvus作为向量数据库，BGE模型进行文档嵌入，ChatGLM作为生成模型。这套架构在企业文档问答场景中取得了显著效果。</p>
+                
+                <blockquote>
+                    <p>"RAG系统的关键在于平衡检索精度和生成质量，需要在多个维度进行优化。"</p>
+                </blockquote>
+            `,
+            category: "人工智能",
+            date: "2024-01-15",
+            image: "https://picsum.photos/600/400?random=1",
+            status: "已发布"
         },
         {
-            id: 'sample-2',
-            title: '大语言模型微调最佳实践',
-            summary: '本文分享了大语言模型微调的实用技巧，从数据准备到模型评估的完整流程，帮助你以最少的资源获得最好的效果。',
-            content: `<p>大语言模型的微调对于特定领域的应用至关重要，本文将分享我在实践中总结的一些经验。</p>
-                      <h2>数据准备的关键点</h2>
-                      <p>高质量的训练数据是成功微调的基础。以下是几个关键考虑因素：</p>
-                      <ul>
-                          <li>数据多样性：确保覆盖目标任务的各种情况</li>
-                          <li>数据质量：宁缺毋滥，低质量数据可能导致模型性能下降</li>
-                          <li>指令格式一致性：保持提示词格式统一</li>
-                      </ul>
-                      <h2>微调策略选择</h2>
-                      <p>根据资源和需求选择合适的微调方法：</p>
-                      <ol>
-                          <li><strong>LoRA微调</strong>：资源受限时的首选，仅训练少量参数</li>
-                          <li><strong>QLoRA</strong>：在消费级GPU上微调大型模型的有效方法</li>
-                          <li><strong>全参数微调</strong>：资源充足时可获得最佳性能</li>
-                      </ol>
-                      <h2>微调效果评估</h2>
-                      <p>客观评估微调效果至关重要：</p>
-                      <ul>
-                          <li>设置明确的评估指标</li>
-                          <li>准备独立的测试集</li>
-                          <li>与基线模型进行对比</li>
-                          <li>考虑人工评估与自动评估相结合</li>
-                      </ul>
-                      <p>在我的项目中，通过精心设计的200条训练数据，使用QLoRA方法在RTX 4090上微调了Qwen-14B模型，显著提升了特定领域任务的性能。</p>`,
-            category: '经验总结',
-            image: 'https://picsum.photos/600/400?random=2',
-            date: '2024-07-08',
-            status: '已发布'
+            id: 2,
+            title: "大语言模型微调实战：从LoRA到QLoRA的演进",
+            summary: "分享在大语言模型微调过程中的技术选型和优化策略，重点对比LoRA和QLoRA两种参数高效微调方法的实际效果。",
+            content: `
+                <h2>微调的必要性</h2>
+                <p>虽然通用大语言模型已经具备强大的能力，但在特定领域应用时，微调仍是提升性能的重要手段。</p>
+                
+                <h2>LoRA vs QLoRA</h2>
+                <p>LoRA (Low-Rank Adaptation) 通过在原始权重矩阵旁边添加低秩矩阵来实现参数高效微调。QLoRA则进一步引入了量化技术，显著降低了显存需求。</p>
+                
+                <h2>实验结果</h2>
+                <p>在我们的金融文本分类任务中，QLoRA相比LoRA节省了约40%的显存，同时保持了相似的性能表现。</p>
+            `,
+            category: "机器学习",
+            date: "2024-01-10",
+            image: "https://picsum.photos/600/400?random=2",
+            status: "已发布"
         },
         {
-            id: 'sample-3',
-            title: 'MCP系统：定制化AI助手开发实践',
-            summary: '基于LangChain和FastAPI构建一个灵活的多功能对话助手(MCP)系统，实现工具调用、知识库查询等高级功能。',
-            content: `<p>随着AI技术的发展，构建定制化的AI助手(MCP系统)已成为企业和开发者的重要需求。</p>
-                     <h2>什么是MCP系统？</h2>
-                     <p>MCP(Multi-functional Conversational Platform)系统是一种能够整合多种功能的对话式AI平台，可以执行工具调用、知识库查询、数据分析等任务。</p>
-                     <h2>系统架构设计</h2>
-                     <p>一个完整的MCP系统通常包含以下组件：</p>
-                     <ol>
-                         <li><strong>对话管理</strong>：处理用户输入，维护对话历史</li>
-                         <li><strong>工具调用框架</strong>：允许AI使用外部工具和API</li>
-                         <li><strong>知识库集成</strong>：连接各种数据源提供信息支持</li>
-                         <li><strong>大语言模型</strong>：核心推理引擎，生成回复和决策</li>
-                         <li><strong>安全与监控</strong>：确保系统安全可靠运行</li>
-                     </ol>
-                     <h2>技术实现要点</h2>
-                     <p>在我的项目中，我们使用了以下技术栈：</p>
-                     <ul>
-                         <li>后端框架：FastAPI提供高性能API服务</li>
-                         <li>工具调用：LangChain的Tool框架封装各种功能</li>
-                         <li>向量存储：Milvus用于高效知识检索</li>
-                         <li>LLM集成：支持多种模型，包括本地部署的Qwen和OpenAI的API</li>
-                         <li>前端界面：Vue.js构建响应式用户界面</li>
-                     </ul>
-                     <h2>关键挑战与解决方案</h2>
-                     <p>在开发过程中，我们遇到并解决了几个关键挑战：</p>
-                     <ul>
-                         <li>工具调用的鲁棒性：通过结构化输出和错误重试机制提高</li>
-                         <li>上下文长度限制：实现智能上下文压缩算法</li>
-                         <li>多轮对话连贯性：优化提示工程和对话管理</li>
-                     </ul>
-                     <p>这个MCP系统成功应用于企业内部知识管理和客户服务，大幅提升了工作效率。</p>`,
-            category: '项目心得',
-            image: 'https://picsum.photos/600/400?random=3',
-            date: '2024-06-25',
-            status: '已发布'
+            id: 3,
+            title: "MCP协议深度解析：构建AI Agent的新标准",
+            summary: "Model Context Protocol (MCP) 作为新兴的AI Agent通信标准，为构建更加智能和互联的AI系统提供了新的可能性。本文深入分析MCP的技术细节。",
+            content: `
+                <h2>MCP协议概述</h2>
+                <p>Model Context Protocol (MCP) 是一种新的通信协议，旨在标准化AI模型之间的上下文共享和协作。</p>
+                
+                <h2>核心特性</h2>
+                <ul>
+                    <li>标准化的消息格式</li>
+                    <li>高效的上下文传递</li>
+                    <li>可扩展的插件系统</li>
+                    <li>安全的通信机制</li>
+                </ul>
+                
+                <h2>应用场景</h2>
+                <p>MCP在多Agent协作、工具调用、知识共享等场景中展现出巨大潜力，特别是在构建复杂AI工作流时。</p>
+            `,
+            category: "AI协议",
+            date: "2024-01-05",
+            image: "https://picsum.photos/600/400?random=3",
+            status: "已发布"
         },
         {
-            id: 'sample-4',
-            title: '向量数据库选型指南',
-            summary: '深入比较Milvus、Pinecone、FAISS等主流向量数据库，帮助你为AI项目选择最合适的向量存储解决方案。',
-            content: `<p>向量数据库已成为构建现代AI应用的关键基础设施。本文将帮助你在众多选择中找到最适合你项目的向量数据库。</p>
-                      <h2>什么是向量数据库？</h2>
-                      <p>向量数据库是专门设计用于存储、索引和检索高维向量数据的数据库系统。它们在以下AI应用中扮演着核心角色：</p>
-                      <ul>
-                          <li>语义搜索</li>
-                          <li>推荐系统</li>
-                          <li>图像识别</li>
-                          <li>检索增强生成(RAG)</li>
-                      </ul>
-                      <h2>主流向量数据库比较</h2>
-                      <h3>1. Milvus</h3>
-                      <p><strong>优势</strong>：开源、可水平扩展、支持混合搜索、分区和多租户</p>
-                      <p><strong>适用场景</strong>：企业级应用、需要高扩展性和混合查询的场景</p>
-                      
-                      <h3>2. Pinecone</h3>
-                      <p><strong>优势</strong>：全托管服务、易于使用、高可用性</p>
-                      <p><strong>适用场景</strong>：初创公司、快速原型开发、不想维护基础设施的团队</p>
-                      
-                      <h3>3. FAISS</h3>
-                      <p><strong>优势</strong>：高性能、内存效率、丰富的索引类型</p>
-                      <p><strong>适用场景</strong>：单机部署、研究环境、对性能要求极高的应用</p>
-                      
-                      <h2>技术选型考虑因素</h2>
-                      <ol>
-                          <li><strong>数据规模</strong>：预计向量数量和维度</li>
-                          <li><strong>查询性能要求</strong>：QPS和延迟要求</li>
-                          <li><strong>部署环境</strong>：云服务、本地部署或混合模式</li>
-                          <li><strong>预算考量</strong>：开源vs商业、自管理vs托管服务</li>
-                          <li><strong>特殊功能需求</strong>：混合查询、多字段过滤等</li>
-                      </ol>
-                      <p>在我的实践中，对于具有千万级向量和复杂查询需求的产品环境，Milvus是一个理想的选择；而对于快速验证概念或小型项目，Pinecone的易用性和零维护特性则非常有吸引力。</p>`,
-            category: '技术分享',
-            image: 'https://picsum.photos/600/400?random=4',
-            date: '2024-06-10',
-            status: '草稿'
+            id: 4,
+            title: "向量数据库选型指南：Milvus vs Pinecone vs Weaviate",
+            summary: "全面对比主流向量数据库的性能、功能和成本，为不同规模的AI应用提供选型建议。",
+            content: `
+                <h2>向量数据库的重要性</h2>
+                <p>随着AI应用的普及，向量数据库成为了连接传统数据与AI模型的重要桥梁。选择合适的向量数据库对项目成功至关重要。</p>
+                
+                <h2>对比维度</h2>
+                <table>
+                    <tr>
+                        <th>特性</th>
+                        <th>Milvus</th>
+                        <th>Pinecone</th>
+                        <th>Weaviate</th>
+                    </tr>
+                    <tr>
+                        <td>部署方式</td>
+                        <td>开源/云服务</td>
+                        <td>云服务</td>
+                        <td>开源/云服务</td>
+                    </tr>
+                    <tr>
+                        <td>性能</td>
+                        <td>优秀</td>
+                        <td>良好</td>
+                        <td>良好</td>
+                    </tr>
+                </table>
+                
+                <h2>选型建议</h2>
+                <p>对于需要本地部署的企业应用，Milvus是首选；对于快速原型开发，Pinecone提供了便捷的云服务；Weaviate则在GraphQL支持方面具有优势。</p>
+            `,
+            category: "数据库",
+            date: "2023-12-28",
+            image: "https://picsum.photos/600/400?random=4",
+            status: "已发布"
         }
     ];
 }
 
-// 初始化博客管理系统
-document.addEventListener('DOMContentLoaded', initAdmin);
+// 页面加载完成后初始化
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initAdmin);
+} else {
+    initAdmin();
+}
