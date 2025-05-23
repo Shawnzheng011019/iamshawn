@@ -293,19 +293,93 @@
             }
         }
 
-        // 配置marked选项 - 使用稳定版本API
-        if (typeof marked !== 'undefined') {
-            marked.setOptions({
-                highlight: function(code, lang) {
-                    if (typeof Prism !== 'undefined' && Prism.languages[lang]) {
-                        return Prism.highlight(code, Prism.languages[lang], lang);
-                    } else {
-                        return code;
-                    }
-                },
-                breaks: true,
-                gfm: true
-            });
+        // 配置marked选项 - 简化为最稳定的方式
+        function initializeMarked() {
+            if (typeof marked === 'undefined') {
+                console.error('marked库未加载');
+                return false;
+            }
+            
+            try {
+                // 尝试现代API
+                if (marked.use) {
+                    marked.use({
+                        breaks: true,
+                        gfm: true
+                    });
+                    console.log('marked现代API配置成功');
+                } else if (marked.setOptions) {
+                    // 备用旧API
+                    marked.setOptions({
+                        breaks: true,
+                        gfm: true
+                    });
+                    console.log('marked传统API配置成功');
+                }
+                return true;
+            } catch (e) {
+                console.warn('marked配置失败，使用默认设置:', e);
+                return true; // 即使配置失败也可以继续使用默认设置
+            }
+        }
+
+        // 多层markdown解析函数
+        function parseMarkdown(markdown) {
+            console.log('开始解析markdown，内容长度:', markdown.length);
+            
+            // 方法1: 尝试现代API
+            try {
+                if (marked.parse) {
+                    const html = marked.parse(markdown);
+                    console.log('✅ 使用 marked.parse() 成功');
+                    return html;
+                }
+            } catch (e) {
+                console.warn('marked.parse() 失败:', e);
+            }
+            
+            // 方法2: 尝试直接调用
+            try {
+                if (typeof marked === 'function') {
+                    const html = marked(markdown);
+                    console.log('✅ 使用 marked() 直接调用成功');
+                    return html;
+                }
+            } catch (e) {
+                console.warn('marked()直接调用失败:', e);
+            }
+            
+            // 方法3: 手动解析(fallback)
+            console.warn('🔄 使用手动解析作为后备方案');
+            return manualMarkdownParse(markdown);
+        }
+        
+        // 手动markdown解析(简化版)
+        function manualMarkdownParse(markdown) {
+            return markdown
+                // 标题
+                .replace(/^### (.*$)/gm, '<h3>$1</h3>')
+                .replace(/^## (.*$)/gm, '<h2>$1</h2>')
+                .replace(/^# (.*$)/gm, '<h1>$1</h1>')
+                // 粗体和斜体
+                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                // 代码块
+                .replace(/```([\s\S]*?)```/g, '<pre><code>$1</code></pre>')
+                .replace(/`([^`]+)`/g, '<code>$1</code>')
+                // 链接
+                .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank">$1</a>')
+                // 列表
+                .replace(/^\* (.*)$/gm, '<li>$1</li>')
+                .replace(/^(\d+)\. (.*)$/gm, '<li>$2</li>')
+                // 段落
+                .replace(/\n\n/g, '</p>\n<p>')
+                .replace(/^(?!<[h|l|p|u|o|d])/gm, '<p>')
+                .replace(/(?![h|l|p|u|o|d|/]>)$/gm, '</p>')
+                // 清理多余的p标签
+                .replace(/<p><\/p>/g, '')
+                .replace(/<p>(<[h|l|u|o|d])/g, '$1')
+                .replace(/([h|l|u|o|d]>)<\/p>/g, '$1');
         }
 
         async function loadDoc(docName) {
@@ -325,36 +399,35 @@
             content.classList.add('hidden');
             
             try {
-                console.log(`开始加载文档: docs/${docName}.md`);
+                console.log(`📄 开始加载文档: docs/${docName}.md`);
                 
                 const response = await fetch(`docs/${docName}.md`);
-                console.log('Fetch响应状态:', response.status, response.statusText);
+                console.log('📡 Fetch响应状态:', response.status, response.statusText);
                 
                 if (!response.ok) {
                     throw new Error(`HTTP错误: ${response.status} ${response.statusText}`);
                 }
                 
                 const markdown = await response.text();
-                console.log('Markdown内容长度:', markdown.length);
+                console.log('📝 Markdown内容长度:', markdown.length);
                 
                 if (markdown.length === 0) {
                     throw new Error('文档内容为空');
                 }
                 
-                // 使用marked解析markdown - 使用稳定的API
-                let html;
-                if (typeof marked === 'function') {
-                    html = marked(markdown);
-                } else if (typeof marked === 'object' && marked.parse) {
-                    html = marked.parse(markdown);
-                } else {
-                    throw new Error('marked库加载失败或版本不兼容');
-                }
+                // 解析markdown
+                const html = parseMarkdown(markdown);
                 
-                console.log('HTML解析完成，内容预览:', html.substring(0, 200));
+                console.log('🎯 HTML解析完成，内容长度:', html.length);
                 
                 if (!html || html.length === 0) {
                     throw new Error('Markdown解析失败，生成的HTML为空');
+                }
+                
+                // 最终验证：确保不是原始markdown
+                if (html === markdown) {
+                    console.warn('⚠️ 检测到HTML与markdown相同，可能解析失败');
+                    throw new Error('Markdown解析失败，输出与输入相同');
                 }
                 
                 content.innerHTML = html;
@@ -368,10 +441,10 @@
                 
                 // 高亮代码
                 if (typeof Prism !== 'undefined' && Prism.highlightAll) {
-                    // 延迟执行以确保DOM已更新
                     setTimeout(() => {
                         Prism.highlightAll();
-                    }, 100);
+                        console.log('🎨 代码高亮完成');
+                    }, 200);
                 }
                 
                 // 更新导航栏活跃状态
@@ -380,8 +453,10 @@
                 // 滚动到顶部
                 window.scrollTo({ top: 0, behavior: 'smooth' });
                 
+                console.log('✅ 文档加载完成');
+                
             } catch (error) {
-                console.error('文档加载错误:', error);
+                console.error('❌ 文档加载错误:', error);
                 content.innerHTML = `
                     <div class="text-center py-12">
                         <i class="fa-solid fa-exclamation-triangle text-4xl text-red-500 mb-4"></i>
@@ -425,18 +500,24 @@
 
         // 检查URL参数，自动加载文档
         window.addEventListener('load', function() {
-            console.log('页面加载完成');
-            console.log('marked库状态:', typeof marked);
-            console.log('Prism库状态:', typeof Prism);
+            console.log('🚀 页面加载完成');
+            
+            // 初始化marked
+            const markedReady = initializeMarked();
+            console.log('marked库状态:', typeof marked, markedReady ? '✅' : '❌');
+            console.log('Prism库状态:', typeof Prism, typeof Prism !== 'undefined' ? '✅' : '❌');
             
             // 检查依赖库
             if (typeof marked === 'undefined') {
-                console.error('marked库未加载');
+                console.error('❌ marked库未加载');
                 document.getElementById('loading').innerHTML = `
                     <div class="text-center py-8">
                         <i class="fa-solid fa-exclamation-triangle text-4xl text-red-500 mb-4"></i>
                         <h3 class="text-xl font-bold text-gray-800 mb-2">依赖库加载失败</h3>
-                        <p class="text-gray-600">marked.js库未能正确加载，请检查网络连接</p>
+                        <p class="text-gray-600">marked.js库未能正确加载，请检查网络连接或刷新页面重试</p>
+                        <button onclick="location.reload()" class="mt-4 bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors">
+                            刷新页面
+                        </button>
                     </div>
                 `;
                 return;
@@ -446,8 +527,10 @@
             const urlParams = new URLSearchParams(window.location.search);
             const doc = urlParams.get('doc');
             if (doc) {
-                console.log('自动加载文档:', doc);
+                console.log('🔗 自动加载文档:', doc);
                 loadDoc(doc);
+            } else {
+                console.log('📋 等待用户选择文档');
             }
         });
 
