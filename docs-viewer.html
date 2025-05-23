@@ -442,13 +442,64 @@
             
             try {
                 console.log('📥 正在获取markdown文件...');
-                const response = await fetch(`docs/${docName}.md`);
                 
-                if (!response.ok) {
-                    throw new Error(`HTTP错误: ${response.status} ${response.statusText}`);
+                // 添加时间戳避免缓存问题，并尝试多种路径
+                const timestamp = Date.now();
+                const possibleUrls = [
+                    `docs/${docName}.md?v=${timestamp}`,
+                    `./docs/${docName}.md?v=${timestamp}`,
+                    `/docs/${docName}.md?v=${timestamp}`,
+                    `https://raw.githubusercontent.com/Shawnzheng011019/iamshawn/main/docs/${docName}.md`
+                ];
+                
+                let response = null;
+                let markdown = null;
+                let finalUrl = '';
+                
+                // 尝试多个URL直到找到有效的markdown内容
+                for (const url of possibleUrls) {
+                    try {
+                        console.log('📥 尝试URL:', url);
+                        response = await fetch(url, {
+                            method: 'GET',
+                            headers: {
+                                'Cache-Control': 'no-cache',
+                                'Pragma': 'no-cache'
+                            }
+                        });
+                        
+                        console.log('📥 响应状态:', response.status, response.statusText);
+                        console.log('📥 Content-Type:', response.headers.get('content-type'));
+                        
+                        if (response.ok) {
+                            const text = await response.text();
+                            console.log('📥 响应内容长度:', text.length);
+                            console.log('📥 响应前100字符:', text.substring(0, 100));
+                            
+                            // 检查是否是真正的markdown内容（不是HTML页面）
+                            if (!text.startsWith('<!DOCTYPE') && 
+                                !text.startsWith('<html') && 
+                                !text.includes('<title>') &&
+                                text.length > 100) {
+                                markdown = text;
+                                finalUrl = url;
+                                console.log('✅ 找到有效的markdown内容');
+                                break;
+                            } else {
+                                console.log('⚠️ 响应内容似乎是HTML页面，尝试下一个URL');
+                            }
+                        }
+                    } catch (urlError) {
+                        console.log('❌ URL失败:', url, urlError.message);
+                        continue;
+                    }
                 }
                 
-                const markdown = await response.text();
+                if (!markdown) {
+                    throw new Error('无法从任何URL获取有效的markdown内容');
+                }
+                
+                console.log('📥 最终使用URL:', finalUrl);
                 console.log('📥 文件获取成功，长度:', markdown.length);
                 console.log('📥 文件前100字符:', markdown.substring(0, 100));
                 
@@ -520,10 +571,10 @@
                         <div class="space-y-2">
                             <p class="text-sm text-gray-500">可能的原因：</p>
                             <ul class="text-sm text-gray-500 text-left inline-block">
-                                <li>• 网络连接问题</li>
-                                <li>• 文档文件不存在</li>
-                                <li>• Markdown解析器加载失败</li>
-                                <li>• 解析结果验证失败</li>
+                                <li>• 服务器将markdown请求重写为HTML</li>
+                                <li>• 文件路径配置问题</li>
+                                <li>• 缓存问题</li>
+                                <li>• CDN或代理服务器配置问题</li>
                             </ul>
                         </div>
                         <div class="mt-6 space-x-4">

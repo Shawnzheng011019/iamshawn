@@ -1,12 +1,17 @@
 {
-  "rewrites": [
+  "headers": [
     {
-      "source": "/blog",
-      "destination": "/blog.html"
-    },
-    {
-      "source": "/(.*)\\.md",
-      "destination": "/blog/post.html"
+      "source": "/docs/(.*\\.md)",
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "text/plain; charset=utf-8"
+        },
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=3600"
+        }
+      ]
     }
   ]
 } 
