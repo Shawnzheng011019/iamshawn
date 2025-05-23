@@ -9,27 +9,39 @@ const POSTS_PER_PAGE = 6; // 每页显示的文章数
 // 多数据源配置 - 按优先级排序
 const DATA_SOURCES = [
     {
+        name: 'Local Vercel',
+        baseUrl: '',
+        priority: 1,
+        description: 'Vercel 本地部署'
+    },
+    {
+        name: 'Gitee Mirror',
+        baseUrl: 'https://gitee.com/shawnzheng2001/iamshawn/raw/main',
+        priority: 2,
+        description: 'Gitee 国内镜像'
+    },
+    {
         name: 'jsDelivr CDN',
         baseUrl: 'https://cdn.jsdelivr.net/gh/Shawnzheng011019/iamshawn@main',
-        priority: 1,
+        priority: 3,
         description: '国内 CDN 加速'
     },
     {
         name: 'GitHub Raw',
         baseUrl: 'https://raw.githubusercontent.com/Shawnzheng011019/iamshawn/main',
-        priority: 2,
+        priority: 4,
         description: '官方 GitHub'
     },
     {
         name: 'jsDelivr Backup',
         baseUrl: 'https://fastly.jsdelivr.net/gh/Shawnzheng011019/iamshawn@main',
-        priority: 3,
+        priority: 5,
         description: 'CDN 备用节点'
     },
     {
         name: 'GitHub Proxy',
         baseUrl: 'https://ghproxy.com/https://raw.githubusercontent.com/Shawnzheng011019/iamshawn/main',
-        priority: 4,
+        priority: 6,
         description: 'GitHub 代理'
     }
 ];
