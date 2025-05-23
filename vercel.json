@@ -53,6 +53,12 @@
       ]
     }
   ],
+  "rewrites": [
+    {
+      "source": "/blog",
+      "destination": "/blog.html"
+    }
+  ],
   "cleanUrls": false,
   "trailingSlash": false
 } 
