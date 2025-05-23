@@ -77,7 +77,7 @@
             </nav>
             
             <!-- 移动端汉堡菜单 -->
-            <button id="menu-toggle" class="md:hidden text-dark focus:outline-none">
+            <button id="menu-toggle" type="button" class="md:hidden text-dark focus:outline-none" aria-label="切换菜单">
                 <i class="fa-solid fa-bars text-xl"></i>
             </button>
         </div>
@@ -114,7 +114,7 @@
             <div class="container mx-auto px-4 py-20 flex flex-col md:flex-row items-center">
                 <div class="md:w-1/2 mb-10 md:mb-0">
                     <h1 class="text-[clamp(2.5rem,5vw,4rem)] font-bold leading-tight text-shadow">
-                        郑啸 <span class="text-primary">算法工程师</span> & <span class="text-primary">后端开发工程师</span>
+                        郑啸 <span class="text-primary">算法工程师</span> &amp; <span class="text-primary">后端开发工程师</span>
                     </h1>
                     <p class="mt-6 text-lg md:text-xl text-gray-600 max-w-xl">
                         专注于RAG系统开发、MCP系统开发、大语言模型微调与部署的技术探索者
@@ -130,13 +130,13 @@
                         </a>
                     </div>
                     <div class="mt-10 flex items-center space-x-4">
-                        <a href="https://github.com/Shawnzheng011019" target="_blank" class="text-dark hover:text-primary transition-colors text-2xl">
+                        <a href="https://github.com/Shawnzheng011019" target="_blank" class="text-dark hover:text-primary transition-colors text-2xl" aria-label="GitHub">
                             <i class="fa-brands fa-github"></i>
                         </a>
-                        <a href="mailto:Shawnzheng2001@outlook.com" target="_blank" class="text-dark hover:text-primary transition-colors text-2xl">
+                        <a href="mailto:Shawnzheng2001@outlook.com" target="_blank" class="text-dark hover:text-primary transition-colors text-2xl" aria-label="邮箱">
                             <i class="fa-solid fa-envelope"></i>
                         </a>
-                        <a href="tel:16678627572" target="_blank" class="text-dark hover:text-primary transition-colors text-2xl">
+                        <a href="tel:16678627572" target="_blank" class="text-dark hover:text-primary transition-colors text-2xl" aria-label="电话">
                             <i class="fa-solid fa-phone"></i>
                         </a>
                     </div>
@@ -374,7 +374,7 @@
                             </div>
                             <div class="flex justify-between items-center">
                                 <span class="text-primary font-medium">分部负责人</span>
-                                <a href="#" class="text-gray-500 hover:text-primary transition-colors">
+                                <a href="#" class="text-gray-500 hover:text-primary transition-colors" aria-label="查看详情">
                                     <i class="fa-solid fa-arrow-right"></i>
                                 </a>
                             </div>
@@ -399,7 +399,7 @@
                             </div>
                             <div class="flex justify-between items-center">
                                 <span class="text-primary font-medium">成员</span>
-                                <a href="#" class="text-gray-500 hover:text-primary transition-colors">
+                                <a href="#" class="text-gray-500 hover:text-primary transition-colors" aria-label="查看详情">
                                     <i class="fa-solid fa-arrow-right"></i>
                                 </a>
                             </div>
@@ -425,7 +425,7 @@
                             </div>
                             <div class="flex justify-between items-center">
                                 <span class="text-primary font-medium">成员</span>
-                                <a href="#" class="text-gray-500 hover:text-primary transition-colors">
+                                <a href="#" class="text-gray-500 hover:text-primary transition-colors" aria-label="查看详情">
                                     <i class="fa-solid fa-arrow-right"></i>
                                 </a>
                             </div>
@@ -451,7 +451,7 @@
                             </div>
                             <div class="flex justify-between items-center">
                                 <span class="text-primary font-medium">成员</span>
-                                <a href="#" class="text-gray-500 hover:text-primary transition-colors">
+                                <a href="#" class="text-gray-500 hover:text-primary transition-colors" aria-label="查看详情">
                                     <i class="fa-solid fa-arrow-right"></i>
                                 </a>
                             </div>
@@ -690,16 +690,13 @@
                             <div class="mt-10">
                                 <h4 class="font-bold mb-4">关注我</h4>
                                 <div class="flex space-x-4">
-                                    <a href="#" class="w-10 h-10 bg-primary/10 hover:bg-primary/20 text-primary rounded-full flex items-center justify-center transition-colors">
-                                        <i class="fa-brands fa-github"></i>
-                                    </a>
-                                    <a href="#" class="w-10 h-10 bg-primary/10 hover:bg-primary/20 text-primary rounded-full flex items-center justify-center transition-colors">
+                                    <a href="#" class="w-10 h-10 bg-primary/10 hover:bg-primary/20 text-primary rounded-full flex items-center justify-center transition-colors" aria-label="LinkedIn">
                                         <i class="fa-brands fa-linkedin"></i>
                                     </a>
-                                    <a href="#" class="w-10 h-10 bg-primary/10 hover:bg-primary/20 text-primary rounded-full flex items-center justify-center transition-colors">
+                                    <a href="#" class="w-10 h-10 bg-primary/10 hover:bg-primary/20 text-primary rounded-full flex items-center justify-center transition-colors" aria-label="Twitter">
                                         <i class="fa-brands fa-twitter"></i>
                                     </a>
-                                    <a href="#" class="w-10 h-10 bg-primary/10 hover:bg-primary/20 text-primary rounded-full flex items-center justify-center transition-colors">
+                                    <a href="#" class="w-10 h-10 bg-primary/10 hover:bg-primary/20 text-primary rounded-full flex items-center justify-center transition-colors" aria-label="微信">
                                         <i class="fa-brands fa-weixin"></i>
                                     </a>
                                 </div>
@@ -743,18 +740,18 @@
             <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
                 <div>
                     <h3 class="text-xl font-bold mb-4">郑啸</h3>
-                    <p class="text-gray-400">算法工程师 & 后端开发工程师</p>
+                    <p class="text-gray-400">算法工程师 &amp; 后端开发工程师</p>
                     <div class="mt-6 flex space-x-4">
-                        <a href="#" class="text-gray-400 hover:text-white transition-colors">
+                        <a href="#" class="text-gray-400 hover:text-white transition-colors" aria-label="GitHub">
                             <i class="fa-brands fa-github"></i>
                         </a>
-                        <a href="#" class="text-gray-400 hover:text-white transition-colors">
+                        <a href="#" class="text-gray-400 hover:text-white transition-colors" aria-label="LinkedIn">
                             <i class="fa-brands fa-linkedin"></i>
                         </a>
-                        <a href="#" class="text-gray-400 hover:text-white transition-colors">
+                        <a href="#" class="text-gray-400 hover:text-white transition-colors" aria-label="Twitter">
                             <i class="fa-brands fa-twitter"></i>
                         </a>
-                        <a href="#" class="text-gray-400 hover:text-white transition-colors">
+                        <a href="#" class="text-gray-400 hover:text-white transition-colors" aria-label="微信">
                             <i class="fa-brands fa-weixin"></i>
                         </a>
                     </div>
@@ -795,7 +792,7 @@
     </footer>
 
     <!-- 返回顶部按钮 -->
-    <button id="back-to-top" class="fixed bottom-8 right-8 bg-primary hover:bg-primary/90 text-white w-12 h-12 rounded-full flex items-center justify-center shadow-lg transition-all duration-300 opacity-0 invisible">
+    <button id="back-to-top" type="button" class="fixed bottom-8 right-8 bg-primary hover:bg-primary/90 text-white w-12 h-12 rounded-full flex items-center justify-center shadow-lg transition-all duration-300 opacity-0 invisible" aria-label="返回顶部">
         <i class="fa-solid fa-chevron-up"></i>
     </button>
 
