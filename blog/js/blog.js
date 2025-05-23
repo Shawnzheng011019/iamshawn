@@ -30,6 +30,18 @@ const EMBEDDED_POSTS_DATA = [
     "status": "published"
   },
   {
+    "id": "ai-agent-protocols-comparison",
+    "title": "AI代理协议大对决：Function Calling vs MCP vs A2A",
+    "date": "2025-01-02",
+    "category": "人工智能",
+    "tags": ["AI代理", "MCP", "Function Calling", "A2A", "大语言模型", "协议对比"],
+    "summary": "深入分析三大AI代理协议：OpenAI的Function Calling、Anthropic的MCP和Google的A2A，为开发者选择最适合的AI代理架构提供指导。",
+    "cover": "posts/2025-01-02-ai-agent-protocols-comparison/cover.png",
+    "readingTime": "30 分钟",
+    "path": "posts/2025-01-02-ai-agent-protocols-comparison/README.md",
+    "status": "published"
+  },
+  {
     "id": "milvus-integration-deepseacher",
     "title": "深度集成：Milvus与DeepSearcher结合实现高性能向量检索与智能分析",
     "date": "2025-05-15",
@@ -99,6 +111,42 @@ const EMBEDDED_POSTS_DATA = [
     "cover": "posts/2024-04-20-deepseacher-silicon-flow/cover.png",
     "readingTime": "20 分钟",
     "path": "posts/2024-04-20-deepseacher-silicon-flow/README.md",
+    "status": "published"
+  },
+  {
+    "id": "deepseacher-agentic-rag",
+    "title": "DeepSearcher深度解析：Agentic RAG架构如何重新定义智能搜索",
+    "date": "2025-04-15",
+    "category": "技术原理",
+    "tags": ["DeepSearcher", "Agentic RAG", "智能搜索", "大语言模型", "向量数据库", "AI架构"],
+    "summary": "深入剖析DeepSearcher的Agentic RAG架构设计理念、核心组件和工作原理，探讨其如何突破传统RAG的局限，实现更智能的私有数据检索与分析。",
+    "cover": "posts/2024-04-15-deepseacher-agentic-rag/cover.png",
+    "readingTime": "16 分钟",
+    "path": "posts/2024-04-15-deepseacher-agentic-rag/README.md",
+    "status": "published"
+  },
+  {
+    "id": "graph-rag-vs-deepseacher",
+    "title": "告别Graph RAG，拥抱DeepSearcher：为什么代理思维是RAG的未来",
+    "date": "2025-04-10",
+    "category": "技术趋势",
+    "tags": ["DeepSearcher", "Graph RAG", "Agentic RAG", "知识图谱", "向量数据库", "大语言模型"],
+    "summary": "本文对比分析Graph RAG与DeepSearcher的Agentic RAG架构，探讨为什么基于代理思维的RAG方案可能是未来发展方向，以及两种架构在实际应用中的优劣势。",
+    "cover": "posts/2024-04-10-graph-rag-vs-deepseacher/cover.png",
+    "readingTime": "15 分钟",
+    "path": "posts/2024-04-10-graph-rag-vs-deepseacher/README.md",
+    "status": "published"
+  },
+  {
+    "id": "deepseacher-milestone",
+    "title": "开源里程碑：DeepSearcher突破1500星，私有数据智能搜索的新标杆",
+    "date": "2025-04-05",
+    "category": "开源社区",
+    "tags": ["DeepSearcher", "开源里程碑", "GitHub", "私有数据", "智能搜索", "社区贡献"],
+    "summary": "DeepSearcher项目在GitHub上突破1500星，本文分享项目的发展历程、核心功能、社区反馈以及未来规划，展示这一开源智能搜索工具如何改变私有数据处理方式。",
+    "cover": "posts/2024-04-05-deepseacher-milestone/cover.png",
+    "readingTime": "13 分钟",
+    "path": "posts/2024-04-05-deepseacher-milestone/README.md",
     "status": "published"
   },
   {
