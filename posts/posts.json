@@ -1,5 +1,17 @@
 [
   {
+    "id": "ai-content-humanization-guide",
+    "title": "AI写作反检测终极指南：让你的内容\"人味儿\"十足",
+    "date": "2025-01-16",
+    "category": "AI工具技巧",
+    "tags": ["AI写作", "AIGC检测", "提示词工程", "智能体配置", "内容创作", "反检测技巧"],
+    "summary": "在AI内容泛滥的时代，如何让机器写出的文字具备人类的温度？本文将揭秘通过智能体配置和提示词工程，让AI生成内容巧妙规避检测的实战技巧。",
+    "cover": "posts/2025-01-16-ai-content-humanization-guide/cover.png",
+    "readingTime": "20 分钟",
+    "path": "posts/2025-01-16-ai-content-humanization-guide/README.md",
+    "status": "published"
+  },
+  {
     "id": "milvus-integration-deepseacher",
     "title": "深度集成：Milvus与DeepSearcher结合实现高性能向量检索与智能分析",
     "date": "2025-05-15",
