@@ -10,7 +10,7 @@
     <link rel="preload" href="style.css" as="style">
     <link rel="dns-prefetch" href="//cdn.tailwindcss.com">
     <link rel="dns-prefetch" href="//cdnjs.cloudflare.com">
-    <link rel="dns-prefetch" href="//picsum.photos">
+    <link rel="dns-prefetch" href="//raw.githubusercontent.com">
     
     <!-- 关键CSS内联 -->
     <style>
@@ -21,11 +21,19 @@
         .text-primary { color: #165DFF; }
         .bg-primary { background-color: #165DFF; }
         .hidden { display: none; }
-        .fixed { position: fixed; }
         .animate-pulse { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
         @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .5; } }
         .loading-skeleton { background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%); background-size: 200% 100%; animation: loading 1.5s infinite; }
         @keyframes loading { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+        .loading-spinner {
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #165DFF;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
     
     <!-- 字体加载 -->
@@ -118,21 +126,17 @@
     </header>
 
     <main class="pt-20">
-        <!-- 管理员入口 - 地球图标（延迟显示） -->
-        <div id="admin-entry" class="fixed top-24 right-6 z-40 opacity-0 transition-opacity duration-500">
-            <a href="blog/admin/index.html" 
-               class="w-10 h-10 bg-gray-100 hover:bg-gray-200 text-gray-600 hover:text-primary rounded-full flex items-center justify-center transition-all duration-300 shadow-sm hover:shadow-md"
-               title="管理后台">
-                <i class="fa-solid fa-globe text-sm"></i>
-            </a>
-        </div>
-        
         <!-- 博客标题区域 -->
         <section class="py-20 bg-gradient-to-br from-primary/10 to-secondary/10">
             <div class="container mx-auto px-4">
                 <div class="text-center">
                     <h1 class="text-4xl md:text-5xl font-bold mb-6">我的博客</h1>
-                    <p class="text-lg text-gray-600 max-w-2xl mx-auto">分享我在人工智能、大语言模型和开发领域的思考与经验</p>
+                    <p class="text-lg text-gray-600 max-w-2xl mx-auto mb-8">分享我在人工智能、大语言模型和开发领域的思考与经验</p>
+                    <div class="flex justify-center items-center space-x-6 text-sm text-gray-500">
+                        <span><i class="fa-solid fa-rss mr-2"></i>基于GitHub更新</span>
+                        <span><i class="fa-solid fa-markdown mr-2"></i>Markdown驱动</span>
+                        <span><i class="fa-solid fa-rocket mr-2"></i>实时同步</span>
+                    </div>
                 </div>
             </div>
         </section>
@@ -140,14 +144,17 @@
         <!-- 博客文章列表 -->
         <section class="py-16 bg-white">
             <div class="container mx-auto px-4">
-                <div class="mb-10 flex justify-between items-center">
-                    <h2 class="text-2xl font-bold">最新文章</h2>
+                <div class="mb-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                    <div>
+                        <h2 class="text-2xl font-bold mb-2">最新文章</h2>
+                        <p class="text-gray-600">直接从GitHub仓库读取，保持内容实时更新</p>
+                    </div>
                     <div class="relative">
                         <input 
                             type="text" 
                             id="search-input" 
                             placeholder="搜索文章..." 
-                            class="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
+                            class="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary w-64"
                         >
                         <i class="fa-solid fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
                     </div>
@@ -179,6 +186,7 @@
                         <span>郑啸</span>
                     </a>
                     <p class="mt-2 text-gray-400">算法工程师 & 后端开发工程师</p>
+                    <p class="mt-1 text-sm text-gray-500">博客内容基于GitHub Markdown实时更新</p>
                 </div>
                 
                 <div class="flex space-x-6">
@@ -204,7 +212,7 @@
 
     <!-- 博客文章模板 -->
     <template id="blog-post-template">
-        <article class="bg-white rounded-lg shadow-sm overflow-hidden card-hover">
+        <article class="bg-white rounded-lg shadow-sm overflow-hidden card-hover border border-gray-100">
             <img src="" alt="" class="post-image w-full h-48 object-cover lazy-load" loading="lazy">
             <div class="p-6">
                 <div class="flex items-center mb-2">
@@ -212,7 +220,7 @@
                     <span class="mx-2 text-gray-300">•</span>
                     <span class="post-category text-sm text-primary"></span>
                 </div>
-                <h3 class="post-title text-xl font-bold mb-3 line-clamp-2"></h3>
+                <h3 class="post-title text-xl font-bold mb-3 line-clamp-2 hover:text-primary transition-colors cursor-pointer"></h3>
                 <p class="post-summary text-gray-600 mb-4 line-clamp-3"></p>
                 <a href="#" class="post-link inline-flex items-center text-primary hover:text-secondary transition-colors font-medium">
                     阅读更多
@@ -224,11 +232,11 @@
 
     <!-- 文章详情模态框 -->
     <div id="article-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
-        <div class="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto mx-4">
             <div class="p-6">
                 <div class="flex justify-between items-start mb-6">
-                    <h2 id="modal-title" class="text-2xl font-bold"></h2>
-                    <button id="close-modal" class="text-gray-500 hover:text-dark">
+                    <h2 id="modal-title" class="text-2xl font-bold flex-1 mr-4"></h2>
+                    <button id="close-modal" class="text-gray-500 hover:text-dark transition-colors">
                         <i class="fa-solid fa-times text-xl"></i>
                     </button>
                 </div>
@@ -237,8 +245,8 @@
                     <span class="mx-2">•</span>
                     <span id="modal-category" class="text-primary"></span>
                 </div>
-                <img id="modal-image" src="" alt="" class="w-full h-64 object-cover rounded-lg mb-6 lazy-load" loading="lazy">
-                <div id="modal-content" class="prose max-w-none"></div>
+                <img id="modal-image" src="" alt="" class="w-full h-64 object-cover rounded-lg mb-6 lazy-load hidden" loading="lazy">
+                <div id="modal-content" class="prose max-w-none prose-lg prose-headings:text-dark prose-headings:font-bold prose-p:text-gray-700 prose-strong:text-dark prose-code:bg-gray-100 prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-pre:bg-gray-900 prose-pre:text-gray-100"></div>
             </div>
         </div>
     </div>
@@ -263,14 +271,6 @@
                 }, 300);
             }
         }
-        
-        // 延迟显示管理员入口
-        setTimeout(() => {
-            const adminEntry = document.getElementById('admin-entry');
-            if (adminEntry) {
-                adminEntry.style.opacity = '1';
-            }
-        }, 1000);
         
         showLoading();
     </script>

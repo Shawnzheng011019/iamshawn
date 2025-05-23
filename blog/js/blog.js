@@ -1,11 +1,12 @@
 /**
- * 博客前端脚本 - 优化版本
- * 处理博客文章的显示和交互，优化性能
+ * 博客前端脚本 - GitHub版本
+ * 从GitHub仓库读取markdown文章，支持实时更新
  */
 
 // 常量定义
 const POSTS_PER_PAGE = 6; // 每页显示的文章数
-const STORAGE_KEY = 'blog_posts'; // 本地存储键名
+const GITHUB_API_BASE = 'https://api.github.com/repos/Shawnzheng011019/iamshawn/contents';
+const GITHUB_RAW_BASE = 'https://raw.githubusercontent.com/Shawnzheng011019/iamshawn/main';
 
 // DOM 元素缓存
 let domCache = {};
@@ -76,7 +77,7 @@ function initBlog() {
     setupEventListeners();
     
     // 加载博客文章
-    loadPosts();
+    loadPostsFromGitHub();
     
     isLoading = false;
 }
@@ -113,29 +114,77 @@ function setupEventListeners() {
 }
 
 /**
- * 从本地存储加载博客文章
+ * 从GitHub加载文章列表
  */
-function loadPosts() {
+async function loadPostsFromGitHub() {
     try {
-        // 从 localStorage 获取文章数据
-        const postsData = localStorage.getItem(STORAGE_KEY);
+        showLoadingState();
         
-        if (postsData) {
-            const parsedData = JSON.parse(postsData);
-            allPosts = parsedData.filter(post => post.status === '已发布');
-            allPosts.sort((a, b) => new Date(b.date) - new Date(a.date)); // 按日期降序排序
-        } else {
-            // 示例文章（如果没有存储的文章）
-            allPosts = generateSamplePosts();
-            savePosts(allPosts);
+        // 获取文章索引
+        const response = await fetch(`${GITHUB_RAW_BASE}/posts/posts.json`);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
         }
+        
+        const postsData = await response.json();
+        allPosts = postsData.filter(post => post.status === 'published');
+        allPosts.sort((a, b) => new Date(b.date) - new Date(a.date));
         
         // 初始化显示
         filteredPosts = [...allPosts];
         renderPosts();
+        
+        hideLoadingState();
+        
     } catch (error) {
-        console.error('加载文章时出错:', error);
-        showErrorMessage('加载文章失败，请刷新页面重试');
+        console.error('加载文章失败:', error);
+        showErrorMessage('加载文章失败，请检查网络连接或稍后重试');
+        showOfflineMessage();
+    }
+}
+
+/**
+ * 显示加载状态
+ */
+function showLoadingState() {
+    if (domCache.blogPostsContainer) {
+        domCache.blogPostsContainer.innerHTML = `
+            <div class="col-span-full flex justify-center items-center py-12">
+                <div class="text-center">
+                    <div class="loading-spinner mx-auto mb-4"></div>
+                    <p class="text-gray-500">正在从GitHub加载文章...</p>
+                </div>
+            </div>
+        `;
+    }
+}
+
+/**
+ * 隐藏加载状态
+ */
+function hideLoadingState() {
+    // 加载完成，移除加载指示器
+    const loadingElement = document.querySelector('.loading-spinner');
+    if (loadingElement) {
+        loadingElement.parentElement.parentElement.remove();
+    }
+}
+
+/**
+ * 显示离线消息
+ */
+function showOfflineMessage() {
+    if (domCache.blogPostsContainer) {
+        domCache.blogPostsContainer.innerHTML = `
+            <div class="col-span-full text-center py-12">
+                <div class="text-5xl text-gray-300 mb-4"><i class="fa-solid fa-wifi-slash"></i></div>
+                <h3 class="text-xl font-bold text-gray-500 mb-2">网络连接问题</h3>
+                <p class="text-gray-400 mb-4">无法从GitHub加载文章，请检查网络连接</p>
+                <button onclick="loadPostsFromGitHub()" class="bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors">
+                    重新加载
+                </button>
+            </div>
+        `;
     }
 }
 
@@ -148,13 +197,12 @@ function filterPosts(query) {
         filteredPosts = [...allPosts];
     } else {
         query = query.toLowerCase().trim();
-        // 使用更高效的过滤方法
         filteredPosts = allPosts.filter(post => {
             const searchFields = [
                 post.title,
-                post.content,
                 post.summary,
-                post.category
+                post.category,
+                ...(post.tags || [])
             ].join(' ').toLowerCase();
             
             return searchFields.includes(query);
@@ -166,7 +214,7 @@ function filterPosts(query) {
 }
 
 /**
- * 渲染文章列表 - 优化版本
+ * 渲染文章列表
  */
 function renderPosts() {
     if (!domCache.blogPostsContainer) return;
@@ -215,7 +263,7 @@ function createNoPostsMessage() {
 }
 
 /**
- * 渲染单个文章卡片 - 优化版本
+ * 渲染单个文章卡片
  * @param {Object} post - 文章对象
  * @returns {HTMLElement} - 文章卡片元素
  */
@@ -236,15 +284,9 @@ function renderPostCard(post) {
     };
     
     // 优化图片加载
-    if (post.image) {
-        elements.image.dataset.src = post.image;
-        elements.image.alt = post.title;
-    } else {
-        // 使用高质量占位图
-        const placeholderUrl = `https://picsum.photos/600/400?random=${post.id || Math.floor(Math.random() * 100)}`;
-        elements.image.dataset.src = placeholderUrl;
-        elements.image.alt = '文章配图';
-    }
+    const coverImage = post.cover || `https://picsum.photos/600/400?random=${post.id}`;
+    elements.image.dataset.src = `${GITHUB_RAW_BASE}/${coverImage}`;
+    elements.image.alt = post.title;
     
     // 添加到懒加载观察器
     if (imageObserver) {
@@ -259,6 +301,14 @@ function renderPostCard(post) {
     elements.date.textContent = formatDate(post.date);
     elements.category.textContent = post.category;
     elements.summary.textContent = post.summary;
+    
+    // 添加阅读时间
+    if (post.readingTime) {
+        const readingTime = document.createElement('span');
+        readingTime.className = 'text-sm text-gray-400 ml-2';
+        readingTime.textContent = `· ${post.readingTime}`;
+        elements.date.parentNode.appendChild(readingTime);
+    }
     
     // 使用事件委托优化事件处理
     elements.article.addEventListener('click', (e) => {
@@ -276,36 +326,167 @@ function renderPostCard(post) {
 }
 
 /**
- * 打开文章详情 - 优化版本
+ * 打开文章详情
  * @param {Object} post - 文章对象 
  */
-function openArticle(post) {
+async function openArticle(post) {
     if (!domCache.articleModal) return;
     
-    // 批量更新模态框内容
+    try {
+        // 显示模态框加载状态
+        showModalLoading(post);
+        
+        // 从GitHub获取markdown内容
+        const response = await fetch(`${GITHUB_RAW_BASE}/${post.path}`);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const markdownContent = await response.text();
+        
+        // 解析markdown为HTML（简单解析）
+        const htmlContent = parseMarkdownToHTML(markdownContent);
+        
+        // 更新模态框内容
+        updateModalContent(post, htmlContent);
+        
+        // 显示模态框
+        domCache.articleModal.classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+        
+    } catch (error) {
+        console.error('加载文章内容失败:', error);
+        showErrorMessage('加载文章内容失败，请稍后重试');
+        closeModal();
+    }
+}
+
+/**
+ * 显示模态框加载状态
+ * @param {Object} post - 文章对象
+ */
+function showModalLoading(post) {
     const updates = [
         [domCache.modalTitle, 'textContent', post.title],
         [domCache.modalDate, 'textContent', formatDate(post.date)],
         [domCache.modalCategory, 'textContent', post.category],
-        [domCache.modalContent, 'innerHTML', post.content]
+        [domCache.modalContent, 'innerHTML', '<div class="flex justify-center items-center py-8"><div class="loading-spinner"></div><span class="ml-2">正在加载文章内容...</span></div>']
     ];
     
     updates.forEach(([element, property, value]) => {
         if (element) element[property] = value;
     });
     
-    // 优化模态框图片加载
-    if (domCache.modalImage && post.image) {
-        domCache.modalImage.src = post.image;
+    // 设置封面图片
+    if (domCache.modalImage && post.cover) {
+        domCache.modalImage.src = `${GITHUB_RAW_BASE}/${post.cover}`;
         domCache.modalImage.alt = post.title;
         domCache.modalImage.style.display = 'block';
     } else if (domCache.modalImage) {
         domCache.modalImage.style.display = 'none';
     }
+}
+
+/**
+ * 更新模态框内容
+ * @param {Object} post - 文章对象
+ * @param {string} htmlContent - HTML内容
+ */
+function updateModalContent(post, htmlContent) {
+    if (domCache.modalContent) {
+        domCache.modalContent.innerHTML = htmlContent;
+        
+        // 添加代码高亮
+        highlightCode();
+        
+        // 添加文章元信息
+        addArticleMetadata(post);
+    }
+}
+
+/**
+ * 简单的Markdown到HTML转换
+ * @param {string} markdown - Markdown内容
+ * @returns {string} - HTML内容
+ */
+function parseMarkdownToHTML(markdown) {
+    // 移除文章信息部分（## 文章信息 到 --- 之间的内容）
+    markdown = markdown.replace(/## 文章信息[\s\S]*?---\s*\n/, '');
     
-    // 显示模态框
-    domCache.articleModal.classList.remove('hidden');
-    document.body.style.overflow = 'hidden'; // 防止背景滚动
+    // 基本的markdown转换
+    let html = markdown
+        // 标题
+        .replace(/^### (.*$)/gim, '<h3>$1</h3>')
+        .replace(/^## (.*$)/gim, '<h2>$1</h2>')
+        .replace(/^# (.*$)/gim, '<h1>$1</h1>')
+        // 粗体和斜体
+        .replace(/\*\*(.*)\*\*/gim, '<strong>$1</strong>')
+        .replace(/\*(.*)\*/gim, '<em>$1</em>')
+        // 代码块
+        .replace(/```([\s\S]*?)```/gim, '<pre><code>$1</code></pre>')
+        // 行内代码
+        .replace(/`([^`]+)`/gim, '<code>$1</code>')
+        // 链接
+        .replace(/\[([^\]]+)\]\(([^)]+)\)/gim, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>')
+        // 引用
+        .replace(/^> (.*$)/gim, '<blockquote>$1</blockquote>')
+        // 列表
+        .replace(/^\* (.*$)/gim, '<li>$1</li>')
+        .replace(/^- (.*$)/gim, '<li>$1</li>')
+        .replace(/^\d+\. (.*$)/gim, '<li>$1</li>')
+        // 段落
+        .replace(/\n\n/gim, '</p><p>')
+        .replace(/\n/gim, '<br>');
+    
+    // 包装段落
+    html = '<p>' + html + '</p>';
+    
+    // 清理多余的段落标签
+    html = html
+        .replace(/<p><\/p>/gim, '')
+        .replace(/<p>(<h[1-6]>)/gim, '$1')
+        .replace(/(<\/h[1-6]>)<\/p>/gim, '$1')
+        .replace(/<p>(<pre>)/gim, '$1')
+        .replace(/(<\/pre>)<\/p>/gim, '$1')
+        .replace(/<p>(<blockquote>)/gim, '$1')
+        .replace(/(<\/blockquote>)<\/p>/gim, '$1');
+    
+    // 处理列表
+    html = html.replace(/(<li>.*<\/li>)/gims, '<ul>$1</ul>');
+    
+    return html;
+}
+
+/**
+ * 代码高亮（简单实现）
+ */
+function highlightCode() {
+    const codeBlocks = domCache.modalContent.querySelectorAll('pre code');
+    codeBlocks.forEach(block => {
+        block.classList.add('language-javascript'); // 默认为JavaScript高亮
+        // 这里可以集成Prism.js或highlight.js进行语法高亮
+    });
+}
+
+/**
+ * 添加文章元信息
+ * @param {Object} post - 文章对象
+ */
+function addArticleMetadata(post) {
+    if (!domCache.modalContent) return;
+    
+    const metadata = document.createElement('div');
+    metadata.className = 'mt-8 pt-6 border-t border-gray-200';
+    metadata.innerHTML = `
+        <div class="flex flex-wrap gap-2 mb-4">
+            ${post.tags ? post.tags.map(tag => `<span class="px-2 py-1 bg-primary/10 text-primary text-sm rounded">${tag}</span>`).join('') : ''}
+        </div>
+        <p class="text-sm text-gray-500">
+            发布于 ${formatDate(post.date)} · ${post.readingTime || '预计阅读时间未知'}
+        </p>
+    `;
+    
+    domCache.modalContent.appendChild(metadata);
 }
 
 /**
@@ -319,7 +500,7 @@ function closeModal() {
 }
 
 /**
- * 渲染分页 - 优化版本
+ * 渲染分页
  */
 function renderPagination() {
     if (!domCache.paginationContainer) return;
@@ -437,19 +618,6 @@ function scrollToTop() {
 }
 
 /**
- * 保存文章到本地存储
- * @param {Array} posts - 文章数组
- */
-function savePosts(posts) {
-    try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(posts));
-    } catch (error) {
-        console.error('保存文章时出错:', error);
-        showErrorMessage('保存失败，请检查浏览器存储空间');
-    }
-}
-
-/**
  * 格式化日期
  * @param {string} dateString - 日期字符串
  * @returns {string} - 格式化后的日期
@@ -512,123 +680,6 @@ function showErrorMessage(message) {
     setTimeout(() => {
         errorDiv.remove();
     }, 5000);
-}
-
-/**
- * 生成示例文章
- * @returns {Array} - 示例文章数组
- */
-function generateSamplePosts() {
-    return [
-        {
-            id: 1,
-            title: "深入理解RAG系统：检索增强生成在实际应用中的实现",
-            summary: "详细探讨RAG（Retrieval-Augmented Generation）系统的核心原理，从向量数据库到检索策略，再到生成模型的融合，分享在构建企业级RAG应用中的实践经验。",
-            content: `
-                <h2>什么是RAG系统</h2>
-                <p>RAG（Retrieval-Augmented Generation）是一种结合了检索和生成的AI架构，它通过从大型文档库中检索相关信息来增强语言模型的生成能力。</p>
-                
-                <h2>核心组件</h2>
-                <ul>
-                    <li><strong>向量数据库</strong>：存储文档的向量表示</li>
-                    <li><strong>检索器</strong>：根据查询检索相关文档</li>
-                    <li><strong>生成器</strong>：基于检索结果生成回答</li>
-                </ul>
-                
-                <h2>实现细节</h2>
-                <p>在实际项目中，我们使用了Milvus作为向量数据库，BGE模型进行文档嵌入，ChatGLM作为生成模型。这套架构在企业文档问答场景中取得了显著效果。</p>
-                
-                <blockquote>
-                    <p>"RAG系统的关键在于平衡检索精度和生成质量，需要在多个维度进行优化。"</p>
-                </blockquote>
-            `,
-            category: "人工智能",
-            date: "2024-01-15",
-            image: "https://picsum.photos/600/400?random=1",
-            status: "已发布"
-        },
-        {
-            id: 2,
-            title: "大语言模型微调实战：从LoRA到QLoRA的演进",
-            summary: "分享在大语言模型微调过程中的技术选型和优化策略，重点对比LoRA和QLoRA两种参数高效微调方法的实际效果。",
-            content: `
-                <h2>微调的必要性</h2>
-                <p>虽然通用大语言模型已经具备强大的能力，但在特定领域应用时，微调仍是提升性能的重要手段。</p>
-                
-                <h2>LoRA vs QLoRA</h2>
-                <p>LoRA (Low-Rank Adaptation) 通过在原始权重矩阵旁边添加低秩矩阵来实现参数高效微调。QLoRA则进一步引入了量化技术，显著降低了显存需求。</p>
-                
-                <h2>实验结果</h2>
-                <p>在我们的金融文本分类任务中，QLoRA相比LoRA节省了约40%的显存，同时保持了相似的性能表现。</p>
-            `,
-            category: "机器学习",
-            date: "2024-01-10",
-            image: "https://picsum.photos/600/400?random=2",
-            status: "已发布"
-        },
-        {
-            id: 3,
-            title: "MCP协议深度解析：构建AI Agent的新标准",
-            summary: "Model Context Protocol (MCP) 作为新兴的AI Agent通信标准，为构建更加智能和互联的AI系统提供了新的可能性。本文深入分析MCP的技术细节。",
-            content: `
-                <h2>MCP协议概述</h2>
-                <p>Model Context Protocol (MCP) 是一种新的通信协议，旨在标准化AI模型之间的上下文共享和协作。</p>
-                
-                <h2>核心特性</h2>
-                <ul>
-                    <li>标准化的消息格式</li>
-                    <li>高效的上下文传递</li>
-                    <li>可扩展的插件系统</li>
-                    <li>安全的通信机制</li>
-                </ul>
-                
-                <h2>应用场景</h2>
-                <p>MCP在多Agent协作、工具调用、知识共享等场景中展现出巨大潜力，特别是在构建复杂AI工作流时。</p>
-            `,
-            category: "AI协议",
-            date: "2024-01-05",
-            image: "https://picsum.photos/600/400?random=3",
-            status: "已发布"
-        },
-        {
-            id: 4,
-            title: "向量数据库选型指南：Milvus vs Pinecone vs Weaviate",
-            summary: "全面对比主流向量数据库的性能、功能和成本，为不同规模的AI应用提供选型建议。",
-            content: `
-                <h2>向量数据库的重要性</h2>
-                <p>随着AI应用的普及，向量数据库成为了连接传统数据与AI模型的重要桥梁。选择合适的向量数据库对项目成功至关重要。</p>
-                
-                <h2>对比维度</h2>
-                <table>
-                    <tr>
-                        <th>特性</th>
-                        <th>Milvus</th>
-                        <th>Pinecone</th>
-                        <th>Weaviate</th>
-                    </tr>
-                    <tr>
-                        <td>部署方式</td>
-                        <td>开源/云服务</td>
-                        <td>云服务</td>
-                        <td>开源/云服务</td>
-                    </tr>
-                    <tr>
-                        <td>性能</td>
-                        <td>优秀</td>
-                        <td>良好</td>
-                        <td>良好</td>
-                    </tr>
-                </table>
-                
-                <h2>选型建议</h2>
-                <p>对于需要本地部署的企业应用，Milvus是首选；对于快速原型开发，Pinecone提供了便捷的云服务；Weaviate则在GraphQL支持方面具有优势。</p>
-            `,
-            category: "数据库",
-            date: "2023-12-28",
-            image: "https://picsum.photos/600/400?random=4",
-            status: "已发布"
-        }
-    ];
 }
 
 // 页面加载完成后初始化
