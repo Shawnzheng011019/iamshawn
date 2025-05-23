@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>文章 | 郑啸的博客</title>
+    
+    <!-- 预加载关键资源 -->
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" as="style">
+    <link rel="preload" href="/style.css" as="style">
+    <link rel="dns-prefetch" href="//cdn.tailwindcss.com">
+    <link rel="dns-prefetch" href="//cdnjs.cloudflare.com">
+    <link rel="dns-prefetch" href="//raw.githubusercontent.com">
+    
+    <!-- 关键CSS内联 -->
+    <style>
+        /* 关键样式内联以避免FOUC */
+        .font-inter { font-family: 'Inter', system-ui, -apple-system, sans-serif; }
+        .bg-light { background-color: #F9FAFB; }
+        .text-dark { color: #1D2939; }
+        .text-primary { color: #165DFF; }
+        .bg-primary { background-color: #165DFF; }
+        .hidden { display: none; }
+        .animate-pulse { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .5; } }
+        .loading-skeleton { background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%); background-size: 200% 100%; animation: loading 1.5s infinite; }
+        @keyframes loading { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+        .loading-spinner {
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #165DFF;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        /* 文章样式 */
+        .article-content h1 { font-size: 2.25rem; font-weight: 700; margin-top: 2rem; margin-bottom: 1rem; }
+        .article-content h2 { font-size: 1.875rem; font-weight: 700; margin-top: 1.75rem; margin-bottom: 0.75rem; border-bottom: 1px solid #e5e7eb; padding-bottom: 0.5rem; }
+        .article-content h3 { font-size: 1.5rem; font-weight: 600; margin-top: 1.5rem; margin-bottom: 0.75rem; }
+        .article-content h4 { font-size: 1.25rem; font-weight: 600; margin-top: 1.25rem; margin-bottom: 0.5rem; }
+        .article-content p { margin-bottom: 1rem; line-height: 1.7; }
+        .article-content ul, .article-content ol { margin-bottom: 1rem; padding-left: 1.5rem; }
+        .article-content ul { list-style-type: disc; }
+        .article-content ol { list-style-type: decimal; }
+        .article-content li { margin-bottom: 0.5rem; }
+        .article-content a { color: #165DFF; text-decoration: none; }
+        .article-content a:hover { text-decoration: underline; }
+        .article-content blockquote { border-left: 4px solid #e5e7eb; padding-left: 1rem; margin-left: 0; margin-right: 0; font-style: italic; color: #4b5563; }
+        .article-content pre { background-color: #f3f4f6; padding: 1rem; border-radius: 0.375rem; overflow-x: auto; margin-bottom: 1rem; }
+        .article-content code { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 0.875rem; background-color: #f3f4f6; padding: 0.125rem 0.25rem; border-radius: 0.25rem; }
+        .article-content pre code { background-color: transparent; padding: 0; }
+        .article-content img { max-width: 100%; height: auto; border-radius: 0.375rem; margin: 1.5rem 0; }
+        .article-content table { width: 100%; border-collapse: collapse; margin-bottom: 1rem; }
+        .article-content table th, .article-content table td { border: 1px solid #e5e7eb; padding: 0.5rem; }
+        .article-content table th { background-color: #f9fafb; font-weight: 600; }
+    </style>
+    
+    <!-- 字体加载 -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- 样式表 -->
+    <link href="/style.css" rel="stylesheet">
+    
+    <!-- 代码高亮 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/github.min.css">
+    
+    <!-- 异步加载非关键CSS -->
+    <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"></noscript>
+    
+    <!-- 延迟加载Tailwind CSS -->
+    <script>
+        // 优化的Tailwind配置
+        window.tailwindConfig = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#165DFF',
+                        secondary: '#0E2E91',
+                        accent: '#36BFFA',
+                        dark: '#1D2939',
+                        light: '#F9FAFB'
+                    },
+                    fontFamily: {
+                        inter: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                    typography: {
+                        DEFAULT: {
+                            css: {
+                                maxWidth: '100%',
+                            }
+                        }
+                    }
+                }
+            }
+        };
+        
+        // 延迟加载Tailwind
+        function loadTailwind() {
+            const script = document.createElement('script');
+            script.src = 'https://cdn.tailwindcss.com';
+            script.async = true;
+            document.head.appendChild(script);
+        }
+        
+        // 页面关键内容加载后再加载Tailwind
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', loadTailwind);
+        } else {
+            loadTailwind();
+        }
+    </script>
+</head>
+<body class="font-inter bg-light text-dark antialiased overflow-x-hidden">
+    <!-- 加载指示器 -->
+    <div id="loading-indicator" class="fixed top-0 left-0 w-full h-1 bg-primary z-50 transform -translate-x-full transition-transform duration-300"></div>
+    
+    <!-- 导航栏 -->
+    <header id="navbar" class="fixed w-full top-0 z-50 transition-all duration-300">
+        <div class="container mx-auto px-4 py-3 flex items-center justify-between">
+            <a href="/index.html" class="text-2xl font-bold text-primary flex items-center">
+                <span class="mr-2"><i class="fa-solid fa-rocket"></i></span>
+                <span>郑啸</span>
+            </a>
+            
+            <!-- 桌面导航 -->
+            <nav class="hidden md:flex items-center space-x-8">
+                <a href="/index.html" class="text-dark hover:text-primary transition-colors font-medium">首页</a>
+                <a href="/index.html#about" class="text-dark hover:text-primary transition-colors font-medium">关于我</a>
+                <a href="/index.html#internship" class="text-dark hover:text-primary transition-colors font-medium">实习经历</a>
+                <a href="/index.html#projects" class="text-dark hover:text-primary transition-colors font-medium">项目经历</a>
+                <a href="/index.html#skills" class="text-dark hover:text-primary transition-colors font-medium">技能</a>
+                <a href="/blog" class="text-primary font-medium">博客</a>
+                <a href="/index.html#contact" class="bg-primary hover:bg-primary/90 text-white px-5 py-2 rounded-lg transition-all hover:shadow-lg">联系我</a>
+            </nav>
+            
+            <!-- 移动端汉堡菜单 -->
+            <button id="menu-toggle" class="md:hidden text-dark focus:outline-none">
+                <i class="fa-solid fa-bars text-xl"></i>
+            </button>
+        </div>
+        
+        <!-- 移动端导航菜单 -->
+        <div id="mobile-menu" class="hidden md:hidden bg-white shadow-lg absolute w-full">
+            <div class="container mx-auto px-4 py-3 flex flex-col space-y-4">
+                <a href="/index.html" class="text-dark hover:text-primary transition-colors py-2 font-medium">首页</a>
+                <a href="/index.html#about" class="text-dark hover:text-primary transition-colors py-2 font-medium">关于我</a>
+                <a href="/index.html#internship" class="text-dark hover:text-primary transition-colors py-2 font-medium">实习经历</a>
+                <a href="/index.html#projects" class="text-dark hover:text-primary transition-colors py-2 font-medium">项目经历</a>
+                <a href="/index.html#skills" class="text-dark hover:text-primary transition-colors py-2 font-medium">技能</a>
+                <a href="/blog" class="text-primary font-medium">博客</a>
+                <a href="/index.html#contact" class="bg-primary hover:bg-primary/90 text-white px-5 py-2 rounded-lg transition-all hover:shadow-lg text-center">联系我</a>
+            </div>
+        </div>
+    </header>
+
+    <main class="pt-24 pb-16">
+        <div class="container mx-auto px-4">
+            <!-- 文章加载中状态 -->
+            <div id="article-loading" class="flex flex-col items-center justify-center py-20">
+                <div class="loading-spinner mb-4"></div>
+                <p class="text-gray-500">正在加载文章内容...</p>
+            </div>
+            
+            <!-- 文章内容容器 -->
+            <div id="article-container" class="hidden">
+                <!-- 文章头部信息 -->
+                <div class="mb-8">
+                    <a href="/blog" class="inline-flex items-center text-primary mb-4 hover:underline">
+                        <i class="fa-solid fa-arrow-left mr-2"></i> 返回博客列表
+                    </a>
+                    <h1 id="article-title" class="text-3xl md:text-4xl font-bold mb-4"></h1>
+                    <div class="flex flex-wrap items-center text-sm text-gray-500 gap-4 mb-4">
+                        <span id="article-date" class="flex items-center">
+                            <i class="fa-regular fa-calendar mr-2"></i>
+                            <span></span>
+                        </span>
+                        <span id="article-category" class="flex items-center">
+                            <i class="fa-solid fa-folder mr-2"></i>
+                            <span></span>
+                        </span>
+                        <span id="article-reading-time" class="flex items-center">
+                            <i class="fa-regular fa-clock mr-2"></i>
+                            <span></span>
+                        </span>
+                    </div>
+                    <div id="article-tags" class="flex flex-wrap gap-2 mb-6"></div>
+                </div>
+                
+                <!-- 文章封面图 -->
+                <div class="mb-8">
+                    <img id="article-cover" src="" alt="" class="w-full h-auto rounded-xl shadow-md">
+                </div>
+                
+                <!-- 文章正文 -->
+                <div id="article-content" class="article-content prose prose-lg max-w-none"></div>
+                
+                <!-- 文章底部 -->
+                <div class="mt-12 pt-6 border-t border-gray-200">
+                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                        <div>
+                            <span class="text-sm text-gray-500">最后更新于 <span id="article-updated-date"></span></span>
+                        </div>
+                        <div class="flex items-center space-x-4">
+                            <a href="#" id="share-article" class="text-primary hover:text-primary/80 transition-colors">
+                                <i class="fa-solid fa-share-nodes mr-1"></i> 分享
+                            </a>
+                            <a href="https://github.com/Shawnzheng011019/iamshawn/issues" target="_blank" class="text-primary hover:text-primary/80 transition-colors">
+                                <i class="fa-regular fa-comment mr-1"></i> 评论
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 文章加载错误 -->
+            <div id="article-error" class="hidden flex flex-col items-center justify-center py-20">
+                <div class="text-4xl text-red-500 mb-4">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                </div>
+                <h2 class="text-xl font-bold mb-2">文章加载失败</h2>
+                <p class="text-gray-500 mb-6">无法加载文章内容，请稍后再试</p>
+                <a href="/blog" class="bg-primary hover:bg-primary/90 text-white px-5 py-2 rounded-lg transition-all hover:shadow-lg">
+                    返回博客列表
+                </a>
+            </div>
+        </div>
+    </main>
+    
+    <!-- 页脚 -->
+    <footer class="bg-dark text-white py-12">
+        <div class="container mx-auto px-4">
+            <div class="flex flex-col md:flex-row justify-between items-center">
+                <div class="mb-6 md:mb-0">
+                    <a href="/index.html" class="text-2xl font-bold text-white flex items-center">
+                        <span class="mr-2"><i class="fa-solid fa-rocket"></i></span>
+                        <span>郑啸</span>
+                    </a>
+                    <p class="mt-2 text-gray-400">算法工程师 & 后端开发工程师</p>
+                    <p class="mt-1 text-sm text-gray-500">博客内容基于GitHub Markdown实时更新</p>
+                </div>
+                
+                <div class="flex space-x-6">
+                    <a href="https://github.com/Shawnzheng011019" class="text-white hover:text-primary transition-colors text-xl">
+                        <i class="fa-brands fa-github"></i>
+                    </a>
+                    <a href="mailto:Shawnzheng2001@outlook.com" class="text-white hover:text-primary transition-colors text-xl">
+                        <i class="fa-solid fa-envelope"></i>
+                    </a>
+                    <a href="tel:16678627572" class="text-white hover:text-primary transition-colors text-xl">
+                        <i class="fa-solid fa-phone"></i>
+                    </a>
+                </div>
+            </div>
+            
+            <div class="mt-8 pt-8 border-t border-gray-800 text-center text-sm text-gray-500">
+                <p>© 2024 郑啸. 保留所有权利.</p>
+            </div>
+        </div>
+    </footer>
+    
+    <!-- 返回顶部按钮 -->
+    <button id="back-to-top" class="fixed bottom-6 right-6 bg-primary text-white w-12 h-12 rounded-full flex items-center justify-center shadow-lg opacity-0 invisible transition-all duration-300 z-40">
+        <i class="fa-solid fa-arrow-up"></i>
+    </button>
+    
+    <!-- 代码高亮 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
+    
+    <!-- Markdown解析器 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/4.3.0/marked.min.js"></script>
+    
+    <!-- 页面脚本 -->
+    <script src="/script.js"></script>
+    
+    <!-- 博客文章脚本 -->
+    <script>
+        // 数据源配置
+        const DATA_SOURCES = [
+            {
+                name: 'jsDelivr CDN',
+                baseUrl: 'https://cdn.jsdelivr.net/gh/Shawnzheng011019/iamshawn@main',
+                priority: 1
+            },
+            {
+                name: 'GitHub Raw',
+                baseUrl: 'https://raw.githubusercontent.com/Shawnzheng011019/iamshawn/main',
+                priority: 2
+            },
+            {
+                name: 'jsDelivr Backup',
+                baseUrl: 'https://fastly.jsdelivr.net/gh/Shawnzheng011019/iamshawn@main',
+                priority: 3
+            },
+            {
+                name: 'GitHub Proxy',
+                baseUrl: 'https://ghproxy.com/https://raw.githubusercontent.com/Shawnzheng011019/iamshawn/main',
+                priority: 4
+            }
+        ];
+        
+        // DOM元素
+        const elements = {
+            articleContainer: document.getElementById('article-container'),
+            articleLoading: document.getElementById('article-loading'),
+            articleError: document.getElementById('article-error'),
+            articleTitle: document.getElementById('article-title'),
+            articleDate: document.getElementById('article-date').querySelector('span'),
+            articleCategory: document.getElementById('article-category').querySelector('span'),
+            articleReadingTime: document.getElementById('article-reading-time').querySelector('span'),
+            articleTags: document.getElementById('article-tags'),
+            articleCover: document.getElementById('article-cover'),
+            articleContent: document.getElementById('article-content'),
+            articleUpdatedDate: document.getElementById('article-updated-date'),
+            backToTop: document.getElementById('back-to-top'),
+            shareArticle: document.getElementById('share-article'),
+            menuToggle: document.getElementById('menu-toggle'),
+            mobileMenu: document.getElementById('mobile-menu')
+        };
+        
+        // 获取文章ID
+        function getArticleId() {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get('id');
+        }
+        
+        // 加载文章数据
+        async function loadArticle() {
+            const articleId = getArticleId();
+            if (!articleId) {
+                showError('未找到文章ID');
+                return;
+            }
+            
+            try {
+                // 1. 获取文章元数据
+                const posts = await fetchPostsData();
+                const post = posts.find(p => p.id === articleId);
+                
+                if (!post) {
+                    showError('未找到该文章');
+                    return;
+                }
+                
+                // 2. 更新页面标题
+                document.title = `${post.title} | 郑啸的博客`;
+                
+                // 3. 获取文章内容
+                const content = await fetchArticleContent(post.path);
+                
+                // 4. 渲染文章
+                renderArticle(post, content);
+                
+                // 5. 处理代码高亮
+                setTimeout(() => {
+                    highlightCode();
+                }, 100);
+            } catch (error) {
+                console.error('加载文章失败:', error);
+                showError('加载文章失败');
+            }
+        }
+        
+        // 获取文章列表数据
+        async function fetchPostsData() {
+            for (const source of DATA_SOURCES) {
+                try {
+                    const response = await fetch(`${source.baseUrl}/posts/posts.json`);
+                    if (response.ok) {
+                        return await response.json();
+                    }
+                } catch (error) {
+                    console.warn(`从 ${source.name} 获取文章列表失败:`, error);
+                }
+            }
+            throw new Error('无法从任何数据源获取文章列表');
+        }
+        
+        // 获取文章内容
+        async function fetchArticleContent(path) {
+            for (const source of DATA_SOURCES) {
+                try {
+                    const response = await fetch(`${source.baseUrl}/${path}`);
+                    if (response.ok) {
+                        return await response.text();
+                    }
+                } catch (error) {
+                    console.warn(`从 ${source.name} 获取文章内容失败:`, error);
+                }
+            }
+            throw new Error('无法从任何数据源获取文章内容');
+        }
+        
+        // 渲染文章
+        function renderArticle(post, markdown) {
+            // 1. 设置文章元数据
+            elements.articleTitle.textContent = post.title;
+            elements.articleDate.textContent = formatDate(post.date);
+            elements.articleCategory.textContent = post.category;
+            elements.articleReadingTime.textContent = post.readingTime;
+            elements.articleUpdatedDate.textContent = formatDate(post.date);
+            
+            // 2. 设置封面图
+            elements.articleCover.src = `/${post.cover}`;
+            elements.articleCover.alt = post.title;
+            
+            // 3. 渲染标签
+            elements.articleTags.innerHTML = '';
+            post.tags.forEach(tag => {
+                const tagElement = document.createElement('span');
+                tagElement.className = 'bg-primary/10 text-primary px-3 py-1 rounded-full text-sm';
+                tagElement.textContent = tag;
+                elements.articleTags.appendChild(tagElement);
+            });
+            
+            // 4. 渲染Markdown内容
+            const htmlContent = parseMarkdown(markdown);
+            elements.articleContent.innerHTML = htmlContent;
+            
+            // 5. 显示文章容器
+            elements.articleLoading.classList.add('hidden');
+            elements.articleContainer.classList.remove('hidden');
+            
+            // 6. 设置分享链接
+            elements.shareArticle.addEventListener('click', (e) => {
+                e.preventDefault();
+                shareArticle(post.title, window.location.href);
+            });
+        }
+        
+        // 解析Markdown
+        function parseMarkdown(markdown) {
+            // 配置Marked选项
+            marked.setOptions({
+                breaks: true,
+                gfm: true,
+                headerIds: true,
+                headerPrefix: 'heading-',
+                highlight: function(code, lang) {
+                    if (lang && hljs.getLanguage(lang)) {
+                        try {
+                            return hljs.highlight(code, { language: lang }).value;
+                        } catch (e) {}
+                    }
+                    return hljs.highlightAuto(code).value;
+                }
+            });
+            
+            // 解析Markdown
+            return marked.parse(markdown);
+        }
+        
+        // 高亮代码
+        function highlightCode() {
+            document.querySelectorAll('pre code').forEach((block) => {
+                hljs.highlightBlock(block);
+            });
+        }
+        
+        // 显示错误
+        function showError(message) {
+            elements.articleLoading.classList.add('hidden');
+            elements.articleError.classList.remove('hidden');
+        }
+        
+        // 格式化日期
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('zh-CN', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+        }
+        
+        // 分享文章
+        function shareArticle(title, url) {
+            if (navigator.share) {
+                navigator.share({
+                    title: title,
+                    url: url
+                }).catch(console.error);
+            } else {
+                // 回退方案：复制链接
+                navigator.clipboard.writeText(url).then(() => {
+                    alert('链接已复制到剪贴板');
+                }).catch(console.error);
+            }
+        }
+        
+        // 移动端菜单
+        elements.menuToggle.addEventListener('click', function() {
+            elements.mobileMenu.classList.toggle('hidden');
+        });
+        
+        // 返回顶部
+        elements.backToTop.addEventListener('click', function() {
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
+        });
+        
+        // 监听滚动
+        window.addEventListener('scroll', function() {
+            if (window.scrollY > 100) {
+                document.getElementById('navbar').classList.add('bg-white', 'shadow-md');
+                elements.backToTop.classList.remove('opacity-0', 'invisible');
+                elements.backToTop.classList.add('opacity-100', 'visible');
+            } else {
+                document.getElementById('navbar').classList.remove('bg-white', 'shadow-md');
+                elements.backToTop.classList.add('opacity-0', 'invisible');
+                elements.backToTop.classList.remove('opacity-100', 'visible');
+            }
+        });
+        
+        // 初始化
+        document.addEventListener('DOMContentLoaded', loadArticle);
+    </script>
+</body>
+</html> 

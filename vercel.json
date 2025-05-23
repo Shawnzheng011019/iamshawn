@@ -11,6 +11,10 @@
     {
       "source": "/blog",
       "destination": "/blog.html"
+    },
+    {
+      "source": "/blog/:id",
+      "destination": "/blog/post.html?id=:id"
     }
   ],
   "headers": [
@@ -74,5 +78,9 @@
         }
       ]
     }
-  ]
+  ],
+  "github": {
+    "silent": true
+  },
+  "domains": ["iamshawn.top"]
 } 
