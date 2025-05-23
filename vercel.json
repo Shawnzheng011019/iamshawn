@@ -39,12 +39,5 @@
     }
   ],
   "cleanUrls": true,
-  "trailingSlash": false,
-  "functions": {
-    "blog/admin/**": {
-      "headers": {
-        "cache-control": "no-cache, no-store, must-revalidate"
-      }
-    }
-  }
+  "trailingSlash": false
 } 
