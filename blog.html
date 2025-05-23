@@ -34,6 +34,50 @@
             animation: spin 1s linear infinite;
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        /* 图片加载优化 */
+        .post-image {
+            background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+            transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
+        }
+        .post-image:not([src]) {
+            opacity: 0.7;
+        }
+        .post-image.loaded {
+            transform: scale(1.02);
+            animation: imageLoaded 0.6s ease-out;
+        }
+        .post-image.error {
+            opacity: 0.5;
+            filter: grayscale(100%);
+        }
+        @keyframes imageLoaded {
+            0% { opacity: 0; transform: scale(0.95); }
+            100% { opacity: 1; transform: scale(1); }
+        }
+        
+        /* 懒加载占位符 */
+        .lazy-load {
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+        }
+        @keyframes shimmer {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+        
+        /* 图片hover效果 */
+        .card-hover:hover .post-image {
+            transform: scale(1.05);
+        }
+        
+        /* 响应式图片优化 */
+        @media (max-width: 768px) {
+            .post-image {
+                height: 160px;
+            }
+        }
     </style>
     
     <!-- 字体加载 -->

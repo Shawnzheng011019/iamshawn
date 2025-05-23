@@ -46,6 +46,30 @@ const DATA_SOURCES = [
     }
 ];
 
+// 图片CDN优化配置
+const IMAGE_CDN_SOURCES = [
+    {
+        name: 'jsDelivr CDN',
+        transform: (url) => url.replace('https://gitee.com/Shawnzheng011019/iamshawn/raw/master/', 'https://cdn.jsdelivr.net/gh/Shawnzheng011019/iamshawn@main/'),
+        priority: 1
+    },
+    {
+        name: 'Fastly CDN',
+        transform: (url) => url.replace('https://gitee.com/Shawnzheng011019/iamshawn/raw/master/', 'https://fastly.jsdelivr.net/gh/Shawnzheng011019/iamshawn@main/'),
+        priority: 2
+    },
+    {
+        name: 'Gitee Raw',
+        transform: (url) => url,
+        priority: 3
+    },
+    {
+        name: 'GitHub Raw',
+        transform: (url) => url.replace('https://gitee.com/Shawnzheng011019/iamshawn/raw/master/', 'https://raw.githubusercontent.com/Shawnzheng011019/iamshawn/main/'),
+        priority: 4
+    }
+];
+
 // DOM 元素缓存
 let domCache = {};
 
@@ -66,6 +90,179 @@ const CACHE_KEYS = {
     DATA_SOURCE: 'preferred_data_source'
 };
 const CACHE_DURATION = 5 * 60 * 1000; // 5分钟缓存
+
+// 图片缓存
+const imageCache = new Map();
+const imageLoadingPromises = new Map();
+
+/**
+ * 智能图片加载器
+ */
+class SmartImageLoader {
+    constructor() {
+        this.preloadQueue = new Set();
+        this.isPreloading = false;
+    }
+
+    /**
+     * 优化图片URL
+     * @param {string} originalUrl - 原始图片URL
+     * @returns {string} - 优化后的URL
+     */
+    optimizeImageUrl(originalUrl) {
+        if (!originalUrl || originalUrl.startsWith('http://') || originalUrl.startsWith('https://picsum.photos')) {
+            return originalUrl;
+        }
+
+        // 使用最优CDN
+        const bestCDN = IMAGE_CDN_SOURCES[0];
+        return bestCDN.transform(originalUrl);
+    }
+
+    /**
+     * 预加载图片
+     * @param {string} url - 图片URL
+     * @returns {Promise<HTMLImageElement>}
+     */
+    async preloadImage(url) {
+        if (!url) return null;
+
+        const optimizedUrl = this.optimizeImageUrl(url);
+        
+        // 检查缓存
+        if (imageCache.has(optimizedUrl)) {
+            return imageCache.get(optimizedUrl);
+        }
+
+        // 检查是否正在加载
+        if (imageLoadingPromises.has(optimizedUrl)) {
+            return imageLoadingPromises.get(optimizedUrl);
+        }
+
+        // 创建加载Promise
+        const loadingPromise = this.loadImageWithFallback(optimizedUrl);
+        imageLoadingPromises.set(optimizedUrl, loadingPromise);
+
+        try {
+            const img = await loadingPromise;
+            imageCache.set(optimizedUrl, img);
+            return img;
+        } finally {
+            imageLoadingPromises.delete(optimizedUrl);
+        }
+    }
+
+    /**
+     * 带降级的图片加载
+     * @param {string} url - 图片URL
+     * @returns {Promise<HTMLImageElement>}
+     */
+    async loadImageWithFallback(url) {
+        for (const cdn of IMAGE_CDN_SOURCES) {
+            try {
+                const cdnUrl = cdn.transform(url);
+                const img = await this.loadSingleImage(cdnUrl);
+                console.log(`图片从 ${cdn.name} 加载成功:`, cdnUrl);
+                return img;
+            } catch (error) {
+                console.warn(`图片从 ${cdn.name} 加载失败:`, error.message);
+                continue;
+            }
+        }
+        
+        // 所有CDN都失败，返回占位图片
+        return this.createPlaceholderImage();
+    }
+
+    /**
+     * 加载单个图片
+     * @param {string} url - 图片URL
+     * @returns {Promise<HTMLImageElement>}
+     */
+    loadSingleImage(url) {
+        return new Promise((resolve, reject) => {
+            const img = new Image();
+            
+            const timeout = setTimeout(() => {
+                reject(new Error('图片加载超时'));
+            }, 8000); // 8秒超时
+
+            img.onload = () => {
+                clearTimeout(timeout);
+                resolve(img);
+            };
+
+            img.onerror = () => {
+                clearTimeout(timeout);
+                reject(new Error('图片加载失败'));
+            };
+
+            // 添加图片优化参数
+            img.crossOrigin = 'anonymous';
+            img.src = url;
+        });
+    }
+
+    /**
+     * 创建占位图片
+     * @returns {HTMLImageElement}
+     */
+    createPlaceholderImage() {
+        const canvas = document.createElement('canvas');
+        canvas.width = 600;
+        canvas.height = 400;
+        const ctx = canvas.getContext('2d');
+        
+        // 绘制渐变背景
+        const gradient = ctx.createLinearGradient(0, 0, 600, 400);
+        gradient.addColorStop(0, '#f3f4f6');
+        gradient.addColorStop(1, '#e5e7eb');
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, 600, 400);
+        
+        // 绘制图标
+        ctx.fillStyle = '#9ca3af';
+        ctx.font = '48px FontAwesome';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('📷', 300, 200);
+        
+        const img = new Image();
+        img.src = canvas.toDataURL();
+        return img;
+    }
+
+    /**
+     * 批量预加载图片
+     * @param {Array} urls - 图片URL数组
+     */
+    async batchPreload(urls) {
+        if (this.isPreloading) return;
+        
+        this.isPreloading = true;
+        const validUrls = urls.filter(url => url && !imageCache.has(this.optimizeImageUrl(url)));
+        
+        console.log(`开始预加载 ${validUrls.length} 张图片...`);
+        
+        // 分批加载，避免过载
+        const batchSize = 3;
+        for (let i = 0; i < validUrls.length; i += batchSize) {
+            const batch = validUrls.slice(i, i + batchSize);
+            await Promise.allSettled(batch.map(url => this.preloadImage(url)));
+            
+            // 短暂延迟，避免网络堵塞
+            if (i + batchSize < validUrls.length) {
+                await new Promise(resolve => setTimeout(resolve, 200));
+            }
+        }
+        
+        console.log('图片预加载完成');
+        this.isPreloading = false;
+    }
+}
+
+// 创建全局图片加载器实例
+const smartImageLoader = new SmartImageLoader();
 
 /**
  * 初始化DOM元素缓存
@@ -96,14 +293,33 @@ function initLazyLoading() {
                 if (entry.isIntersecting) {
                     const img = entry.target;
                     if (img.dataset.src) {
-                        img.src = img.dataset.src;
-                        img.removeAttribute('data-src');
-                        imageObserver.unobserve(img);
+                        // 使用智能图片加载器
+                        smartImageLoader.preloadImage(img.dataset.src).then(loadedImg => {
+                            if (loadedImg && img.isConnected) {
+                                img.src = loadedImg.src;
+                                img.classList.add('loaded');
+                                img.removeAttribute('data-src');
+                                
+                                // 添加加载完成动画
+                                img.style.opacity = '0';
+                                img.style.transition = 'opacity 0.3s ease-in-out';
+                                requestAnimationFrame(() => {
+                                    img.style.opacity = '1';
+                                });
+                            }
+                        }).catch(error => {
+                            console.warn('图片加载失败:', error);
+                            // 显示占位图片
+                            img.src = smartImageLoader.createPlaceholderImage().src;
+                            img.classList.add('error');
+                        }).finally(() => {
+                            imageObserver.unobserve(img);
+                        });
                     }
                 }
             });
         }, {
-            rootMargin: '50px 0px',
+            rootMargin: '100px 0px', // 提前100px开始加载
             threshold: 0.01
         });
     }
@@ -280,6 +496,9 @@ async function loadPostsWithFallback() {
             renderPosts();
             hideLoadingState();
             
+            // 预加载当前页面的图片
+            preloadCurrentPageImages();
+            
             // 后台更新数据
             updatePostsInBackground();
             return;
@@ -294,10 +513,10 @@ async function loadPostsWithFallback() {
         allPosts = postsData.filter(post => post.status === 'published');
         allPosts.sort((a, b) => new Date(b.date) - new Date(a.date));
         
-        // 更新图片URL为当前数据源
+        // 优化图片URL为当前数据源
         allPosts.forEach(post => {
             if (post.cover && !post.cover.startsWith('http')) {
-                post.cover = `${currentDataSource.baseUrl}/${post.cover}`;
+                post.cover = smartImageLoader.optimizeImageUrl(`${currentDataSource.baseUrl}/${post.cover}`);
             }
             if (post.path && !post.path.startsWith('http')) {
                 post.path = `${currentDataSource.baseUrl}/${post.path}`;
@@ -311,6 +530,12 @@ async function loadPostsWithFallback() {
         filteredPosts = [...allPosts];
         renderPosts();
         hideLoadingState();
+        
+        // 预加载当前页面的图片
+        preloadCurrentPageImages();
+        
+        // 智能预加载下一页图片
+        setTimeout(() => preloadNextPageImages(), 2000);
         
         showSuccessMessage(`已连接到数据源: ${currentDataSource.name}`);
         
@@ -529,6 +754,13 @@ function renderPosts() {
     
     // 渲染分页
     renderPagination();
+    
+    // 延迟预加载当前页图片（DOM更新后）
+    requestAnimationFrame(() => {
+        preloadCurrentPageImages();
+        // 延迟预加载下一页
+        setTimeout(() => preloadNextPageImages(), 1000);
+    });
 }
 
 /**
@@ -569,15 +801,28 @@ function renderPostCard(post) {
     
     // 优化图片加载
     const coverImage = post.cover || `https://picsum.photos/600/400?random=${post.id}`;
-    elements.image.dataset.src = coverImage;
+    const optimizedImageUrl = smartImageLoader.optimizeImageUrl(coverImage);
+    
+    elements.image.dataset.src = optimizedImageUrl;
     elements.image.alt = post.title;
+    elements.image.style.backgroundColor = '#f3f4f6'; // 加载时的背景色
+    
+    // 添加加载状态指示器
+    elements.image.style.position = 'relative';
+    elements.image.style.minHeight = '192px'; // 12rem = 192px
     
     // 添加到懒加载观察器
     if (imageObserver) {
         imageObserver.observe(elements.image);
     } else {
-        // 降级处理：直接加载图片
-        elements.image.src = elements.image.dataset.src;
+        // 降级处理：直接使用智能加载器
+        smartImageLoader.preloadImage(optimizedImageUrl).then(loadedImg => {
+            if (loadedImg && elements.image.isConnected) {
+                elements.image.src = loadedImg.src;
+            }
+        }).catch(() => {
+            elements.image.src = smartImageLoader.createPlaceholderImage().src;
+        });
     }
     
     // 设置其他数据
@@ -1020,6 +1265,69 @@ function showNotification(message, type = 'info') {
     setTimeout(() => {
         notificationDiv.remove();
     }, 5000);
+}
+
+/**
+ * 预加载当前页面图片
+ */
+function preloadCurrentPageImages() {
+    const startIndex = (currentPage - 1) * POSTS_PER_PAGE;
+    const endIndex = startIndex + POSTS_PER_PAGE;
+    const currentPagePosts = filteredPosts.slice(startIndex, endIndex);
+    
+    const imageUrls = currentPagePosts
+        .map(post => post.cover)
+        .filter(cover => cover && !cover.startsWith('https://picsum.photos'));
+    
+    if (imageUrls.length > 0) {
+        smartImageLoader.batchPreload(imageUrls);
+    }
+}
+
+/**
+ * 预加载下一页图片
+ */
+function preloadNextPageImages() {
+    const totalPages = Math.ceil(filteredPosts.length / POSTS_PER_PAGE);
+    if (currentPage >= totalPages) return;
+    
+    const nextPageStartIndex = currentPage * POSTS_PER_PAGE;
+    const nextPageEndIndex = nextPageStartIndex + POSTS_PER_PAGE;
+    const nextPagePosts = filteredPosts.slice(nextPageStartIndex, nextPageEndIndex);
+    
+    const imageUrls = nextPagePosts
+        .map(post => post.cover)
+        .filter(cover => cover && !cover.startsWith('https://picsum.photos'));
+    
+    if (imageUrls.length > 0) {
+        console.log(`预加载下一页 ${imageUrls.length} 张图片`);
+        smartImageLoader.batchPreload(imageUrls);
+    }
+}
+
+/**
+ * 预加载文章内图片
+ * @param {string} content - 文章内容
+ */
+function preloadArticleImages(content) {
+    const imageRegex = /!\[.*?\]\((.*?)\)/g;
+    const imageUrls = [];
+    let match;
+    
+    while ((match = imageRegex.exec(content)) !== null) {
+        const imageUrl = match[1];
+        if (imageUrl && !imageUrl.startsWith('http://') && !imageUrl.startsWith('https://picsum.photos')) {
+            // 转换相对路径为绝对路径
+            const fullUrl = imageUrl.startsWith('http') ? imageUrl : 
+                           currentDataSource ? `${currentDataSource.baseUrl}/${imageUrl}` : imageUrl;
+            imageUrls.push(fullUrl);
+        }
+    }
+    
+    if (imageUrls.length > 0) {
+        console.log(`预加载文章内 ${imageUrls.length} 张图片`);
+        smartImageLoader.batchPreload(imageUrls);
+    }
 }
 
 // 页面加载完成后初始化

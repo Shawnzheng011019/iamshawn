@@ -306,12 +306,37 @@
             document.getElementById('article-category').textContent = article.category;
             document.getElementById('article-reading-time').textContent = article.readingTime || '预计阅读时间未知';
             
-            // 设置封面图片
+            // 设置封面图片 - 使用智能加载
             const coverImg = document.getElementById('article-cover');
             if (article.cover) {
-                coverImg.src = article.cover;
-                coverImg.alt = article.title;
+                // 显示加载状态
+                coverImg.style.backgroundColor = '#f3f4f6';
+                coverImg.style.minHeight = '256px';
                 coverImg.classList.remove('hidden');
+                
+                // 使用智能图片加载器
+                if (window.smartImageLoader) {
+                    window.smartImageLoader.preloadImage(article.cover).then(loadedImg => {
+                        if (loadedImg && coverImg.isConnected) {
+                            coverImg.src = loadedImg.src;
+                            coverImg.alt = article.title;
+                            
+                            // 添加加载完成动画
+                            coverImg.style.opacity = '0';
+                            coverImg.style.transition = 'opacity 0.5s ease-in-out';
+                            requestAnimationFrame(() => {
+                                coverImg.style.opacity = '1';
+                            });
+                        }
+                    }).catch(error => {
+                        console.warn('封面图片加载失败:', error);
+                        coverImg.style.display = 'none';
+                    });
+                } else {
+                    // 降级处理
+                    coverImg.src = article.cover;
+                    coverImg.alt = article.title;
+                }
             }
             
             // 设置标签
@@ -326,6 +351,11 @@
             const contentBody = document.getElementById('content-body');
             contentBody.innerHTML = parseMarkdownToHTML(content);
             contentBody.classList.remove('hidden');
+            
+            // 预加载文章内图片
+            if (window.preloadArticleImages) {
+                preloadArticleImages(content);
+            }
             
             // 显示头部内容
             document.getElementById('header-content').classList.remove('hidden');
