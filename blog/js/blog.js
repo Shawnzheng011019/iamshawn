@@ -599,33 +599,11 @@ function renderPostCard(post) {
 
 /**
  * 打开文章详情
- * @param {Object} post - 文章对象 
+ * @param {Object} post - 文章对象
  */
 async function openArticle(post) {
-    if (!domCache.articleModal) return;
-    
-    try {
-        // 显示模态框加载状态
-        showModalLoading(post);
-        
-        // 尝试从多数据源获取markdown内容
-        const markdownContent = await fetchArticleContent(post);
-        
-        // 解析markdown为HTML
-        const htmlContent = parseMarkdownToHTML(markdownContent);
-        
-        // 更新模态框内容
-        updateModalContent(post, htmlContent);
-        
-        // 显示模态框
-        domCache.articleModal.classList.remove('hidden');
-        document.body.style.overflow = 'hidden';
-        
-    } catch (error) {
-        console.error('加载文章内容失败:', error);
-        showErrorMessage('加载文章内容失败，请稍后重试');
-        closeModal();
-    }
+    // 导航到文章详情页
+    window.location.href = `/blog/${post.id}`;
 }
 
 /**
