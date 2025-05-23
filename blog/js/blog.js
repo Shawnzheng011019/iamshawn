@@ -614,8 +614,8 @@ function renderPostCard(post) {
  * @param {Object} post - 文章对象
  */
 async function openArticle(post) {
-    // 导航到文章详情页
-    window.location.href = `/blog/${post.id}`;
+    // 导航到文章详情页，使用 /文章名.md 格式
+    window.location.href = `/${post.id}.md`;
 }
 
 /**

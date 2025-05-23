@@ -246,7 +246,15 @@
         
         // 从URL获取文章ID
         function getArticleIdFromURL() {
-            const pathParts = window.location.pathname.split('/');
+            const pathname = window.location.pathname;
+            
+            // 如果URL格式是 /文章名.md，直接提取文章名
+            if (pathname.endsWith('.md')) {
+                return pathname.substring(1, pathname.length - 3); // 去掉开头的/和结尾的.md
+            }
+            
+            // 兼容旧的 /blog/文章ID 格式
+            const pathParts = pathname.split('/');
             return pathParts[pathParts.length - 1] || pathParts[pathParts.length - 2];
         }
         

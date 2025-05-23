@@ -5,6 +5,10 @@
       "destination": "/blog.html"
     },
     {
+      "source": "/(.*)\\.md",
+      "destination": "/blog/post.html"
+    },
+    {
       "source": "/blog/(.*)",
       "destination": "/blog/post.html"
     }
