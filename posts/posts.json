@@ -1,5 +1,17 @@
 [
   {
+    "id": "ai-agent-protocols-comparison",
+    "title": "AI代理协议大对决：Function Calling vs MCP vs A2A",
+    "date": "2025-01-02",
+    "category": "人工智能",
+    "tags": ["AI代理", "MCP", "Function Calling", "A2A", "大语言模型", "协议对比"],
+    "summary": "深入分析三大AI代理协议：OpenAI的Function Calling、Anthropic的MCP和Google的A2A，为开发者选择最适合的AI代理架构提供指导。",
+    "cover": "posts/2025-01-02-ai-agent-protocols-comparison/cover.jpg",
+    "readingTime": "18 分钟",
+    "path": "posts/2025-01-02-ai-agent-protocols-comparison/README.md",
+    "status": "published"
+  },
+  {
     "id": "rag-system-deep-dive",
     "title": "深入理解RAG系统：检索增强生成在实际应用中的实现",
     "date": "2024-01-15",
