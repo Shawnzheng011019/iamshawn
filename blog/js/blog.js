@@ -16,7 +16,7 @@ const DATA_SOURCES = [
     },
     {
         name: 'Gitee Mirror',
-        baseUrl: 'https://gitee.com/shawnzheng2001/iamshawn/raw/main',
+        baseUrl: 'https://gitee.com/Shawnzheng011019/iamshawn/raw/master',
         priority: 2,
         description: 'Gitee 国内镜像'
     },
