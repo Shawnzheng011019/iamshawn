@@ -5,8 +5,9 @@
   "main": "index.html",
   "scripts": {
     "dev": "python3 -m http.server 8000",
-    "build": "echo 'Static site, no build needed'",
-    "start": "echo 'Static site deployed on Vercel'"
+    "build": "echo 'Static site - no build required'",
+    "start": "echo 'Static site deployed'",
+    "test": "echo 'No tests specified'"
   },
   "keywords": [
     "portfolio",
@@ -21,6 +22,7 @@
     "url": "https://github.com/Shawnzheng011019/iamshawn"
   },
   "engines": {
-    "node": ">=14.0.0"
-  }
+    "node": ">=18.0.0"
+  },
+  "type": "module"
 } 

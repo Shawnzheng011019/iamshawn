@@ -1,0 +1,30 @@
+# Dependencies and caches
+node_modules/
+.npm/
+.yarn/
+
+# Build outputs
+dist/
+build/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
+
+# Git
+.git/
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+*.tmp
+*.temp
+
+# Deployment trigger file (used for testing)
+.deployment-trigger 
