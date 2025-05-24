@@ -152,13 +152,7 @@ class SpaceVoyage {
             this.controls = new THREE.PointerLockControls(this.camera, document.body);
             this.scene.add(this.controls.getObject());
             
-            // 点击锁定鼠标
-            document.addEventListener('click', () => {
-                if (!document.getElementById('modal').style.display || 
-                    document.getElementById('modal').style.display === 'none') {
-                    this.controls.lock();
-                }
-            });
+            // 点击锁定鼠标的逻辑已移到setupEventListeners中
         } else {
             // 移动端使用简单的相机控制
             this.camera.position.set(0, 0, 10);
@@ -410,20 +404,81 @@ class SpaceVoyage {
         let blogPosts = [];
         try {
             const response = await fetch('posts/posts.json');
-            const posts = await response.json();
-            blogPosts = posts.slice(0, 15); // 取前15篇文章
+            if (response.ok) {
+                const posts = await response.json();
+                blogPosts = posts.slice(0, 15); // 取前15篇文章
+                console.log('成功加载博客数据:', blogPosts.length, '篇文章');
+            } else {
+                throw new Error(`HTTP ${response.status}`);
+            }
         } catch (error) {
             console.error('Failed to load blog posts:', error);
             // 使用默认数据
             blogPosts = [
-                { title: 'Milvus向量数据库实践', category: '数据库技术', date: '2024-01', id: 'milvus-practice' },
-                { title: 'React性能优化技巧', category: '前端开发', date: '2024-02', id: 'react-optimization' },
-                { title: 'Python异步编程详解', category: '后端开发', date: '2024-03', id: 'python-async' },
-                { title: 'Docker容器化部署', category: '运维技术', date: '2024-04', id: 'docker-deploy' },
-                { title: '机器学习模型部署', category: '人工智能', date: '2024-05', id: 'ml-deployment' },
-                { title: 'TypeScript高级特性', category: '前端开发', date: '2024-06', id: 'typescript-advanced' },
-                { title: 'Kubernetes集群管理', category: '运维技术', date: '2024-07', id: 'k8s-management' },
-                { title: '数据可视化最佳实践', category: '数据科学', date: '2024-08', id: 'data-visualization' }
+                { 
+                    id: 'milvus-practice', 
+                    title: 'Milvus向量数据库实践', 
+                    category: '数据库技术', 
+                    date: '2024-01',
+                    path: 'posts/milvus-practice/README.md',
+                    summary: '深入探讨Milvus向量数据库的实践应用'
+                },
+                { 
+                    id: 'react-optimization', 
+                    title: 'React性能优化技巧', 
+                    category: '前端开发', 
+                    date: '2024-02',
+                    path: 'posts/react-optimization/README.md',
+                    summary: 'React应用性能优化的最佳实践'
+                },
+                { 
+                    id: 'python-async', 
+                    title: 'Python异步编程详解', 
+                    category: '后端开发', 
+                    date: '2024-03',
+                    path: 'posts/python-async/README.md',
+                    summary: 'Python异步编程的核心概念和实践'
+                },
+                { 
+                    id: 'docker-deploy', 
+                    title: 'Docker容器化部署', 
+                    category: '运维技术', 
+                    date: '2024-04',
+                    path: 'posts/docker-deploy/README.md',
+                    summary: 'Docker容器化部署的完整指南'
+                },
+                { 
+                    id: 'ml-deployment', 
+                    title: '机器学习模型部署', 
+                    category: '人工智能', 
+                    date: '2024-05',
+                    path: 'posts/ml-deployment/README.md',
+                    summary: '机器学习模型生产环境部署实践'
+                },
+                { 
+                    id: 'typescript-advanced', 
+                    title: 'TypeScript高级特性', 
+                    category: '前端开发', 
+                    date: '2024-06',
+                    path: 'posts/typescript-advanced/README.md',
+                    summary: 'TypeScript的高级特性和使用技巧'
+                },
+                { 
+                    id: 'k8s-management', 
+                    title: 'Kubernetes集群管理', 
+                    category: '运维技术', 
+                    date: '2024-07',
+                    path: 'posts/k8s-management/README.md',
+                    summary: 'Kubernetes集群管理最佳实践'
+                },
+                { 
+                    id: 'data-visualization', 
+                    title: '数据可视化最佳实践', 
+                    category: '数据科学', 
+                    date: '2024-08',
+                    path: 'posts/data-visualization/README.md',
+                    summary: '数据可视化的设计原则和实现方法'
+                }
             ];
         }
 
@@ -436,7 +491,7 @@ class SpaceVoyage {
             
             // 为特殊文章使用月球纹理
             let material;
-            const isSpecialPost = index === 0 || post.category === '人工智能'; // 第一篇或AI相关文章
+            const isSpecialPost = index === 0 || post.category === '人工智能' || post.category === 'AI协议'; // 第一篇或AI相关文章
             
             if (isSpecialPost) {
                 // 异步加载月球纹理
@@ -472,30 +527,45 @@ class SpaceVoyage {
                 height,
                 Math.sin(angle) * radius
             );
+            
+            // 确保文章数据包含必要字段，统一使用ID格式
             star.userData = { 
                 ...post, 
                 type: 'article',
-                // 格式化显示数据
+                // 确保有稳定的ID - 优先使用posts.json中的id字段
+                id: post.id || `article-${index}`,  
                 displayTitle: post.title,
                 displayCategory: post.category,
                 displayDate: post.date,
                 summary: post.summary || `这是一篇关于${post.title}的技术文章。`,
-                readingTime: post.readingTime || '5 分钟'
+                readingTime: post.readingTime || '5 分钟',
+                // 保留slug和path作为备用信息，但不用于链接生成
+                slug: post.slug,
+                path: post.path,
+                // 添加调试信息
+                originalData: { ...post }
             };
             
-            // 添加闪烁效果
+            // 输出调试信息 - 重点关注ID
+            console.log(`处理文章 ${index}:`, {
+                title: star.userData.displayTitle,
+                id: star.userData.id,
+                hasValidId: !!star.userData.id && star.userData.id !== `article-${index}`,
+                originalId: post.id
+            });
+            
+            // 添加闪烁效果数据
             star.userData.originalOpacity = 0.9;
-            star.userData.twinkleSpeed = Math.random() * 0.05 + 0.02;
+            star.userData.twinkleSpeed = 1.5 + Math.random() * 2;
             
             this.scene.add(star);
             this.blogStars.push(star);
         });
         
-        this.isInBlogSpace = true;
         this.currentMode = 'blog';
+        this.isInBlogSpace = true;
         
-        // 显示返回主太空按钮
-        document.getElementById('back-to-main-space').style.display = 'flex';
+        console.log(`博客空间创建完成，共加载 ${this.blogStars.length} 篇文章`);
     }
 
     createMainSpace() {
@@ -619,6 +689,15 @@ class SpaceVoyage {
                 return;
             }
             
+            // 如果是桌面端且鼠标未锁定，尝试锁定鼠标
+            if (!this.isMobile && this.controls && this.controls.lock && !this.controls.isLocked) {
+                try {
+                    this.controls.lock();
+                } catch (error) {
+                    console.log('鼠标锁定失败，请再次点击');
+                }
+            }
+            
             // 如果瞄准了星球，直接进入
             if (this.targetPlanet) {
                 enterPlanet();
@@ -667,6 +746,14 @@ class SpaceVoyage {
                 if (modal.style.display === 'flex') {
                     closeModal();
                 }
+            }
+        });
+        
+        // 确保模态框关闭按钮有效 - 使用事件委托
+        document.addEventListener('click', (event) => {
+            if (event.target.classList.contains('modal-close') || 
+                event.target.closest('.modal-close')) {
+                closeModal();
             }
         });
     }
@@ -831,27 +918,38 @@ class SpaceVoyage {
         const speed = this.isAccelerating ? this.accelerateSpeed : this.normalSpeed;
         
         if (!this.isMobile && this.controls) {
-            // 桌面端使用PointerLockControls
-            const velocity = new THREE.Vector3();
+            // 桌面端使用PointerLockControls - 直接使用正确的方向
             
-            // 确保方向正确：W键向前，S键向后
-            if (this.moveForward) velocity.z -= speed;  // W键向前移动（负z方向）
-            if (this.moveBackward) velocity.z += speed; // S键向后移动（正z方向）
-            if (this.moveLeft) velocity.x -= speed;     // A键向左移动
-            if (this.moveRight) velocity.x += speed;    // D键向右移动
-            if (this.moveUp) velocity.y += speed;       // 空格键向上移动
-            if (this.moveDown) velocity.y -= speed;     // Shift键向下移动
+            // 前后移动：W键向前（正数），S键向后（负数）
+            if (this.moveForward) {
+                this.controls.moveForward(speed);   // W键向前移动
+            }
+            if (this.moveBackward) {
+                this.controls.moveForward(-speed);  // S键向后移动
+            }
             
-            // 应用移动
-            this.controls.moveForward(velocity.z);
-            this.controls.moveRight(velocity.x);
-            this.controls.getObject().position.y += velocity.y;
+            // 左右移动：A键向左（负数），D键向右（正数）
+            if (this.moveLeft) {
+                this.controls.moveRight(-speed);    // A键向左移动
+            }
+            if (this.moveRight) {
+                this.controls.moveRight(speed);     // D键向右移动
+            }
+            
+            // 上下移动
+            if (this.moveUp) {
+                this.controls.getObject().position.y += speed;   // 空格键向上移动
+            }
+            if (this.moveDown) {
+                this.controls.getObject().position.y -= speed;   // Ctrl键向下移动
+            }
         } else if (this.isMobile) {
             // 移动端直接控制相机组位置
             const velocity = new THREE.Vector3();
             
-            if (this.moveForward) velocity.z -= speed;  // 向前移动
-            if (this.moveBackward) velocity.z += speed; // 向后移动
+            // 移动端的方向逻辑：保持一致性
+            if (this.moveForward) velocity.z -= speed;  // 向前移动（负z方向）
+            if (this.moveBackward) velocity.z += speed; // 向后移动（正z方向）
             if (this.moveLeft) velocity.x -= speed;     // 向左移动
             if (this.moveRight) velocity.x += speed;    // 向右移动
             if (this.moveUp) velocity.y += speed;       // 向上移动
@@ -966,11 +1064,13 @@ class SpaceVoyage {
         console.log(`正在加载纹理: ${path}`);
         
         return new Promise((resolve, reject) => {
-            // 尝试多个路径，包括CDN和本地路径
+            // 优化路径顺序：先本地，后CDN
             const possiblePaths = [
-                path,
-                `./${path}`,
-                `/${path}`,
+                path,                    // 原始路径
+                `./${path}`,            // 相对路径
+                `/${path}`,             // 绝对路径
+                `./textures/planets/earth.jpeg`,  // 默认地球纹理作为备用
+                `./textures/planets/mars.jpg`,    // 默认火星纹理作为备用
                 `https://cdn.jsdelivr.net/gh/Shawnzheng011019/iamshawn@main/${path}`,
                 `https://fastly.jsdelivr.net/gh/Shawnzheng011019/iamshawn@main/${path}`,
                 `https://raw.githubusercontent.com/Shawnzheng011019/iamshawn/main/${path}`
@@ -980,19 +1080,32 @@ class SpaceVoyage {
             
             const tryLoadTexture = () => {
                 if (currentPathIndex >= possiblePaths.length) {
-                    console.warn(`所有路径都无法加载纹理: ${path}，使用默认纹理`);
-                    // 创建一个简单的默认纹理
+                    console.warn(`所有路径都无法加载纹理: ${path}，使用程序生成的默认纹理`);
+                    // 创建一个更美观的默认纹理
                     const canvas = document.createElement('canvas');
-                    canvas.width = 256;
-                    canvas.height = 256;
+                    canvas.width = 512;
+                    canvas.height = 512;
                     const ctx = canvas.getContext('2d');
-                    ctx.fillStyle = '#cccccc';
-                    ctx.fillRect(0, 0, 256, 256);
-                    ctx.fillStyle = '#999999';
-                    ctx.fillRect(0, 0, 128, 128);
-                    ctx.fillRect(128, 128, 128, 128);
+                    
+                    // 创建径向渐变背景
+                    const gradient = ctx.createRadialGradient(256, 256, 0, 256, 256, 256);
+                    gradient.addColorStop(0, '#4fc3f7');
+                    gradient.addColorStop(0.5, '#29b6f6');
+                    gradient.addColorStop(1, '#0277bd');
+                    ctx.fillStyle = gradient;
+                    ctx.fillRect(0, 0, 512, 512);
+                    
+                    // 添加一些纹理效果
+                    for (let i = 0; i < 50; i++) {
+                        ctx.fillStyle = `rgba(255, 255, 255, ${Math.random() * 0.3})`;
+                        ctx.beginPath();
+                        ctx.arc(Math.random() * 512, Math.random() * 512, Math.random() * 20, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
                     
                     const defaultTexture = new THREE.CanvasTexture(canvas);
+                    defaultTexture.wrapS = THREE.RepeatWrapping;
+                    defaultTexture.wrapT = THREE.RepeatWrapping;
                     this.loadedTextures.set(path, defaultTexture);
                     resolve(defaultTexture);
                     return;
@@ -1039,19 +1152,27 @@ class SpaceVoyage {
 // 全局函数
 async function enterPlanet() {
     const voyage = window.spaceVoyage;
-    if (!voyage.targetPlanet) return;
+    if (!voyage.targetPlanet) {
+        console.log('没有目标星球');
+        return;
+    }
     
     const planetData = voyage.targetPlanet.userData;
+    console.log('进入星球，数据:', planetData);
+    console.log('星球类型:', planetData.type);
     
     if (planetData.type === 'blog') {
         // 进入博客太空
+        console.log('进入博客太空');
         await voyage.createBlogSpace();
         document.getElementById('planet-info').classList.remove('show');
     } else if (planetData.type === 'article') {
         // 显示文章内容
+        console.log('显示文章内容');
         showArticleModal(planetData);
     } else {
         // 显示星球内容
+        console.log('显示星球内容');
         showPlanetModal(planetData);
     }
 }
@@ -1088,36 +1209,78 @@ function showArticleModal(articleData) {
     const modal = document.getElementById('modal');
     const modalBody = document.getElementById('modal-body');
     
-    // 构造具体文章的URL
-    const articleUrl = articleData.path 
-        ? `blog/article.html?id=${articleData.id}` 
-        : 'blog.html';
+    // 输出调试信息
+    console.log('showArticleModal 被调用，文章数据:', articleData);
+    
+    // 构造具体文章的URL - 统一使用ID格式
+    let articleUrl = 'blog.html'; // 默认跳转到博客主页
+    let linkText = '查看我的博客';
+    
+    // 确保文章数据存在
+    if (!articleData) {
+        console.error('文章数据为空');
+        articleUrl = 'blog.html';
+        linkText = '查看我的博客';
+    } else {
+        // 优先使用ID，这与博客系统的URL格式匹配
+        if (articleData.id) {
+            // 使用ID构造链接 - 这是博客系统期望的格式
+            articleUrl = `blog/article.html?id=${encodeURIComponent(articleData.id)}`;
+            linkText = '阅读完整文章';
+            console.log('使用 id:', articleData.id);
+        } else if (articleData.slug) {
+            // 备选：使用slug作为ID
+            articleUrl = `blog/article.html?id=${encodeURIComponent(articleData.slug)}`;
+            linkText = '阅读完整文章';
+            console.log('使用 slug 作为 id:', articleData.slug);
+        } else if (articleData.displayTitle || articleData.title) {
+            // 最后备选：基于标题生成ID
+            const title = articleData.displayTitle || articleData.title;
+            const generatedId = title.toLowerCase()
+                .replace(/[^\w\s-]/g, '') // 移除特殊字符
+                .replace(/\s+/g, '-')     // 空格替换为连字符
+                .trim();
+            articleUrl = `blog/article.html?id=${encodeURIComponent(generatedId)}`;
+            linkText = '阅读完整文章';
+            console.log('基于标题生成 id:', generatedId);
+        } else {
+            console.warn('文章数据缺少必要的标识符，使用默认博客页面');
+        }
+    }
+    
+    console.log('最终构造的URL:', articleUrl);
+    
+    // 获取文章信息，提供默认值
+    const title = articleData?.displayTitle || articleData?.title || '未知文章';
+    const category = articleData?.displayCategory || articleData?.category || '未分类';
+    const date = articleData?.displayDate || articleData?.date || '未知时间';
+    const summary = articleData?.summary || `这是一篇关于${title}的技术文章。`;
+    const readingTime = articleData?.readingTime || '5 分钟';
+    const tags = articleData?.tags || [];
     
     modalBody.innerHTML = `
         <div style="max-width: 800px;">
             <h1 style="color: #64b5f6; margin-bottom: 1rem; font-size: 2rem; line-height: 1.3;">
-                ${articleData.displayTitle || articleData.title}
+                ${title}
             </h1>
             <div style="margin-bottom: 1.5rem; color: #b0bec5; display: flex; flex-wrap: wrap; gap: 1rem; align-items: center;">
-                <span style="background: ${getCategoryColorHex(articleData.displayCategory || articleData.category)}; color: white; padding: 6px 12px; border-radius: 15px; font-size: 0.9rem;">
-                    ${articleData.displayCategory || articleData.category}
+                <span style="background: ${getCategoryColorHex(category)}; color: white; padding: 6px 12px; border-radius: 15px; font-size: 0.9rem;">
+                    ${category}
                 </span>
                 <span style="display: flex; align-items: center; gap: 0.5rem;">
                     <i class="fa-solid fa-calendar" style="color: #64b5f6;"></i>
-                    ${articleData.displayDate || articleData.date}
+                    ${date}
                 </span>
-                ${articleData.readingTime ? `
                 <span style="display: flex; align-items: center; gap: 0.5rem;">
                     <i class="fa-solid fa-clock" style="color: #64b5f6;"></i>
-                    ${articleData.readingTime}
+                    ${readingTime}
                 </span>
-                ` : ''}
             </div>
             
-            ${articleData.tags ? `
+            ${tags.length > 0 ? `
             <div style="margin-bottom: 1.5rem;">
                 <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
-                    ${articleData.tags.map(tag => `
+                    ${tags.map(tag => `
                         <span style="background: rgba(100, 181, 246, 0.2); color: #64b5f6; padding: 4px 8px; border-radius: 10px; font-size: 0.8rem;">
                             #${tag}
                         </span>
@@ -1128,21 +1291,25 @@ function showArticleModal(articleData) {
             
             <div style="line-height: 1.8; color: #e0e0e0;">
                 <p style="margin-bottom: 1.5rem; font-size: 1.1rem; color: #b0bec5; font-style: italic;">
-                    ${articleData.summary || `这是一篇关于${articleData.title}的技术文章。`}
+                    ${summary}
                 </p>
                 
                 <div style="background: rgba(100, 181, 246, 0.1); padding: 1.5rem; border-radius: 10px; border-left: 4px solid #64b5f6; margin-bottom: 1.5rem;">
                     <h3 style="color: #64b5f6; margin-bottom: 1rem;">📖 文章预览</h3>
                     <p style="margin-bottom: 1rem;">这篇文章详细介绍了相关技术概念、实践经验和最佳实践。</p>
                     <p style="margin-bottom: 1rem;">通过实际案例和代码示例，帮助读者更好地理解和应用这些技术。</p>
+                    ${articleData?.id ? 
+                        '<p style="color: #4fc3f7;">点击下方链接阅读完整文章内容。</p>' : 
+                        '<p style="color: #ff9800;">暂无完整文章内容，点击下方链接查看博客主页。</p>'
+                    }
                 </div>
                 
                 <div style="text-align: center; margin-top: 2rem;">
-                    <a href="${articleUrl}" target="_blank" 
-                       onclick="closeModal()" 
+                    <a href="${articleUrl}" 
+                       onclick="closeModal(); return true;" 
                        style="display: inline-flex; align-items: center; gap: 0.5rem; background: linear-gradient(45deg, #2196f3, #64b5f6); color: white; padding: 12px 24px; border-radius: 25px; text-decoration: none; font-weight: bold; transition: all 0.3s ease;">
                         <i class="fa-solid fa-book-open"></i>
-                        ${articleData.path ? '阅读完整文章' : '查看我的博客'}
+                        ${linkText}
                     </a>
                 </div>
             </div>
@@ -1182,7 +1349,25 @@ function getCategoryColorHex(category) {
 }
 
 function closeModal() {
-    document.getElementById('modal').style.display = 'none';
+    const modal = document.getElementById('modal');
+    if (modal) {
+        modal.style.display = 'none';
+        
+        // 关闭模态框后，如果是桌面端且不是移动设备，延迟重新锁定鼠标控制
+        if (window.spaceVoyage && !window.spaceVoyage.isMobile && window.spaceVoyage.controls && window.spaceVoyage.controls.lock) {
+            // 添加短暂延迟，确保关闭动画完成后再锁定
+            setTimeout(() => {
+                // 只有当模态框确实已关闭时才锁定
+                if (modal.style.display === 'none') {
+                    try {
+                        window.spaceVoyage.controls.lock();
+                    } catch (error) {
+                        console.log('自动重新锁定鼠标失败，请点击页面重新锁定');
+                    }
+                }
+            }, 100);
+        }
+    }
 }
 
 function backToMainSpace() {
@@ -1229,20 +1414,33 @@ function getInternshipContent() {
             <h1 style="color: #64b5f6; margin-bottom: 1.5rem;">实习经历</h1>
             <div style="line-height: 1.8; color: #e0e0e0;">
                 <div style="margin-bottom: 2rem; padding: 1.5rem; background: rgba(255,255,255,0.05); border-radius: 10px;">
-                    <h3 style="color: #64b5f6; margin-bottom: 0.5rem;">算法工程师</h3>
-                    <p style="color: #b0bec5; margin-bottom: 1rem;">Zilliz • 2024年7月 - 至今</p>
-                    <p>• 负责RAG系统的设计与开发，提升检索和生成的准确性</p>
-                    <p>• 参与MCP系统的构建，优化多模态数据处理流程</p>
-                    <p>• 进行大语言模型的微调和部署，提高模型在特定任务上的性能</p>
-                    <p>• 参与技术方案的设计和优化，解决复杂的工程问题</p>
-                </div>
-                <div style="padding: 1.5rem; background: rgba(255,255,255,0.05); border-radius: 10px;">
-                    <h3 style="color: #64b5f6; margin-bottom: 0.5rem;">后端开发工程师</h3>
-                    <p style="color: #b0bec5; margin-bottom: 1rem;">相关项目经验 • 2023年 - 2024年</p>
-                    <p>• 使用Django框架开发高性能的Web应用程序</p>
-                    <p>• 设计和优化PostgreSQL数据库架构</p>
-                    <p>• 开发RESTful API，支持前后端分离架构</p>
-                    <p>• 参与系统架构设计和技术选型</p>
+                    <h3 style="color: #64b5f6; margin-bottom: 0.5rem;">Zilliz</h3>
+                    <p style="color: #b0bec5; margin-bottom: 1rem;">专注于AI非结构化数据处理和分析 • 2025.05 - 2025.09（更新中）</p>
+                    <p style="margin-bottom: 0.5rem;">Zilliz成立于2017年，致力于发掘非结构化数据价值，打造面向AI应用的新一代数据库技术。产品包括Milvus，Zilliz Cloud等。</p>
+                    
+                    <h4 style="color: #64b5f6; margin: 1rem 0 0.5rem 0;">技术栈</h4>
+                    <p style="margin-bottom: 1rem;">Milvus • PyMilvus • RAG • Deep Searcher • Python</p>
+                    
+                    <h4 style="color: #64b5f6; margin: 1rem 0 0.5rem 0;">实习项目</h4>
+                    <div style="margin-left: 1rem;">
+                        <p style="margin-bottom: 0.5rem;"><strong>Milvus MCP Server</strong></p>
+                        <p style="margin-bottom: 1rem; font-size: 0.9rem; color: #b0bec5;">实现了Milvus查询功能的MCP服务，为大语言模型提供向量数据库操作能力，支持向量检索、相似性搜索等核心功能。</p>
+                        
+                        <p style="margin-bottom: 0.5rem;"><strong>Milvus Code Generate Helper</strong></p>
+                        <p style="margin-bottom: 1rem; font-size: 0.9rem; color: #b0bec5;">基于RAG框架开发的Milvus代码生成MCP服务，能够根据用户需求自动生成PyMilvus代码片段，提高开发效率。</p>
+                        
+                        <p style="margin-bottom: 0.5rem;"><strong>Deep Searcher</strong></p>
+                        <p style="margin-bottom: 1rem; font-size: 0.9rem; color: #b0bec5;">基于Agentic RAG架构的智能搜索引擎，支持多种大语言模型和向量数据库，能够基于私有数据执行复杂推理和生成专业报告。</p>
+                    </div>
+                    
+                    <div style="margin-top: 1rem; display: flex; gap: 1rem; flex-wrap: wrap;">
+                        <a href="https://zilliz.com.cn/about" target="_blank" style="color: #64b5f6; text-decoration: none; font-size: 0.9rem;">
+                            了解更多 <i class="fa-solid fa-external-link-alt"></i>
+                        </a>
+                        <a href="docs-viewer.html" style="color: #64b5f6; text-decoration: none; font-size: 0.9rem;">
+                            查看技术文档 <i class="fa-solid fa-file-alt"></i>
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>
@@ -1255,36 +1453,36 @@ function getProjectsContent() {
             <h1 style="color: #64b5f6; margin-bottom: 1.5rem;">项目经历</h1>
             <div style="line-height: 1.8; color: #e0e0e0;">
                 <div style="margin-bottom: 2rem; padding: 1.5rem; background: rgba(255,255,255,0.05); border-radius: 10px;">
-                    <h3 style="color: #64b5f6; margin-bottom: 0.5rem;">DeepSearcher - 智能搜索与报告生成工具</h3>
-                    <p style="color: #b0bec5; margin-bottom: 1rem;">Python/FastAPI/Milvus • 2024年</p>
-                    <p>• 基于Agentic RAG架构的智能搜索引擎</p>
-                    <p>• 支持多种大语言模型和向量数据库</p>
-                    <p>• 能够基于私有数据执行复杂推理和生成专业报告</p>
-                    <p>• GitHub项目获得1500+星标</p>
+                    <h3 style="color: #64b5f6; margin-bottom: 0.5rem;">向量数据库文档翻译系统</h3>
+                    <p style="color: #b0bec5; margin-bottom: 1rem;">Python/Django/PostgreSQL • 2024.11 - 2024.12</p>
+                    <p>• 基于Django开发的向量数据库文档翻译系统，支持中英文互译，项目经理</p>
+                    <p>• 使用GPT-4对接口进行深度定制，结合向量数据库实现上下文感知翻译</p>
+                    <p>• 集成文档管理、版本控制、翻译历史追踪等功能模块</p>
+                    <p>• 实现自动化工作流，支持批量翻译和实时协作</p>
                 </div>
                 <div style="margin-bottom: 2rem; padding: 1.5rem; background: rgba(255,255,255,0.05); border-radius: 10px;">
-                    <h3 style="color: #64b5f6; margin-bottom: 0.5rem;">个人主页与博客系统</h3>
-                    <p style="color: #b0bec5; margin-bottom: 1rem;">HTML/CSS/JavaScript/Three.js • 2024年</p>
-                    <p>• 响应式设计的个人主页，支持移动端和桌面端</p>
-                    <p>• 集成博客系统和文章管理功能</p>
-                    <p>• 创新的3D太空漫游交互界面</p>
-                    <p>• 支持多数据源和CDN加速</p>
+                    <h3 style="color: #64b5f6; margin-bottom: 0.5rem;">联邦学习风电预测系统</h3>
+                    <p style="color: #b0bec5; margin-bottom: 1rem;">Django/PySyft/PyEcharts • 2023.12 - 2024.02</p>
+                    <p>• 实现基于Django的异步任务调度系统，支持多节点协同训练</p>
+                    <p>• 使用PySyft框架构建联邦学习环境，保护数据隐私</p>
+                    <p>• 集成PyEcharts实现风电数据可视化和预测结果展示</p>
+                    <p>• 设计分布式训练架构，提高模型训练效率</p>
                 </div>
                 <div style="margin-bottom: 2rem; padding: 1.5rem; background: rgba(255,255,255,0.05); border-radius: 10px;">
-                    <h3 style="color: #64b5f6; margin-bottom: 0.5rem;">RAG系统开发与优化</h3>
-                    <p style="color: #b0bec5; margin-bottom: 1rem;">Python/LangChain/Milvus • 2024年</p>
-                    <p>• 设计和实现高性能的RAG检索增强生成系统</p>
-                    <p>• 集成多种向量数据库和大语言模型</p>
-                    <p>• 优化检索策略和生成质量</p>
-                    <p>• 支持私有数据的智能问答</p>
+                    <h3 style="color: #64b5f6; margin-bottom: 0.5rem;">公安--工单信息抽取</h3>
+                    <p style="color: #b0bec5; margin-bottom: 1rem;">Flask/FastAPI/PostgreSQL/高德地图API • 2024.01 - 2024.05</p>
+                    <p>• 设计工单处理微服务架构，采用责任链模式对接多数据源，日均处理3000+工单</p>
+                    <p>• 实现基于Flask的核心业务逻辑，使用FastAPI构建高性能API接口</p>
+                    <p>• 集成高德地图API实现地理位置解析和路径规划功能</p>
+                    <p>• 优化PostgreSQL数据库查询性能，支持大规模数据处理</p>
                 </div>
                 <div style="padding: 1.5rem; background: rgba(255,255,255,0.05); border-radius: 10px;">
-                    <h3 style="color: #64b5f6; margin-bottom: 0.5rem;">大语言模型微调与部署</h3>
-                    <p style="color: #b0bec5; margin-bottom: 1rem;">Python/PyTorch/Transformers • 2023年-2024年</p>
-                    <p>• 使用LoRA、QLoRA等技术进行模型微调</p>
-                    <p>• 优化模型推理性能和部署效率</p>
-                    <p>• 支持多种开源大模型的适配和优化</p>
-                    <p>• 实现模型的高效推理和API服务</p>
+                    <h3 style="color: #64b5f6; margin-bottom: 0.5rem;">云网孪生系统--智能问答大模型</h3>
+                    <p style="color: #b0bec5; margin-bottom: 1rem;">Django/PostgreSQL/Milvus/FastAPI • 2023.09 - 2023.12</p>
+                    <p>• 搭建微服务架构，采用Django实现问答引擎核心模块，异步处理用户请求，支持200+并发问答</p>
+                    <p>• 集成Milvus向量数据库，实现基于语义检索的智能问答</p>
+                    <p>• 使用FastAPI构建RESTful API接口，支持多客户端接入</p>
+                    <p>• 实现基于上下文的对话管理和知识图谱构建</p>
                 </div>
             </div>
         </div>
