@@ -2,7 +2,11 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="screen-orientation" content="landscape">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
@@ -532,15 +536,104 @@
                 cursor: default;
             }
         }
+
+        /* 横屏提示 */
+        .orientation-prompt {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            color: #fff;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+            flex-direction: column;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .orientation-prompt.show {
+            display: flex;
+        }
+
+        .orientation-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            color: #64b5f6;
+            animation: pulse 1.5s ease-in-out infinite alternate;
+        }
+
+        .orientation-text {
+            font-size: 1.2rem;
+            margin-bottom: 0.5rem;
+            color: #b0bec5;
+        }
+
+        /* 移动端横屏优化 */
+        @media (max-width: 1024px) and (orientation: landscape) {
+            .mobile-controls {
+                height: 150px;
+            }
+            
+            .virtual-joystick {
+                width: 100px;
+                height: 100px;
+                bottom: 15px;
+                left: 15px;
+            }
+            
+            .joystick-knob {
+                width: 35px;
+                height: 35px;
+            }
+            
+            .mobile-buttons {
+                bottom: 15px;
+                right: 15px;
+                gap: 8px;
+            }
+            
+            .mobile-btn {
+                width: 50px;
+                height: 50px;
+                font-size: 1rem;
+            }
+            
+            .controls-info {
+                bottom: 10px;
+                left: 10px;
+                font-size: 0.8rem;
+                padding: 10px;
+                max-width: 200px;
+            }
+            
+            .planet-info {
+                top: 10px;
+                right: 10px;
+                max-width: 250px;
+                padding: 12px;
+            }
+        }
     </style>
 </head>
 <body>
+    <!-- 横屏提示 -->
+    <div id="orientation-prompt" class="orientation-prompt">
+        <div class="orientation-icon">📱</div>
+        <div class="orientation-text">请将设备横向旋转</div>
+        <div class="orientation-text">以获得最佳太空漫游体验</div>
+    </div>
+
     <!-- 移动端提示信息 -->
     <div id="mobile-info" class="mobile-info">
         <h3>🚀 太空漫游</h3>
         <p>在移动设备上体验太空探索</p>
-        <p>使用左侧虚拟摇杆移动</p>
-        <p>右侧按钮控制上升/下降和加速</p>
+        <p>🎮 左侧虚拟摇杆：移动</p>
+        <p>🎯 滑动屏幕：控制视角</p>
+        <p>⬆️⬇️ 右侧按钮：上升/下降/加速</p>
         <button onclick="closeMobileInfo()">开始探索</button>
     </div>
 
@@ -601,13 +694,21 @@
         
         <div class="controls-info">
             <strong>控制说明：</strong><br>
-            鼠标移动 - 环顾四周<br>
-            WASD - 移动<br>
-            Shift - 加速<br>
-            Space - 上升<br>
-            Ctrl - 下降<br>
-            ESC - 释放鼠标<br>
-            点击星球 - 直接进入
+            <span class="desktop-controls">
+                鼠标移动 - 环顾四周<br>
+                WASD - 移动<br>
+                Shift - 加速<br>
+                Space - 上升<br>
+                Ctrl - 下降<br>
+                ESC - 释放鼠标<br>
+                点击星球 - 直接进入
+            </span>
+            <span class="mobile-controls-text" style="display: none;">
+                滑动屏幕 - 环顾四周<br>
+                左侧摇杆 - 移动<br>
+                右侧按钮 - 上升/下降/加速<br>
+                点击星球 - 直接进入
+            </span>
         </div>
 
         <div class="planet-info" id="planet-info">
@@ -635,7 +736,7 @@
         </div>
     </div>
 
-    <script src="space-voyage.js?v=1.3.0"></script>
+    <script src="space-voyage.js?v=1.5.0"></script>
     
     <script>
         // 移动端信息关闭函数
@@ -649,12 +750,53 @@
                    window.innerWidth <= 768;
         }
         
+        // 检查屏幕方向
+        function checkOrientation() {
+            const orientationPrompt = document.getElementById('orientation-prompt');
+            if (isMobileDevice()) {
+                if (window.innerHeight > window.innerWidth) {
+                    // 竖屏 - 显示横屏提示
+                    orientationPrompt.classList.add('show');
+                } else {
+                    // 横屏 - 隐藏提示
+                    orientationPrompt.classList.remove('show');
+                }
+            }
+        }
+        
+        // 切换控制说明显示
+        function updateControlsDisplay() {
+            const desktopControls = document.querySelector('.desktop-controls');
+            const mobileControls = document.querySelector('.mobile-controls-text');
+            
+            if (isMobileDevice()) {
+                desktopControls.style.display = 'none';
+                mobileControls.style.display = 'block';
+            } else {
+                desktopControls.style.display = 'block';
+                mobileControls.style.display = 'none';
+            }
+        }
+        
         // 页面加载完成后检查是否为移动端
         document.addEventListener('DOMContentLoaded', function() {
             if (isMobileDevice()) {
                 document.getElementById('mobile-info').classList.add('show');
                 document.getElementById('mobile-controls').classList.add('show');
             }
+            updateControlsDisplay();
+            checkOrientation();
+        });
+        
+        // 监听屏幕方向变化
+        window.addEventListener('orientationchange', function() {
+            setTimeout(checkOrientation, 100);
+        });
+        
+        // 监听窗口大小变化
+        window.addEventListener('resize', function() {
+            checkOrientation();
+            updateControlsDisplay();
         });
     </script>
 </body>

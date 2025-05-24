@@ -26,6 +26,13 @@ class SpaceVoyage {
         this.joystickActive = false;
         this.joystickDirection = { x: 0, y: 0 };
         
+        // 移动端视角控制
+        this.touchStartX = 0;
+        this.touchStartY = 0;
+        this.isLookingAround = false;
+        this.cameraRotationX = 0; // 上下旋转
+        this.cameraRotationY = 0; // 左右旋转
+        
         // 速度设置
         this.normalSpeed = 0.3;
         this.accelerateSpeed = 0.8;
@@ -33,6 +40,10 @@ class SpaceVoyage {
         // Raycaster for interaction
         this.raycaster = new THREE.Raycaster();
         this.mouse = new THREE.Vector2();
+        
+        // 纹理加载器
+        this.textureLoader = new THREE.TextureLoader();
+        this.loadedTextures = new Map(); // 缓存已加载的纹理
         
         this.init();
     }
@@ -49,7 +60,7 @@ class SpaceVoyage {
         this.setupRenderer();
         this.setupControls();
         this.createSpaceEnvironment();
-        this.createPlanets();
+        await this.createPlanets();
         this.setupEventListeners();
         this.animate();
         this.hideLoadingScreen();
@@ -64,8 +75,9 @@ class SpaceVoyage {
             const loadingSteps = [
                 '初始化3D引擎...',
                 '生成太空环境...',
+                '加载银河系背景...',
+                '加载星球纹理...',
                 '创建星系...',
-                '加载星球数据...',
                 '设置物理系统...',
                 '优化渲染...',
                 '准备就绪！'
@@ -151,28 +163,44 @@ class SpaceVoyage {
             // 移动端使用简单的相机控制
             this.camera.position.set(0, 0, 10);
             
+            // 移动端独立的相机控制系统
+            this.cameraGroup = new THREE.Group();
+            this.cameraPivot = new THREE.Group();
+            this.cameraGroup.add(this.cameraPivot);
+            this.cameraPivot.add(this.camera);
+            this.scene.add(this.cameraGroup);
+            
             // 创建一个虚拟controls对象用于移动端
             this.controls = {
-                getObject: () => ({ position: this.camera.position }),
-                getDirection: (vector) => this.camera.getWorldDirection(vector),
+                getObject: () => this.cameraGroup,
+                getDirection: (vector) => {
+                    this.camera.getWorldDirection(vector);
+                    return vector;
+                },
                 moveForward: (distance) => {
                     const direction = new THREE.Vector3();
                     this.camera.getWorldDirection(direction);
-                    this.camera.position.addScaledVector(direction, distance);
+                    this.cameraGroup.position.addScaledVector(direction, distance);
                 },
                 moveRight: (distance) => {
                     const direction = new THREE.Vector3();
                     this.camera.getWorldDirection(direction);
                     const right = new THREE.Vector3();
                     right.crossVectors(direction, this.camera.up).normalize();
-                    this.camera.position.addScaledVector(right, distance);
+                    this.cameraGroup.position.addScaledVector(right, distance);
                 },
                 unlock: () => {} // 空函数，移动端不需要
             };
+            
+            // 设置移动端触摸控制
+            this.setupMobileLookControls();
         }
     }
 
     createSpaceEnvironment() {
+        // 添加银河系背景
+        this.createSpaceBackground();
+        
         // 创建星空背景
         const starGeometry = new THREE.BufferGeometry();
         // 移动端减少星星数量以提升性能
@@ -228,7 +256,35 @@ class SpaceVoyage {
         this.scene.add(directionalLight);
     }
 
-    createPlanets() {
+    async createSpaceBackground() {
+        try {
+            // 加载银河系背景纹理
+            const milkyWayTexture = await this.loadTexture('textures/space/milky_way.jpg');
+            
+            if (milkyWayTexture) {
+                // 创建球体几何体作为天空盒
+                const skyboxGeometry = new THREE.SphereGeometry(15000, 32, 32);
+                const skyboxMaterial = new THREE.MeshBasicMaterial({
+                    map: milkyWayTexture,
+                    side: THREE.BackSide, // 内表面渲染
+                    transparent: true,
+                    opacity: 0.8
+                });
+                
+                const skybox = new THREE.Mesh(skyboxGeometry, skyboxMaterial);
+                skybox.rotation.y = Math.PI; // 调整方向
+                this.scene.add(skybox);
+                
+                console.log('银河系背景纹理加载成功');
+            } else {
+                console.warn('银河系背景纹理加载失败，使用默认星空');
+            }
+        } catch (error) {
+            console.warn('创建太空背景时出错:', error);
+        }
+    }
+
+    async createPlanets() {
         const planetData = [
             {
                 name: '关于我',
@@ -236,7 +292,8 @@ class SpaceVoyage {
                 position: [30, 5, -20],
                 color: 0x4fc3f7,
                 size: 3,
-                type: 'about'
+                type: 'about',
+                texture: 'textures/planets/earth.jpeg'
             },
             {
                 name: '实习经历',
@@ -244,7 +301,8 @@ class SpaceVoyage {
                 position: [-25, -10, -30],
                 color: 0x81c784,
                 size: 2.8,
-                type: 'internship'
+                type: 'internship',
+                texture: 'textures/planets/mars.jpg'
             },
             {
                 name: '项目经历',
@@ -252,7 +310,8 @@ class SpaceVoyage {
                 position: [15, -20, 40],
                 color: 0xffb74d,
                 size: 3.2,
-                type: 'projects'
+                type: 'projects',
+                texture: 'textures/planets/jupiter.jpg'
             },
             {
                 name: '技能',
@@ -260,7 +319,8 @@ class SpaceVoyage {
                 position: [-40, 15, 25],
                 color: 0xf06292,
                 size: 2.5,
-                type: 'skills'
+                type: 'skills',
+                texture: 'textures/planets/mercury.jpg'
             },
             {
                 name: '博客',
@@ -268,21 +328,51 @@ class SpaceVoyage {
                 position: [35, -5, 60],
                 color: 0xba68c8,
                 size: 3.5,
-                type: 'blog'
+                type: 'blog',
+                texture: 'textures/planets/venus.jpg'
             }
         ];
 
-        planetData.forEach((data, index) => {
+        await this.createPlanetsWithTextures(planetData);
+    }
+
+    async createPlanetsWithTextures(planetData) {
+        for (const data of planetData) {
             // 创建星球几何体
             const geometry = new THREE.SphereGeometry(data.size, 32, 32);
             
-            // 创建材质
-            const material = new THREE.MeshPhongMaterial({
-                color: data.color,
-                transparent: true,
-                opacity: 0.8,
-                shininess: 100
-            });
+            let material;
+            
+            // 尝试加载纹理
+            if (data.texture) {
+                const texture = await this.loadTexture(data.texture);
+                if (texture) {
+                    // 如果纹理加载成功，使用纹理材质
+                    material = new THREE.MeshPhongMaterial({
+                        map: texture,
+                        transparent: true,
+                        opacity: 0.9,
+                        shininess: 100
+                    });
+                } else {
+                    // 纹理加载失败，使用纯色材质
+                    console.warn(`星球 ${data.name} 的纹理加载失败，使用纯色`);
+                    material = new THREE.MeshPhongMaterial({
+                        color: data.color,
+                        transparent: true,
+                        opacity: 0.8,
+                        shininess: 100
+                    });
+                }
+            } else {
+                // 没有纹理，使用纯色材质
+                material = new THREE.MeshPhongMaterial({
+                    color: data.color,
+                    transparent: true,
+                    opacity: 0.8,
+                    shininess: 100
+                });
+            }
             
             const planet = new THREE.Mesh(geometry, material);
             planet.position.set(...data.position);
@@ -295,7 +385,7 @@ class SpaceVoyage {
             const glowMaterial = new THREE.MeshBasicMaterial({
                 color: data.color,
                 transparent: true,
-                opacity: 0.2,
+                opacity: 0.15, // 降低发光透明度，让纹理更突出
                 side: THREE.BackSide
             });
             const glow = new THREE.Mesh(glowGeometry, glowMaterial);
@@ -306,7 +396,7 @@ class SpaceVoyage {
             
             this.scene.add(planet);
             this.planets.push(planet);
-        });
+        }
     }
 
     async createBlogSpace() {
@@ -343,11 +433,35 @@ class SpaceVoyage {
             const height = (Math.random() - 0.5) * 30;
             
             const geometry = new THREE.SphereGeometry(0.8, 16, 16);
-            const material = new THREE.MeshPhongMaterial({
-                color: this.getCategoryColor(post.category),
-                transparent: true,
-                opacity: 0.9
-            });
+            
+            // 为特殊文章使用月球纹理
+            let material;
+            const isSpecialPost = index === 0 || post.category === '人工智能'; // 第一篇或AI相关文章
+            
+            if (isSpecialPost) {
+                // 异步加载月球纹理
+                this.loadTexture('textures/planets/moon.jpg').then(texture => {
+                    if (texture) {
+                        star.material = new THREE.MeshPhongMaterial({
+                            map: texture,
+                            transparent: true,
+                            opacity: 0.9
+                        });
+                    }
+                });
+                // 先使用纯色材质
+                material = new THREE.MeshPhongMaterial({
+                    color: this.getCategoryColor(post.category),
+                    transparent: true,
+                    opacity: 0.9
+                });
+            } else {
+                material = new THREE.MeshPhongMaterial({
+                    color: this.getCategoryColor(post.category),
+                    transparent: true,
+                    opacity: 0.9
+                });
+            }
             
             const star = new THREE.Mesh(geometry, material);
             star.position.set(
@@ -636,6 +750,62 @@ class SpaceVoyage {
         });
     }
 
+    setupMobileLookControls() {
+        if (!this.isMobile) return;
+        
+        let isFirstTouch = true;
+        
+        // 触摸视角控制
+        document.addEventListener('touchstart', (event) => {
+            // 如果是在UI元素上，不处理视角控制
+            const target = event.target;
+            if (target.closest('.virtual-joystick') || 
+                target.closest('.mobile-btn') || 
+                target.closest('.planet-info') || 
+                target.closest('.modal') ||
+                target.closest('.mobile-info')) {
+                return;
+            }
+            
+            if (event.touches.length === 1) {
+                this.isLookingAround = true;
+                this.touchStartX = event.touches[0].pageX;
+                this.touchStartY = event.touches[0].pageY;
+            }
+        });
+        
+        document.addEventListener('touchmove', (event) => {
+            if (!this.isLookingAround || event.touches.length !== 1) return;
+            
+            event.preventDefault();
+            
+            const deltaX = event.touches[0].pageX - this.touchStartX;
+            const deltaY = event.touches[0].pageY - this.touchStartY;
+            
+            // 调整灵敏度
+            const sensitivity = 0.002;
+            
+            this.cameraRotationY -= deltaX * sensitivity;
+            this.cameraRotationX -= deltaY * sensitivity;
+            
+            // 限制垂直旋转角度
+            this.cameraRotationX = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, this.cameraRotationX));
+            
+            // 应用旋转
+            this.cameraGroup.rotation.y = this.cameraRotationY;
+            this.cameraPivot.rotation.x = this.cameraRotationX;
+            
+            this.touchStartX = event.touches[0].pageX;
+            this.touchStartY = event.touches[0].pageY;
+        });
+        
+        document.addEventListener('touchend', (event) => {
+            if (event.touches.length === 0) {
+                this.isLookingAround = false;
+            }
+        });
+    }
+
     updateMovement() {
         const speed = this.isAccelerating ? this.accelerateSpeed : this.normalSpeed;
         
@@ -654,21 +824,20 @@ class SpaceVoyage {
             this.controls.moveRight(velocity.x);
             this.controls.getObject().position.y += velocity.y;
         } else if (this.isMobile) {
-            // 移动端直接控制相机位置
+            // 移动端直接控制相机组位置
             const velocity = new THREE.Vector3();
             
-            if (this.moveForward) velocity.z += speed;
-            if (this.moveBackward) velocity.z -= speed;
+            if (this.moveForward) velocity.z -= speed;  // 修正方向
+            if (this.moveBackward) velocity.z += speed; // 修正方向
             if (this.moveLeft) velocity.x -= speed;
             if (this.moveRight) velocity.x += speed;
             if (this.moveUp) velocity.y += speed;
             if (this.moveDown) velocity.y -= speed;
             
-            // 应用相机的旋转矩阵到移动向量
-            velocity.applyMatrix4(this.camera.matrixWorld);
-            velocity.sub(this.camera.getWorldPosition(new THREE.Vector3()));
+            // 应用相机组的旋转到移动向量
+            velocity.applyQuaternion(this.cameraGroup.quaternion);
             
-            this.camera.position.add(velocity);
+            this.cameraGroup.position.add(velocity);
         }
     }
 
@@ -761,6 +930,35 @@ class SpaceVoyage {
         }
         
         this.renderer.render(this.scene, this.camera);
+    }
+
+    async loadTexture(path) {
+        // 如果纹理已经加载过，直接返回缓存的纹理
+        if (this.loadedTextures.has(path)) {
+            return this.loadedTextures.get(path);
+        }
+        
+        return new Promise((resolve, reject) => {
+            this.textureLoader.load(
+                path,
+                (texture) => {
+                    // 设置纹理参数
+                    texture.wrapS = THREE.RepeatWrapping;
+                    texture.wrapT = THREE.RepeatWrapping;
+                    texture.magFilter = THREE.LinearFilter;
+                    texture.minFilter = THREE.LinearMipMapLinearFilter;
+                    
+                    // 缓存纹理
+                    this.loadedTextures.set(path, texture);
+                    resolve(texture);
+                },
+                undefined,
+                (error) => {
+                    console.warn(`纹理加载失败: ${path}`, error);
+                    resolve(null); // 返回null而不是reject，这样不会中断程序
+                }
+            );
+        });
     }
 }
 
@@ -1040,4 +1238,4 @@ function getSkillsContent() {
 // 初始化应用
 document.addEventListener('DOMContentLoaded', () => {
     window.spaceVoyage = new SpaceVoyage();
-}); 
+});
