@@ -64,6 +64,20 @@
                 scrollbar-width: none;
             }
             
+            /* 教育背景桌面端默认样式 */
+            .education-info {
+                display: flex;
+                flex-direction: row;
+                gap: 0.5rem;
+                align-items: center;
+            }
+            
+            .education-info p:first-child::after {
+                content: " | ";
+                color: #165DFF;
+                margin: 0 0.25rem;
+            }
+            
             /* 移动端优化 */
             @media (max-width: 640px) {
                 .container {
@@ -104,6 +118,28 @@
                 .mobile-btn {
                     padding: 0.75rem 1.5rem;
                     font-size: 0.875rem;
+                }
+                
+                /* 教育背景移动端优化 - 专业和时间分两行 */
+                .education-info {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 0.25rem;
+                }
+                
+                .education-info p:first-child::after {
+                    content: "";
+                    margin: 0;
+                }
+                
+                /* 关于我部分联系方式文字对齐 */
+                .contact-item {
+                    text-align: left;
+                }
+                
+                .contact-item p {
+                    text-align: left;
+                    word-break: break-all;
                 }
             }
         }
@@ -231,7 +267,10 @@
                                 </div>
                                 <div class="bg-gray-50 p-4 rounded-lg shadow-sm">
                                     <h4 class="font-bold text-lg">中国石油大学（华东）</h4>
-                                    <p class="text-primary">计算机科学与技术（硕士研究生） | 2024.09 - 2026.07（在读）</p>
+                                    <div class="education-info">
+                                        <p class="text-primary font-medium">计算机科学与技术（硕士研究生）</p>
+                                        <p class="text-primary">2024.09 - 2026.07（在读）</p>
+                                    </div>
                                     <p class="mt-2">研究方向：自然语言处理、Transformer、大语言模型的部署及微调</p>
                                 </div>
                             </div>
@@ -242,7 +281,10 @@
                                 </div>
                                 <div class="bg-gray-50 p-4 rounded-lg shadow-sm">
                                     <h4 class="font-bold text-lg">中国石油大学（华东）</h4>
-                                    <p class="text-primary">计算机科学与技术（学士） | 2020.09 - 2024.07</p>
+                                    <div class="education-info">
+                                        <p class="text-primary font-medium">计算机科学与技术（学士）</p>
+                                        <p class="text-primary">2020.09 - 2024.07</p>
+                                    </div>
                                     <p class="mt-2">相关课程：计算机组成原理、数据结构与算法、计算机网络原理、计算机操作系统原理等</p>
                                 </div>
                             </div>
@@ -276,7 +318,7 @@
                             </p>
                             
                             <div class="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                <div class="bg-white p-4 rounded-lg shadow-sm flex flex-col sm:flex-row items-start sm:items-center">
+                                <div class="bg-white p-4 rounded-lg shadow-sm flex flex-col sm:flex-row items-start sm:items-center contact-item">
                                     <div class="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mb-3 sm:mb-0 sm:mr-4">
                                         <i class="fa-solid fa-envelope text-primary"></i>
                                     </div>
@@ -286,7 +328,7 @@
                                     </div>
                                 </div>
                                 
-                                <div class="bg-white p-4 rounded-lg shadow-sm flex flex-col sm:flex-row items-start sm:items-center">
+                                <div class="bg-white p-4 rounded-lg shadow-sm flex flex-col sm:flex-row items-start sm:items-center contact-item">
                                     <div class="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mb-3 sm:mb-0 sm:mr-4">
                                         <i class="fa-solid fa-phone text-primary"></i>
                                     </div>
@@ -296,7 +338,7 @@
                                     </div>
                                 </div>
                                 
-                                <div class="bg-white p-4 rounded-lg shadow-sm flex flex-col sm:flex-row items-start sm:items-center">
+                                <div class="bg-white p-4 rounded-lg shadow-sm flex flex-col sm:flex-row items-start sm:items-center contact-item">
                                     <div class="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mb-3 sm:mb-0 sm:mr-4">
                                         <i class="fa-solid fa-graduation-cap text-primary"></i>
                                     </div>
@@ -306,7 +348,7 @@
                                     </div>
                                 </div>
                                 
-                                <div class="bg-white p-4 rounded-lg shadow-sm flex flex-col sm:flex-row items-start sm:items-center">
+                                <div class="bg-white p-4 rounded-lg shadow-sm flex flex-col sm:flex-row items-start sm:items-center contact-item">
                                     <div class="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mb-3 sm:mb-0 sm:mr-4">
                                         <i class="fa-solid fa-briefcase text-primary"></i>
                                     </div>
