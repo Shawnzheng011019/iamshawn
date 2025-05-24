@@ -27,4 +27,11 @@ logs/
 *.temp
 
 # Deployment trigger file (used for testing)
-.deployment-trigger 
+.deployment-trigger
+
+# Vercel ignore file
+# 确保这些文件不被忽略
+!space-voyage.js
+!space-voyage.html
+!posts/
+!*.json 
