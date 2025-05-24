@@ -489,6 +489,45 @@ class SpaceVoyage {
             this.setupMobileControls();
         }
 
+        // 鼠标点击事件 - 点击星球直接进入
+        document.addEventListener('click', (event) => {
+            // 避免在模态窗口打开时触发
+            const modal = document.getElementById('modal');
+            if (modal.style.display === 'flex') return;
+            
+            // 避免点击UI元素时触发
+            const target = event.target;
+            if (target.closest('.planet-info') || target.closest('.controls-info') || 
+                target.closest('.back-to-main') || target.closest('.mobile-controls')) {
+                return;
+            }
+            
+            // 如果瞄准了星球，直接进入
+            if (this.targetPlanet) {
+                enterPlanet();
+            }
+        });
+
+        // 移动端触摸事件 - 触摸星球直接进入
+        document.addEventListener('touchstart', (event) => {
+            // 避免在模态窗口打开时触发
+            const modal = document.getElementById('modal');
+            if (modal.style.display === 'flex') return;
+            
+            // 避免触摸UI元素时触发
+            const target = event.target;
+            if (target.closest('.planet-info') || target.closest('.controls-info') || 
+                target.closest('.back-to-main') || target.closest('.mobile-controls')) {
+                return;
+            }
+            
+            // 如果瞄准了星球，直接进入
+            if (this.targetPlanet) {
+                event.preventDefault(); // 防止触发click事件
+                enterPlanet();
+            }
+        });
+
         // 窗口大小调整
         window.addEventListener('resize', () => {
             this.camera.aspect = window.innerWidth / window.innerHeight;
@@ -604,22 +643,22 @@ class SpaceVoyage {
             // 桌面端使用PointerLockControls
             const velocity = new THREE.Vector3();
             
-            if (this.moveForward) velocity.z -= speed;
-            if (this.moveBackward) velocity.z += speed;
+            if (this.moveForward) velocity.z += speed;
+            if (this.moveBackward) velocity.z -= speed;
             if (this.moveLeft) velocity.x -= speed;
             if (this.moveRight) velocity.x += speed;
             if (this.moveUp) velocity.y += speed;
             if (this.moveDown) velocity.y -= speed;
             
-            this.controls.moveForward(velocity.z);
+            this.controls.moveForward(-velocity.z);
             this.controls.moveRight(velocity.x);
             this.controls.getObject().position.y += velocity.y;
         } else if (this.isMobile) {
             // 移动端直接控制相机位置
             const velocity = new THREE.Vector3();
             
-            if (this.moveForward) velocity.z -= speed;
-            if (this.moveBackward) velocity.z += speed;
+            if (this.moveForward) velocity.z += speed;
+            if (this.moveBackward) velocity.z -= speed;
             if (this.moveLeft) velocity.x -= speed;
             if (this.moveRight) velocity.x += speed;
             if (this.moveUp) velocity.y += speed;
