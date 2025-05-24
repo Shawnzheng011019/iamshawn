@@ -834,20 +834,15 @@ class SpaceVoyage {
             // 桌面端使用PointerLockControls
             const velocity = new THREE.Vector3();
             
-            // 修正方向：W键向前(正z)，S键向后(负z)
-            if (this.moveForward) velocity.z -= speed;  // 向前移动
-            if (this.moveBackward) velocity.z += speed; // 向后移动
-            if (this.moveLeft) velocity.x -= speed;     // 向左移动
-            if (this.moveRight) velocity.x += speed;    // 向右移动
-            if (this.moveUp) velocity.y += speed;       // 向上移动
-            if (this.moveDown) velocity.y -= speed;     // 向下移动
+            // 确保方向正确：W键向前，S键向后
+            if (this.moveForward) velocity.z -= speed;  // W键向前移动（负z方向）
+            if (this.moveBackward) velocity.z += speed; // S键向后移动（正z方向）
+            if (this.moveLeft) velocity.x -= speed;     // A键向左移动
+            if (this.moveRight) velocity.x += speed;    // D键向右移动
+            if (this.moveUp) velocity.y += speed;       // 空格键向上移动
+            if (this.moveDown) velocity.y -= speed;     // Shift键向下移动
             
-            // 调试信息（只在有移动时输出）
-            if (velocity.length() > 0) {
-                console.log(`桌面端移动: velocity(${velocity.x.toFixed(2)}, ${velocity.y.toFixed(2)}, ${velocity.z.toFixed(2)}) 速度倍率: ${this.isAccelerating ? '加速' : '正常'}`);
-            }
-            
-            // 直接传递velocity值，不需要取负
+            // 应用移动
             this.controls.moveForward(velocity.z);
             this.controls.moveRight(velocity.x);
             this.controls.getObject().position.y += velocity.y;
@@ -861,11 +856,6 @@ class SpaceVoyage {
             if (this.moveRight) velocity.x += speed;    // 向右移动
             if (this.moveUp) velocity.y += speed;       // 向上移动
             if (this.moveDown) velocity.y -= speed;     // 向下移动
-            
-            // 调试信息（只在有移动时输出，减少日志频率）
-            if (velocity.length() > 0 && Math.random() < 0.1) { // 10%概率输出日志
-                console.log(`移动端移动: velocity(${velocity.x.toFixed(2)}, ${velocity.y.toFixed(2)}, ${velocity.z.toFixed(2)}) 摇杆: (${this.joystickDirection.x.toFixed(2)}, ${this.joystickDirection.y.toFixed(2)})`);
-            }
             
             // 应用相机组的旋转到移动向量
             velocity.applyQuaternion(this.cameraGroup.quaternion);
@@ -976,19 +966,35 @@ class SpaceVoyage {
         console.log(`正在加载纹理: ${path}`);
         
         return new Promise((resolve, reject) => {
-            // 尝试多个路径
+            // 尝试多个路径，包括CDN和本地路径
             const possiblePaths = [
                 path,
                 `./${path}`,
-                `/${path}`
+                `/${path}`,
+                `https://cdn.jsdelivr.net/gh/Shawnzheng011019/iamshawn@main/${path}`,
+                `https://fastly.jsdelivr.net/gh/Shawnzheng011019/iamshawn@main/${path}`,
+                `https://raw.githubusercontent.com/Shawnzheng011019/iamshawn/main/${path}`
             ];
             
             let currentPathIndex = 0;
             
             const tryLoadTexture = () => {
                 if (currentPathIndex >= possiblePaths.length) {
-                    console.error(`所有路径都无法加载纹理: ${path}`);
-                    resolve(null);
+                    console.warn(`所有路径都无法加载纹理: ${path}，使用默认纹理`);
+                    // 创建一个简单的默认纹理
+                    const canvas = document.createElement('canvas');
+                    canvas.width = 256;
+                    canvas.height = 256;
+                    const ctx = canvas.getContext('2d');
+                    ctx.fillStyle = '#cccccc';
+                    ctx.fillRect(0, 0, 256, 256);
+                    ctx.fillStyle = '#999999';
+                    ctx.fillRect(0, 0, 128, 128);
+                    ctx.fillRect(128, 128, 128, 128);
+                    
+                    const defaultTexture = new THREE.CanvasTexture(canvas);
+                    this.loadedTextures.set(path, defaultTexture);
+                    resolve(defaultTexture);
                     return;
                 }
                 
@@ -1003,6 +1009,7 @@ class SpaceVoyage {
                         texture.wrapT = THREE.RepeatWrapping;
                         texture.magFilter = THREE.LinearFilter;
                         texture.minFilter = THREE.LinearMipMapLinearFilter;
+                        texture.generateMipmaps = true;
                         
                         // 缓存纹理
                         this.loadedTextures.set(path, texture);
@@ -1011,13 +1018,15 @@ class SpaceVoyage {
                     },
                     (progress) => {
                         if (progress.total > 0) {
-                            console.log(`纹理加载进度: ${currentPath} - ${(progress.loaded / progress.total * 100).toFixed(1)}%`);
+                            const percentage = (progress.loaded / progress.total * 100).toFixed(1);
+                            console.log(`纹理加载进度: ${currentPath} - ${percentage}%`);
                         }
                     },
                     (error) => {
                         console.warn(`纹理加载失败 (${currentPath}):`, error);
                         currentPathIndex++;
-                        tryLoadTexture();
+                        // 添加延迟避免过快重试
+                        setTimeout(tryLoadTexture, 100);
                     }
                 );
             };
@@ -1079,6 +1088,11 @@ function showArticleModal(articleData) {
     const modal = document.getElementById('modal');
     const modalBody = document.getElementById('modal-body');
     
+    // 构造具体文章的URL
+    const articleUrl = articleData.path 
+        ? `blog/article.html?id=${articleData.id}` 
+        : 'blog.html';
+    
     modalBody.innerHTML = `
         <div style="max-width: 800px;">
             <h1 style="color: #64b5f6; margin-bottom: 1rem; font-size: 2rem; line-height: 1.3;">
@@ -1123,25 +1137,14 @@ function showArticleModal(articleData) {
                     <p style="margin-bottom: 1rem;">通过实际案例和代码示例，帮助读者更好地理解和应用这些技术。</p>
                 </div>
                 
-                ${articleData.path ? `
                 <div style="text-align: center; margin-top: 2rem;">
-                    <a href="blog.html" target="_blank" 
+                    <a href="${articleUrl}" target="_blank" 
                        onclick="closeModal()" 
                        style="display: inline-flex; align-items: center; gap: 0.5rem; background: linear-gradient(45deg, #2196f3, #64b5f6); color: white; padding: 12px 24px; border-radius: 25px; text-decoration: none; font-weight: bold; transition: all 0.3s ease;">
                         <i class="fa-solid fa-book-open"></i>
-                        阅读完整文章
+                        ${articleData.path ? '阅读完整文章' : '查看我的博客'}
                     </a>
                 </div>
-                ` : `
-                <div style="text-align: center; margin-top: 2rem;">
-                    <a href="blog.html" target="_blank" 
-                       onclick="closeModal()" 
-                       style="display: inline-flex; align-items: center; gap: 0.5rem; background: linear-gradient(45deg, #2196f3, #64b5f6); color: white; padding: 12px 24px; border-radius: 25px; text-decoration: none; font-weight: bold; transition: all 0.3s ease;">
-                        <i class="fa-solid fa-book-open"></i>
-                        查看我的博客
-                    </a>
-                </div>
-                `}
             </div>
         </div>
     `;
@@ -1191,15 +1194,30 @@ function backToMainSpace() {
 
 function getAboutContent() {
     return `
-        <div style="max-width: 600px;">
+        <div style="max-width: 700px;">
             <h1 style="color: #64b5f6; margin-bottom: 1.5rem;">关于我</h1>
             <div style="line-height: 1.8; color: #e0e0e0;">
-                <p style="margin-bottom: 1rem;">你好！我是郑啸，一名充满热情的技术开发者。</p>
-                <p style="margin-bottom: 1rem;">我专注于全栈开发、数据科学和人工智能领域，喜欢探索新技术并将其应用到实际项目中。</p>
-                <p style="margin-bottom: 1rem;">通过不断学习和实践，我希望能够创造出有价值的技术解决方案。</p>
+                <p style="margin-bottom: 1rem;">你好，我是郑啸，目前是中国石油大学（华东）计算机科学与技术专业的硕士研究生，专注于自然语言处理和大语言模型领域的研究与开发。</p>
+                <p style="margin-bottom: 1rem;">我对技术有着强烈的好奇心和热情，特别是在RAG系统开发、MCP系统开发以及大语言模型的微调和部署方面有丰富的实践经验。我善于将理论知识与实际应用相结合，解决复杂的技术挑战。</p>
+                <p style="margin-bottom: 1rem;">在学术研究中，我致力于探索多模态大小模型融合架构和类脑脉冲大模型架构，以解决大模型推理成本高和能效比低的问题。</p>
+                <p style="margin-bottom: 1rem;">作为一名后端开发工程师，我熟练掌握Django、PostgreSQL、FastAPI等技术栈，能够独立设计和实现高性能的后端系统。我注重代码质量和工程规范，善于团队协作和技术沟通。</p>
+                
                 <h3 style="color: #64b5f6; margin: 1.5rem 0 1rem 0;">教育背景</h3>
-                <p>• 计算机科学相关专业</p>
-                <p>• 持续学习新技术和最佳实践</p>
+                <div style="background: rgba(255,255,255,0.1); padding: 1rem; border-radius: 8px; margin-bottom: 1rem;">
+                    <p style="font-weight: bold;">中国石油大学（华东）</p>
+                    <p style="color: #64b5f6;">计算机科学与技术（硕士研究生） | 2024.09 - 2026.07（在读）</p>
+                    <p style="margin-top: 0.5rem;">研究方向：自然语言处理、Transformer、大语言模型的部署及微调</p>
+                </div>
+                <div style="background: rgba(255,255,255,0.1); padding: 1rem; border-radius: 8px; margin-bottom: 1rem;">
+                    <p style="font-weight: bold;">中国石油大学（华东）</p>
+                    <p style="color: #64b5f6;">计算机科学与技术（学士） | 2020.09 - 2024.07</p>
+                    <p style="margin-top: 0.5rem;">相关课程：计算机组成原理、数据结构与算法、计算机网络原理、计算机操作系统原理等</p>
+                </div>
+                
+                <h3 style="color: #64b5f6; margin: 1.5rem 0 1rem 0;">联系方式</h3>
+                <p>• 邮箱：Shawnzheng2001@outlook.com</p>
+                <p>• 电话：16678627572</p>
+                <p>• GitHub：https://github.com/Shawnzheng011019</p>
             </div>
         </div>
     `;
@@ -1211,18 +1229,20 @@ function getInternshipContent() {
             <h1 style="color: #64b5f6; margin-bottom: 1.5rem;">实习经历</h1>
             <div style="line-height: 1.8; color: #e0e0e0;">
                 <div style="margin-bottom: 2rem; padding: 1.5rem; background: rgba(255,255,255,0.05); border-radius: 10px;">
-                    <h3 style="color: #64b5f6; margin-bottom: 0.5rem;">软件开发实习生</h3>
-                    <p style="color: #b0bec5; margin-bottom: 1rem;">某科技公司 • 2024年</p>
-                    <p>• 参与前端和后端开发项目</p>
-                    <p>• 学习现代开发工具和流程</p>
-                    <p>• 与团队协作完成产品功能</p>
+                    <h3 style="color: #64b5f6; margin-bottom: 0.5rem;">算法工程师</h3>
+                    <p style="color: #b0bec5; margin-bottom: 1rem;">Zilliz • 2024年7月 - 至今</p>
+                    <p>• 负责RAG系统的设计与开发，提升检索和生成的准确性</p>
+                    <p>• 参与MCP系统的构建，优化多模态数据处理流程</p>
+                    <p>• 进行大语言模型的微调和部署，提高模型在特定任务上的性能</p>
+                    <p>• 参与技术方案的设计和优化，解决复杂的工程问题</p>
                 </div>
                 <div style="padding: 1.5rem; background: rgba(255,255,255,0.05); border-radius: 10px;">
-                    <h3 style="color: #64b5f6; margin-bottom: 0.5rem;">技术助理</h3>
-                    <p style="color: #b0bec5; margin-bottom: 1rem;">研究机构 • 2023年</p>
-                    <p>• 协助数据分析和处理</p>
-                    <p>• 参与机器学习项目</p>
-                    <p>• 编写技术文档和报告</p>
+                    <h3 style="color: #64b5f6; margin-bottom: 0.5rem;">后端开发工程师</h3>
+                    <p style="color: #b0bec5; margin-bottom: 1rem;">相关项目经验 • 2023年 - 2024年</p>
+                    <p>• 使用Django框架开发高性能的Web应用程序</p>
+                    <p>• 设计和优化PostgreSQL数据库架构</p>
+                    <p>• 开发RESTful API，支持前后端分离架构</p>
+                    <p>• 参与系统架构设计和技术选型</p>
                 </div>
             </div>
         </div>
@@ -1235,25 +1255,36 @@ function getProjectsContent() {
             <h1 style="color: #64b5f6; margin-bottom: 1.5rem;">项目经历</h1>
             <div style="line-height: 1.8; color: #e0e0e0;">
                 <div style="margin-bottom: 2rem; padding: 1.5rem; background: rgba(255,255,255,0.05); border-radius: 10px;">
-                    <h3 style="color: #64b5f6; margin-bottom: 0.5rem;">个人主页与博客系统</h3>
-                    <p style="color: #b0bec5; margin-bottom: 1rem;">HTML/CSS/JavaScript • 2024年</p>
-                    <p>• 响应式设计的个人主页</p>
-                    <p>• 集成博客系统和文章管理</p>
-                    <p>• 3D太空漫游交互界面</p>
+                    <h3 style="color: #64b5f6; margin-bottom: 0.5rem;">DeepSearcher - 智能搜索与报告生成工具</h3>
+                    <p style="color: #b0bec5; margin-bottom: 1rem;">Python/FastAPI/Milvus • 2024年</p>
+                    <p>• 基于Agentic RAG架构的智能搜索引擎</p>
+                    <p>• 支持多种大语言模型和向量数据库</p>
+                    <p>• 能够基于私有数据执行复杂推理和生成专业报告</p>
+                    <p>• GitHub项目获得1500+星标</p>
                 </div>
                 <div style="margin-bottom: 2rem; padding: 1.5rem; background: rgba(255,255,255,0.05); border-radius: 10px;">
-                    <h3 style="color: #64b5f6; margin-bottom: 0.5rem;">数据可视化平台</h3>
-                    <p style="color: #b0bec5; margin-bottom: 1rem;">React/D3.js/Python • 2024年</p>
-                    <p>• 交互式数据可视化图表</p>
-                    <p>• 实时数据处理和分析</p>
-                    <p>• 用户友好的界面设计</p>
+                    <h3 style="color: #64b5f6; margin-bottom: 0.5rem;">个人主页与博客系统</h3>
+                    <p style="color: #b0bec5; margin-bottom: 1rem;">HTML/CSS/JavaScript/Three.js • 2024年</p>
+                    <p>• 响应式设计的个人主页，支持移动端和桌面端</p>
+                    <p>• 集成博客系统和文章管理功能</p>
+                    <p>• 创新的3D太空漫游交互界面</p>
+                    <p>• 支持多数据源和CDN加速</p>
+                </div>
+                <div style="margin-bottom: 2rem; padding: 1.5rem; background: rgba(255,255,255,0.05); border-radius: 10px;">
+                    <h3 style="color: #64b5f6; margin-bottom: 0.5rem;">RAG系统开发与优化</h3>
+                    <p style="color: #b0bec5; margin-bottom: 1rem;">Python/LangChain/Milvus • 2024年</p>
+                    <p>• 设计和实现高性能的RAG检索增强生成系统</p>
+                    <p>• 集成多种向量数据库和大语言模型</p>
+                    <p>• 优化检索策略和生成质量</p>
+                    <p>• 支持私有数据的智能问答</p>
                 </div>
                 <div style="padding: 1.5rem; background: rgba(255,255,255,0.05); border-radius: 10px;">
-                    <h3 style="color: #64b5f6; margin-bottom: 0.5rem;">机器学习应用</h3>
-                    <p style="color: #b0bec5; margin-bottom: 1rem;">Python/TensorFlow • 2023年</p>
-                    <p>• 图像识别模型开发</p>
-                    <p>• 模型训练和优化</p>
-                    <p>• API接口设计和部署</p>
+                    <h3 style="color: #64b5f6; margin-bottom: 0.5rem;">大语言模型微调与部署</h3>
+                    <p style="color: #b0bec5; margin-bottom: 1rem;">Python/PyTorch/Transformers • 2023年-2024年</p>
+                    <p>• 使用LoRA、QLoRA等技术进行模型微调</p>
+                    <p>• 优化模型推理性能和部署效率</p>
+                    <p>• 支持多种开源大模型的适配和优化</p>
+                    <p>• 实现模型的高效推理和API服务</p>
                 </div>
             </div>
         </div>
@@ -1268,37 +1299,53 @@ function getSkillsContent() {
                 <div style="margin-bottom: 2rem;">
                     <h3 style="color: #64b5f6; margin-bottom: 1rem;">编程语言</h3>
                     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 0.5rem;">
-                        <span style="background: #2196f3; padding: 6px 12px; border-radius: 15px; text-align: center;">JavaScript</span>
-                        <span style="background: #4caf50; padding: 6px 12px; border-radius: 15px; text-align: center;">Python</span>
+                        <span style="background: #2196f3; padding: 6px 12px; border-radius: 15px; text-align: center;">Python</span>
+                        <span style="background: #4caf50; padding: 6px 12px; border-radius: 15px; text-align: center;">JavaScript</span>
                         <span style="background: #ff9800; padding: 6px 12px; border-radius: 15px; text-align: center;">TypeScript</span>
                         <span style="background: #9c27b0; padding: 6px 12px; border-radius: 15px; text-align: center;">Java</span>
+                        <span style="background: #f44336; padding: 6px 12px; border-radius: 15px; text-align: center;">SQL</span>
                     </div>
                 </div>
                 <div style="margin-bottom: 2rem;">
-                    <h3 style="color: #64b5f6; margin-bottom: 1rem;">框架与库</h3>
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 0.5rem;">
-                        <span style="background: #2196f3; padding: 6px 12px; border-radius: 15px; text-align: center;">React</span>
-                        <span style="background: #4caf50; padding: 6px 12px; border-radius: 15px; text-align: center;">Vue.js</span>
-                        <span style="background: #ff9800; padding: 6px 12px; border-radius: 15px; text-align: center;">Node.js</span>
-                        <span style="background: #9c27b0; padding: 6px 12px; border-radius: 15px; text-align: center;">Django</span>
+                    <h3 style="color: #64b5f6; margin-bottom: 1rem;">框架与工具</h3>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 0.5rem;">
+                        <span style="background: #00bcd4; padding: 6px 12px; border-radius: 15px; text-align: center;">Django</span>
+                        <span style="background: #009688; padding: 6px 12px; border-radius: 15px; text-align: center;">FastAPI</span>
+                        <span style="background: #673ab7; padding: 6px 12px; border-radius: 15px; text-align: center;">LangChain</span>
+                        <span style="background: #3f51b5; padding: 6px 12px; border-radius: 15px; text-align: center;">PyTorch</span>
+                        <span style="background: #795548; padding: 6px 12px; border-radius: 15px; text-align: center;">Transformers</span>
+                        <span style="background: #607d8b; padding: 6px 12px; border-radius: 15px; text-align: center;">Three.js</span>
                     </div>
                 </div>
                 <div style="margin-bottom: 2rem;">
-                    <h3 style="color: #64b5f6; margin-bottom: 1rem;">数据库</h3>
+                    <h3 style="color: #64b5f6; margin-bottom: 1rem;">数据库与存储</h3>
                     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 0.5rem;">
-                        <span style="background: #2196f3; padding: 6px 12px; border-radius: 15px; text-align: center;">MySQL</span>
-                        <span style="background: #4caf50; padding: 6px 12px; border-radius: 15px; text-align: center;">MongoDB</span>
-                        <span style="background: #ff9800; padding: 6px 12px; border-radius: 15px; text-align: center;">Redis</span>
-                        <span style="background: #9c27b0; padding: 6px 12px; border-radius: 15px; text-align: center;">Milvus</span>
+                        <span style="background: #336791; padding: 6px 12px; border-radius: 15px; text-align: center;">PostgreSQL</span>
+                        <span style="background: #4ea94b; padding: 6px 12px; border-radius: 15px; text-align: center;">MongoDB</span>
+                        <span style="background: #dc382d; padding: 6px 12px; border-radius: 15px; text-align: center;">Redis</span>
+                        <span style="background: #1976d2; padding: 6px 12px; border-radius: 15px; text-align: center;">Milvus</span>
+                        <span style="background: #ff6f00; padding: 6px 12px; border-radius: 15px; text-align: center;">Elasticsearch</span>
+                    </div>
+                </div>
+                <div style="margin-bottom: 2rem;">
+                    <h3 style="color: #64b5f6; margin-bottom: 1rem;">专业技能</h3>
+                    <div style="background: rgba(255,255,255,0.1); padding: 1rem; border-radius: 8px;">
+                        <p>• <strong>RAG系统开发</strong>：检索增强生成、向量检索优化</p>
+                        <p>• <strong>大语言模型</strong>：模型微调、推理优化、部署实践</p>
+                        <p>• <strong>MCP系统</strong>：多模态数据处理、系统集成</p>
+                        <p>• <strong>后端开发</strong>：API设计、数据库优化、系统架构</p>
+                        <p>• <strong>自然语言处理</strong>：文本处理、语义理解、信息提取</p>
+                        <p>• <strong>向量数据库</strong>：Milvus、Pinecone、Qdrant等向量检索系统</p>
                     </div>
                 </div>
                 <div>
-                    <h3 style="color: #64b5f6; margin-bottom: 1rem;">工具与平台</h3>
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 0.5rem;">
-                        <span style="background: #2196f3; padding: 6px 12px; border-radius: 15px; text-align: center;">Git</span>
-                        <span style="background: #4caf50; padding: 6px 12px; border-radius: 15px; text-align: center;">Docker</span>
-                        <span style="background: #ff9800; padding: 6px 12px; border-radius: 15px; text-align: center;">AWS</span>
-                        <span style="background: #9c27b0; padding: 6px 12px; border-radius: 15px; text-align: center;">Kubernetes</span>
+                    <h3 style="color: #64b5f6; margin-bottom: 1rem;">开发工具</h3>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 0.5rem;">
+                        <span style="background: #f05032; padding: 6px 12px; border-radius: 15px; text-align: center;">Git</span>
+                        <span style="background: #2496ed; padding: 6px 12px; border-radius: 15px; text-align: center;">Docker</span>
+                        <span style="background: #326ce5; padding: 6px 12px; border-radius: 15px; text-align: center;">Kubernetes</span>
+                        <span style="background: #ff9900; padding: 6px 12px; border-radius: 15px; text-align: center;">AWS</span>
+                        <span style="background: #4285f4; padding: 6px 12px; border-radius: 15px; text-align: center;">GCP</span>
                     </div>
                 </div>
             </div>
