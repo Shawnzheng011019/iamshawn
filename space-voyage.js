@@ -150,7 +150,25 @@ class SpaceVoyage {
         } else {
             // 移动端使用简单的相机控制
             this.camera.position.set(0, 0, 10);
-            // 移动端不需要PointerLockControls
+            
+            // 创建一个虚拟controls对象用于移动端
+            this.controls = {
+                getObject: () => ({ position: this.camera.position }),
+                getDirection: (vector) => this.camera.getWorldDirection(vector),
+                moveForward: (distance) => {
+                    const direction = new THREE.Vector3();
+                    this.camera.getWorldDirection(direction);
+                    this.camera.position.addScaledVector(direction, distance);
+                },
+                moveRight: (distance) => {
+                    const direction = new THREE.Vector3();
+                    this.camera.getWorldDirection(direction);
+                    const right = new THREE.Vector3();
+                    right.crossVectors(direction, this.camera.up).normalize();
+                    this.camera.position.addScaledVector(right, distance);
+                },
+                unlock: () => {} // 空函数，移动端不需要
+            };
         }
     }
 
@@ -357,6 +375,7 @@ class SpaceVoyage {
         });
         
         this.isInBlogSpace = true;
+        this.currentMode = 'blog';
         
         // 显示返回主太空按钮
         document.getElementById('back-to-main-space').style.display = 'flex';
@@ -373,6 +392,7 @@ class SpaceVoyage {
         this.createPlanets();
         
         this.isInBlogSpace = false;
+        this.currentMode = 'main';
         
         // 隐藏返回主太空按钮
         document.getElementById('back-to-main-space').style.display = 'none';
@@ -629,9 +649,9 @@ class SpaceVoyage {
         
         let intersectableObjects = [];
         if (this.currentMode === 'main') {
-            intersectableObjects = this.planets.map(p => p.mesh);
+            intersectableObjects = this.planets;
         } else if (this.currentMode === 'blog') {
-            intersectableObjects = this.blogStars.map(s => s.mesh);
+            intersectableObjects = this.blogStars;
         }
         
         const intersects = this.raycaster.intersectObjects(intersectableObjects);
@@ -641,9 +661,9 @@ class SpaceVoyage {
             let targetData = null;
             
             if (this.currentMode === 'main') {
-                targetData = this.planets.find(p => p.mesh === intersectedObject);
+                targetData = this.planets.find(p => p === intersectedObject);
             } else if (this.currentMode === 'blog') {
-                targetData = this.blogStars.find(s => s.mesh === intersectedObject);
+                targetData = this.blogStars.find(s => s === intersectedObject);
             }
             
             if (targetData && (!this.targetPlanet || this.targetPlanet !== targetData)) {
@@ -652,11 +672,11 @@ class SpaceVoyage {
                 // 显示信息面板
                 const planetInfo = document.querySelector('.planet-info');
                 if (this.currentMode === 'main') {
-                    document.querySelector('.planet-name').textContent = targetData.name;
-                    document.querySelector('.planet-description').textContent = targetData.description;
+                    document.querySelector('.planet-name').textContent = targetData.userData.name;
+                    document.querySelector('.planet-description').textContent = targetData.userData.description;
                 } else if (this.currentMode === 'blog') {
-                    document.querySelector('.planet-name').textContent = targetData.title;
-                    document.querySelector('.planet-description').textContent = `分类: ${targetData.category} | ${targetData.date}`;
+                    document.querySelector('.planet-name').textContent = targetData.userData.title;
+                    document.querySelector('.planet-description').textContent = `分类: ${targetData.userData.category} | ${targetData.userData.date}`;
                 }
                 planetInfo.classList.add('show');
                 
