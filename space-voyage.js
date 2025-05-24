@@ -648,6 +648,24 @@ class SpaceVoyage {
             this.camera.updateProjectionMatrix();
             this.renderer.setSize(window.innerWidth, window.innerHeight);
         });
+        
+        // 模态框关闭事件
+        document.addEventListener('click', (event) => {
+            const modal = document.getElementById('modal');
+            if (event.target === modal) {
+                closeModal();
+            }
+        });
+        
+        // ESC键关闭模态框
+        document.addEventListener('keydown', (event) => {
+            if (event.code === 'Escape') {
+                const modal = document.getElementById('modal');
+                if (modal.style.display === 'flex') {
+                    closeModal();
+                }
+            }
+        });
     }
 
     setupMobileControls() {
@@ -938,6 +956,8 @@ class SpaceVoyage {
             return this.loadedTextures.get(path);
         }
         
+        console.log(`正在加载纹理: ${path}`);
+        
         return new Promise((resolve, reject) => {
             this.textureLoader.load(
                 path,
@@ -950,11 +970,14 @@ class SpaceVoyage {
                     
                     // 缓存纹理
                     this.loadedTextures.set(path, texture);
+                    console.log(`纹理加载成功: ${path}`);
                     resolve(texture);
                 },
-                undefined,
+                (progress) => {
+                    console.log(`纹理加载进度: ${path} - ${(progress.loaded / progress.total * 100).toFixed(1)}%`);
+                },
                 (error) => {
-                    console.warn(`纹理加载失败: ${path}`, error);
+                    console.error(`纹理加载失败: ${path}`, error);
                     resolve(null); // 返回null而不是reject，这样不会中断程序
                 }
             );
@@ -1060,16 +1083,22 @@ function showArticleModal(articleData) {
                 
                 ${articleData.path ? `
                 <div style="text-align: center; margin-top: 2rem;">
-                    <a href="${articleData.path}" target="_blank" 
+                    <a href="blog/" target="_blank" 
+                       onclick="closeModal()" 
                        style="display: inline-flex; align-items: center; gap: 0.5rem; background: linear-gradient(45deg, #2196f3, #64b5f6); color: white; padding: 12px 24px; border-radius: 25px; text-decoration: none; font-weight: bold; transition: all 0.3s ease;">
                         <i class="fa-solid fa-book-open"></i>
                         阅读完整文章
                     </a>
                 </div>
                 ` : `
-                <p style="text-align: center; color: #888; font-style: italic; margin-top: 2rem;">
-                    <em>注：这是示例内容，完整文章正在准备中...</em>
-                </p>
+                <div style="text-align: center; margin-top: 2rem;">
+                    <a href="blog/" target="_blank" 
+                       onclick="closeModal()" 
+                       style="display: inline-flex; align-items: center; gap: 0.5rem; background: linear-gradient(45deg, #2196f3, #64b5f6); color: white; padding: 12px 24px; border-radius: 25px; text-decoration: none; font-weight: bold; transition: all 0.3s ease;">
+                        <i class="fa-solid fa-book-open"></i>
+                        查看我的博客
+                    </a>
+                </div>
                 `}
             </div>
         </div>
