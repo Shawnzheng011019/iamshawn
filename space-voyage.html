@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>太空漫游 | 郑啸个人主页</title>
+    
+    <!-- Favicon支持 -->
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="manifest" href="/site.webmanifest">
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://threejs.org/examples/js/controls/PointerLockControls.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" rel="stylesheet">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', system-ui, sans-serif;
+            background: #000;
+            color: #fff;
+            overflow: hidden;
+            cursor: crosshair;
+        }
+
+        #loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg, #0a0a0a, #1a1a2e, #16213e);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            animation: gradientShift 4s ease-in-out infinite;
+        }
+
+        @keyframes gradientShift {
+            0%, 100% { background: linear-gradient(45deg, #0a0a0a, #1a1a2e, #16213e); }
+            50% { background: linear-gradient(45deg, #16213e, #0a0a0a, #1a1a2e); }
+        }
+
+        .loading-content {
+            text-align: center;
+            max-width: 500px;
+            padding: 2rem;
+        }
+
+        .loading-title {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin-bottom: 1rem;
+            background: linear-gradient(45deg, #64b5f6, #42a5f5, #2196f3);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: titleGlow 2s ease-in-out infinite alternate;
+        }
+
+        @keyframes titleGlow {
+            from { filter: brightness(1); }
+            to { filter: brightness(1.2) drop-shadow(0 0 20px rgba(100, 181, 246, 0.5)); }
+        }
+
+        .loading-text {
+            font-size: 1.1rem;
+            color: #b0bec5;
+            margin-bottom: 2rem;
+            line-height: 1.6;
+        }
+
+        .solar-system {
+            position: relative;
+            width: 200px;
+            height: 200px;
+            margin: 2rem auto;
+        }
+
+        .orbit {
+            position: absolute;
+            border: 1px solid rgba(100, 181, 246, 0.3);
+            border-radius: 50%;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        .orbit1 { width: 60px; height: 60px; animation: spin 2s linear infinite; }
+        .orbit2 { width: 100px; height: 100px; animation: spin 3s linear infinite reverse; }
+        .orbit3 { width: 140px; height: 140px; animation: spin 4s linear infinite; }
+        .orbit4 { width: 180px; height: 180px; animation: spin 5s linear infinite reverse; }
+
+        @keyframes spin {
+            from { transform: translate(-50%, -50%) rotate(0deg); }
+            to { transform: translate(-50%, -50%) rotate(360deg); }
+        }
+
+        .planet {
+            position: absolute;
+            border-radius: 50%;
+            top: -5px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .sun {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background: radial-gradient(circle, #ffeb3b, #ff9800);
+            border-radius: 50%;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            box-shadow: 0 0 20px #ffeb3b;
+            animation: pulse 1.5s ease-in-out infinite alternate;
+        }
+
+        @keyframes pulse {
+            from { box-shadow: 0 0 20px #ffeb3b, 0 0 40px #ffeb3b; }
+            to { box-shadow: 0 0 30px #ffeb3b, 0 0 60px #ffeb3b; }
+        }
+
+        .planet1 { width: 8px; height: 8px; background: #2196f3; }
+        .planet2 { width: 6px; height: 6px; background: #4caf50; }
+        .planet3 { width: 10px; height: 10px; background: #ff5722; }
+        .planet4 { width: 7px; height: 7px; background: #9c27b0; }
+
+        .progress-bar {
+            width: 300px;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 2px;
+            overflow: hidden;
+            margin: 1rem auto;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #2196f3, #64b5f6);
+            border-radius: 2px;
+            width: 0%;
+            transition: width 0.3s ease;
+            box-shadow: 0 0 10px rgba(33, 150, 243, 0.5);
+        }
+
+        .loading-percentage {
+            font-size: 1.2rem;
+            color: #64b5f6;
+            font-weight: bold;
+            margin-top: 1rem;
+        }
+
+        #canvas-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+
+        #ui-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        .crosshair {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 30px;
+            height: 30px;
+            border: 2px solid rgba(255, 255, 255, 0.7);
+            border-radius: 50%;
+            pointer-events: none;
+            transition: all 0.3s ease;
+        }
+
+        .crosshair::before,
+        .crosshair::after {
+            content: '';
+            position: absolute;
+            background: rgba(255, 255, 255, 0.7);
+        }
+
+        .crosshair::before {
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 2px;
+            transform: translateY(-50%);
+        }
+
+        .crosshair::after {
+            left: 50%;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            transform: translateX(-50%);
+        }
+
+        .crosshair.targeting {
+            border-color: #64b5f6;
+            box-shadow: 0 0 20px rgba(100, 181, 246, 0.8);
+            transform: translate(-50%, -50%) scale(1.2);
+        }
+
+        .crosshair.targeting::before,
+        .crosshair.targeting::after {
+            background: #64b5f6;
+        }
+
+        .controls-info {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 15px;
+            border-radius: 10px;
+            font-size: 0.9rem;
+            line-height: 1.5;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            pointer-events: auto;
+        }
+
+        .planet-info {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 20px;
+            border-radius: 15px;
+            max-width: 300px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            opacity: 0;
+            transform: translateY(-20px);
+            transition: all 0.3s ease;
+            pointer-events: auto;
+        }
+
+        .planet-info.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .planet-name {
+            font-size: 1.3rem;
+            font-weight: bold;
+            margin-bottom: 8px;
+            color: #64b5f6;
+        }
+
+        .planet-description {
+            color: #b0bec5;
+            margin-bottom: 15px;
+            line-height: 1.5;
+        }
+
+        .enter-btn {
+            background: linear-gradient(45deg, #2196f3, #64b5f6);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            width: 100%;
+        }
+
+        .enter-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(33, 150, 243, 0.4);
+        }
+
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .modal-content {
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            border-radius: 20px;
+            padding: 30px;
+            max-width: 80%;
+            max-height: 80%;
+            overflow-y: auto;
+            position: relative;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            background: none;
+            border: none;
+            color: #fff;
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 5px;
+            border-radius: 50%;
+            width: 35px;
+            height: 35px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        .modal-close:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: rotate(90deg);
+        }
+
+        .back-to-main {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 25px;
+            cursor: pointer;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            pointer-events: auto;
+        }
+
+        .back-to-main:hover {
+            background: rgba(33, 150, 243, 0.8);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(33, 150, 243, 0.3);
+        }
+
+        @media (max-width: 768px) {
+            .loading-title {
+                font-size: 2rem;
+            }
+            
+            .controls-info,
+            .planet-info {
+                font-size: 0.8rem;
+                padding: 10px;
+            }
+            
+            .modal-content {
+                max-width: 95%;
+                max-height: 90%;
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 加载屏幕 -->
+    <div id="loading-screen">
+        <div class="loading-content">
+            <h1 class="loading-title">太空漫游</h1>
+            <p class="loading-text">探索宇宙深处，发现未知的星球和故事...<br>正在初始化引擎系统</p>
+            
+            <div class="solar-system">
+                <div class="sun"></div>
+                <div class="orbit orbit1">
+                    <div class="planet planet1"></div>
+                </div>
+                <div class="orbit orbit2">
+                    <div class="planet planet2"></div>
+                </div>
+                <div class="orbit orbit3">
+                    <div class="planet planet3"></div>
+                </div>
+                <div class="orbit orbit4">
+                    <div class="planet planet4"></div>
+                </div>
+            </div>
+            
+            <div class="progress-bar">
+                <div class="progress-fill" id="progress-fill"></div>
+            </div>
+            <div class="loading-percentage" id="loading-percentage">0%</div>
+        </div>
+    </div>
+
+    <!-- 3D Canvas容器 -->
+    <div id="canvas-container"></div>
+
+    <!-- UI覆层 -->
+    <div id="ui-overlay">
+        <div class="crosshair" id="crosshair"></div>
+        
+        <div class="controls-info">
+            <strong>控制说明：</strong><br>
+            鼠标移动 - 环顾四周<br>
+            WASD - 移动<br>
+            Shift - 加速<br>
+            Space - 上升<br>
+            Ctrl - 下降<br>
+            ESC - 释放鼠标<br>
+            点击进入 - 对准星球按住鼠标
+        </div>
+
+        <div class="planet-info" id="planet-info">
+            <div class="planet-name" id="planet-name"></div>
+            <div class="planet-description" id="planet-description"></div>
+            <button class="enter-btn" id="enter-btn" onclick="enterPlanet()">进入星球</button>
+        </div>
+
+        <a href="index.html" class="back-to-main">
+            <i class="fa-solid fa-arrow-left"></i>
+            返回主页
+        </a>
+        
+        <button id="back-to-main-space" class="back-to-main" style="top: 70px; display: none;" onclick="backToMainSpace()">
+            <i class="fa-solid fa-globe"></i>
+            返回主太空
+        </button>
+    </div>
+
+    <!-- 模态窗口 -->
+    <div id="modal" class="modal">
+        <div class="modal-content">
+            <button class="modal-close" onclick="closeModal()">×</button>
+            <div id="modal-body"></div>
+        </div>
+    </div>
+
+    <script src="space-voyage.js"></script>
+</body>
+</html> 
