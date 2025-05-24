@@ -441,19 +441,22 @@ class SpaceVoyage {
             if (isSpecialPost) {
                 // 异步加载月球纹理
                 this.loadTexture('textures/planets/moon.jpg').then(texture => {
-                    if (texture) {
+                    if (texture && star.material) {
                         star.material = new THREE.MeshPhongMaterial({
                             map: texture,
                             transparent: true,
                             opacity: 0.9
                         });
                     }
+                }).catch(error => {
+                    console.warn('月球纹理加载失败，使用默认材质:', error);
                 });
-                // 先使用纯色材质
+                // 先使用特殊颜色材质
                 material = new THREE.MeshPhongMaterial({
-                    color: this.getCategoryColor(post.category),
+                    color: 0xc2c2c2, // 月球般的银灰色
                     transparent: true,
-                    opacity: 0.9
+                    opacity: 0.9,
+                    emissive: 0x111111 // 添加一点发光效果
                 });
             } else {
                 material = new THREE.MeshPhongMaterial({
@@ -831,26 +834,38 @@ class SpaceVoyage {
             // 桌面端使用PointerLockControls
             const velocity = new THREE.Vector3();
             
-            if (this.moveForward) velocity.z += speed;
-            if (this.moveBackward) velocity.z -= speed;
-            if (this.moveLeft) velocity.x -= speed;
-            if (this.moveRight) velocity.x += speed;
-            if (this.moveUp) velocity.y += speed;
-            if (this.moveDown) velocity.y -= speed;
+            // 修正方向：W键向前(正z)，S键向后(负z)
+            if (this.moveForward) velocity.z -= speed;  // 向前移动
+            if (this.moveBackward) velocity.z += speed; // 向后移动
+            if (this.moveLeft) velocity.x -= speed;     // 向左移动
+            if (this.moveRight) velocity.x += speed;    // 向右移动
+            if (this.moveUp) velocity.y += speed;       // 向上移动
+            if (this.moveDown) velocity.y -= speed;     // 向下移动
             
-            this.controls.moveForward(-velocity.z);
+            // 调试信息（只在有移动时输出）
+            if (velocity.length() > 0) {
+                console.log(`桌面端移动: velocity(${velocity.x.toFixed(2)}, ${velocity.y.toFixed(2)}, ${velocity.z.toFixed(2)}) 速度倍率: ${this.isAccelerating ? '加速' : '正常'}`);
+            }
+            
+            // 直接传递velocity值，不需要取负
+            this.controls.moveForward(velocity.z);
             this.controls.moveRight(velocity.x);
             this.controls.getObject().position.y += velocity.y;
         } else if (this.isMobile) {
             // 移动端直接控制相机组位置
             const velocity = new THREE.Vector3();
             
-            if (this.moveForward) velocity.z -= speed;  // 修正方向
-            if (this.moveBackward) velocity.z += speed; // 修正方向
-            if (this.moveLeft) velocity.x -= speed;
-            if (this.moveRight) velocity.x += speed;
-            if (this.moveUp) velocity.y += speed;
-            if (this.moveDown) velocity.y -= speed;
+            if (this.moveForward) velocity.z -= speed;  // 向前移动
+            if (this.moveBackward) velocity.z += speed; // 向后移动
+            if (this.moveLeft) velocity.x -= speed;     // 向左移动
+            if (this.moveRight) velocity.x += speed;    // 向右移动
+            if (this.moveUp) velocity.y += speed;       // 向上移动
+            if (this.moveDown) velocity.y -= speed;     // 向下移动
+            
+            // 调试信息（只在有移动时输出，减少日志频率）
+            if (velocity.length() > 0 && Math.random() < 0.1) { // 10%概率输出日志
+                console.log(`移动端移动: velocity(${velocity.x.toFixed(2)}, ${velocity.y.toFixed(2)}, ${velocity.z.toFixed(2)}) 摇杆: (${this.joystickDirection.x.toFixed(2)}, ${this.joystickDirection.y.toFixed(2)})`);
+            }
             
             // 应用相机组的旋转到移动向量
             velocity.applyQuaternion(this.cameraGroup.quaternion);
@@ -867,7 +882,9 @@ class SpaceVoyage {
             cameraPosition = this.controls.getObject().position;
             this.controls.getDirection(cameraDirection);
         } else {
-            cameraPosition = this.camera.position;
+            // 移动端：获取相机的世界坐标位置和方向
+            cameraPosition = new THREE.Vector3();
+            this.camera.getWorldPosition(cameraPosition);
             this.camera.getWorldDirection(cameraDirection);
         }
         
@@ -959,28 +976,53 @@ class SpaceVoyage {
         console.log(`正在加载纹理: ${path}`);
         
         return new Promise((resolve, reject) => {
-            this.textureLoader.load(
+            // 尝试多个路径
+            const possiblePaths = [
                 path,
-                (texture) => {
-                    // 设置纹理参数
-                    texture.wrapS = THREE.RepeatWrapping;
-                    texture.wrapT = THREE.RepeatWrapping;
-                    texture.magFilter = THREE.LinearFilter;
-                    texture.minFilter = THREE.LinearMipMapLinearFilter;
-                    
-                    // 缓存纹理
-                    this.loadedTextures.set(path, texture);
-                    console.log(`纹理加载成功: ${path}`);
-                    resolve(texture);
-                },
-                (progress) => {
-                    console.log(`纹理加载进度: ${path} - ${(progress.loaded / progress.total * 100).toFixed(1)}%`);
-                },
-                (error) => {
-                    console.error(`纹理加载失败: ${path}`, error);
-                    resolve(null); // 返回null而不是reject，这样不会中断程序
+                `./${path}`,
+                `/${path}`
+            ];
+            
+            let currentPathIndex = 0;
+            
+            const tryLoadTexture = () => {
+                if (currentPathIndex >= possiblePaths.length) {
+                    console.error(`所有路径都无法加载纹理: ${path}`);
+                    resolve(null);
+                    return;
                 }
-            );
+                
+                const currentPath = possiblePaths[currentPathIndex];
+                console.log(`尝试加载纹理路径: ${currentPath}`);
+                
+                this.textureLoader.load(
+                    currentPath,
+                    (texture) => {
+                        // 设置纹理参数
+                        texture.wrapS = THREE.RepeatWrapping;
+                        texture.wrapT = THREE.RepeatWrapping;
+                        texture.magFilter = THREE.LinearFilter;
+                        texture.minFilter = THREE.LinearMipMapLinearFilter;
+                        
+                        // 缓存纹理
+                        this.loadedTextures.set(path, texture);
+                        console.log(`纹理加载成功: ${currentPath}`);
+                        resolve(texture);
+                    },
+                    (progress) => {
+                        if (progress.total > 0) {
+                            console.log(`纹理加载进度: ${currentPath} - ${(progress.loaded / progress.total * 100).toFixed(1)}%`);
+                        }
+                    },
+                    (error) => {
+                        console.warn(`纹理加载失败 (${currentPath}):`, error);
+                        currentPathIndex++;
+                        tryLoadTexture();
+                    }
+                );
+            };
+            
+            tryLoadTexture();
         });
     }
 }
@@ -1083,7 +1125,7 @@ function showArticleModal(articleData) {
                 
                 ${articleData.path ? `
                 <div style="text-align: center; margin-top: 2rem;">
-                    <a href="blog/" target="_blank" 
+                    <a href="blog.html" target="_blank" 
                        onclick="closeModal()" 
                        style="display: inline-flex; align-items: center; gap: 0.5rem; background: linear-gradient(45deg, #2196f3, #64b5f6); color: white; padding: 12px 24px; border-radius: 25px; text-decoration: none; font-weight: bold; transition: all 0.3s ease;">
                         <i class="fa-solid fa-book-open"></i>
@@ -1092,7 +1134,7 @@ function showArticleModal(articleData) {
                 </div>
                 ` : `
                 <div style="text-align: center; margin-top: 2rem;">
-                    <a href="blog/" target="_blank" 
+                    <a href="blog.html" target="_blank" 
                        onclick="closeModal()" 
                        style="display: inline-flex; align-items: center; gap: 0.5rem; background: linear-gradient(45deg, #2196f3, #64b5f6); color: white; padding: 12px 24px; border-radius: 25px; text-decoration: none; font-weight: bold; transition: all 0.3s ease;">
                         <i class="fa-solid fa-book-open"></i>

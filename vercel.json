@@ -1,4 +1,16 @@
 {
+  "redirects": [
+    {
+      "source": "/blog",
+      "destination": "/blog.html",
+      "permanent": false
+    },
+    {
+      "source": "/blog/",
+      "destination": "/blog.html",
+      "permanent": false
+    }
+  ],
   "headers": [
     {
       "source": "/(.*\\.md)",
@@ -41,6 +53,28 @@
         {
           "key": "Cache-Control",
           "value": "public, max-age=3600, must-revalidate"
+        }
+      ]
+    },
+    {
+      "source": "/textures/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=86400"
+        },
+        {
+          "key": "Content-Type",
+          "value": "image/jpeg"
+        }
+      ]
+    },
+    {
+      "source": "/(.*\\.(png|jpg|jpeg|gif|svg|ico|webp))",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=86400"
         }
       ]
     }
