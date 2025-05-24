@@ -1064,13 +1064,13 @@ class SpaceVoyage {
         console.log(`正在加载纹理: ${path}`);
         
         return new Promise((resolve, reject) => {
-            // 优化路径顺序：先本地，后CDN
+            // 优化路径顺序：确保绝对路径优先，兼容Vercel部署
             const possiblePaths = [
-                path,                    // 原始路径
-                `./${path}`,            // 相对路径
-                `/${path}`,             // 绝对路径
-                `./textures/planets/earth.jpeg`,  // 默认地球纹理作为备用
-                `./textures/planets/mars.jpg`,    // 默认火星纹理作为备用
+                `/${path}`,             // 绝对路径 - Vercel部署首选
+                path,                   // 原始路径
+                `./${path}`,           // 相对路径
+                `/textures/planets/earth.jpeg`,  // 默认地球纹理作为备用
+                `/textures/planets/mars.jpg`,    // 默认火星纹理作为备用
                 `https://cdn.jsdelivr.net/gh/Shawnzheng011019/iamshawn@main/${path}`,
                 `https://fastly.jsdelivr.net/gh/Shawnzheng011019/iamshawn@main/${path}`,
                 `https://raw.githubusercontent.com/Shawnzheng011019/iamshawn/main/${path}`

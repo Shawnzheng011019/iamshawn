@@ -34,4 +34,9 @@ logs/
 !space-voyage.js
 !space-voyage.html
 !posts/
-!*.json 
+!*.json
+!textures/
+!favicon.*
+!android-chrome-*
+!apple-touch-icon.png
+!site.webmanifest 

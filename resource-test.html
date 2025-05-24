@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>资源测试页面</title>
+    
+    <!-- Favicon测试 -->
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="/android-chrome-192x192.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="/android-chrome-512x512.png">
+    <link rel="manifest" href="/site.webmanifest">
+    
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .resource-test {
+            margin: 10px 0;
+            padding: 10px;
+            border-left: 4px solid #165DFF;
+            background: #f8f9fa;
+        }
+        .success { border-left-color: #28a745; }
+        .error { border-left-color: #dc3545; }
+        img {
+            max-width: 100px;
+            max-height: 100px;
+            margin: 5px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .texture-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+            margin-top: 10px;
+        }
+        .texture-item {
+            text-align: center;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <h1>资源加载测试页面</h1>
+    <p>此页面用于测试在Vercel部署时favicon和纹理资源是否能正确加载。</p>
+    
+    <div class="test-section">
+        <h2>Favicon 测试</h2>
+        <p>检查浏览器标签页图标是否正确显示，以下图标应该能正常加载：</p>
+        
+        <div class="resource-test" id="favicon-test">
+            <strong>Favicon 文件测试：</strong>
+            <div>
+                <img src="/favicon.ico" alt="favicon.ico" onerror="this.style.border='2px solid red'">
+                <img src="/favicon-32x32.png" alt="favicon-32x32.png" onerror="this.style.border='2px solid red'">
+                <img src="/favicon-16x16.png" alt="favicon-16x16.png" onerror="this.style.border='2px solid red'">
+                <img src="/apple-touch-icon.png" alt="apple-touch-icon.png" onerror="this.style.border='2px solid red'">
+                <img src="/android-chrome-192x192.png" alt="android-chrome-192x192.png" onerror="this.style.border='2px solid red'">
+                <img src="/android-chrome-512x512.png" alt="android-chrome-512x512.png" onerror="this.style.border='2px solid red'">
+            </div>
+        </div>
+    </div>
+    
+    <div class="test-section">
+        <h2>纹理文件测试</h2>
+        <p>检查太空漫游页面使用的纹理文件是否能正确加载：</p>
+        
+        <div class="texture-grid">
+            <div class="texture-item">
+                <h4>地球纹理</h4>
+                <img src="/textures/planets/earth.jpeg" alt="Earth texture" onerror="this.style.border='2px solid red'; this.nextElementSibling.innerHTML='❌ 加载失败'">
+                <div>✅ 加载成功</div>
+            </div>
+            
+            <div class="texture-item">
+                <h4>火星纹理</h4>
+                <img src="/textures/planets/mars.jpg" alt="Mars texture" onerror="this.style.border='2px solid red'; this.nextElementSibling.innerHTML='❌ 加载失败'">
+                <div>✅ 加载成功</div>
+            </div>
+            
+            <div class="texture-item">
+                <h4>木星纹理</h4>
+                <img src="/textures/planets/jupiter.jpg" alt="Jupiter texture" onerror="this.style.border='2px solid red'; this.nextElementSibling.innerHTML='❌ 加载失败'">
+                <div>✅ 加载成功</div>
+            </div>
+            
+            <div class="texture-item">
+                <h4>水星纹理</h4>
+                <img src="/textures/planets/mercury.jpg" alt="Mercury texture" onerror="this.style.border='2px solid red'; this.nextElementSibling.innerHTML='❌ 加载失败'">
+                <div>✅ 加载成功</div>
+            </div>
+            
+            <div class="texture-item">
+                <h4>金星纹理</h4>
+                <img src="/textures/planets/venus.jpg" alt="Venus texture" onerror="this.style.border='2px solid red'; this.nextElementSibling.innerHTML='❌ 加载失败'">
+                <div>✅ 加载成功</div>
+            </div>
+            
+            <div class="texture-item">
+                <h4>月球纹理</h4>
+                <img src="/textures/planets/moon.jpg" alt="Moon texture" onerror="this.style.border='2px solid red'; this.nextElementSibling.innerHTML='❌ 加载失败'">
+                <div>✅ 加载成功</div>
+            </div>
+            
+            <div class="texture-item">
+                <h4>银河系背景</h4>
+                <img src="/textures/space/milky_way.jpg" alt="Milky Way texture" onerror="this.style.border='2px solid red'; this.nextElementSibling.innerHTML='❌ 加载失败'">
+                <div>✅ 加载成功</div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="test-section">
+        <h2>JavaScript 纹理加载测试</h2>
+        <div id="js-test-results">
+            <p>正在测试 JavaScript 纹理加载...</p>
+        </div>
+    </div>
+    
+    <div class="test-section">
+        <h2>返回主页</h2>
+        <p>
+            <a href="/index.html" style="color: #165DFF; text-decoration: none; font-weight: bold;">← 返回主页</a> |
+            <a href="/space-voyage.html" style="color: #165DFF; text-decoration: none; font-weight: bold;">去太空漫游</a>
+        </p>
+    </div>
+    
+    <script>
+        // JavaScript 纹理加载测试
+        async function testTextureLoading() {
+            const results = document.getElementById('js-test-results');
+            const textures = [
+                '/textures/planets/earth.jpeg',
+                '/textures/planets/mars.jpg',
+                '/textures/planets/jupiter.jpg',
+                '/textures/planets/mercury.jpg',
+                '/textures/planets/venus.jpg',
+                '/textures/planets/moon.jpg',
+                '/textures/space/milky_way.jpg'
+            ];
+            
+            let html = '<h4>JavaScript 加载测试结果：</h4>';
+            
+            for (const texture of textures) {
+                try {
+                    const response = await fetch(texture);
+                    if (response.ok) {
+                        html += `<div class="resource-test success">✅ ${texture} - 加载成功 (${response.status})</div>`;
+                    } else {
+                        html += `<div class="resource-test error">❌ ${texture} - 加载失败 (${response.status})</div>`;
+                    }
+                } catch (error) {
+                    html += `<div class="resource-test error">❌ ${texture} - 网络错误: ${error.message}</div>`;
+                }
+            }
+            
+            results.innerHTML = html;
+        }
+        
+        // 页面加载完成后运行测试
+        window.addEventListener('load', testTextureLoading);
+    </script>
+</body>
+</html> 
