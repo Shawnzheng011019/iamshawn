@@ -21,6 +21,11 @@ class SpaceVoyage {
         this.moveDown = false;
         this.isAccelerating = false;
         
+        // 移动端支持
+        this.isMobile = this.checkMobileDevice();
+        this.joystickActive = false;
+        this.joystickDirection = { x: 0, y: 0 };
+        
         // 速度设置
         this.normalSpeed = 0.3;
         this.accelerateSpeed = 0.8;
@@ -30,6 +35,11 @@ class SpaceVoyage {
         this.mouse = new THREE.Vector2();
         
         this.init();
+    }
+
+    checkMobileDevice() {
+        return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || 
+               window.innerWidth <= 768;
     }
 
     async init() {
@@ -125,22 +135,30 @@ class SpaceVoyage {
     }
 
     setupControls() {
-        this.controls = new THREE.PointerLockControls(this.camera, document.body);
-        this.scene.add(this.controls.getObject());
-        
-        // 点击锁定鼠标
-        document.addEventListener('click', () => {
-            if (!document.getElementById('modal').style.display || 
-                document.getElementById('modal').style.display === 'none') {
-                this.controls.lock();
-            }
-        });
+        if (!this.isMobile) {
+            // 桌面端使用PointerLockControls
+            this.controls = new THREE.PointerLockControls(this.camera, document.body);
+            this.scene.add(this.controls.getObject());
+            
+            // 点击锁定鼠标
+            document.addEventListener('click', () => {
+                if (!document.getElementById('modal').style.display || 
+                    document.getElementById('modal').style.display === 'none') {
+                    this.controls.lock();
+                }
+            });
+        } else {
+            // 移动端使用简单的相机控制
+            this.camera.position.set(0, 0, 10);
+            // 移动端不需要PointerLockControls
+        }
     }
 
     createSpaceEnvironment() {
         // 创建星空背景
         const starGeometry = new THREE.BufferGeometry();
-        const starCount = 3000;
+        // 移动端减少星星数量以提升性能
+        const starCount = this.isMobile ? 1500 : 3000;
         const positions = new Float32Array(starCount * 3);
         const colors = new Float32Array(starCount * 3);
         
@@ -171,7 +189,7 @@ class SpaceVoyage {
         starGeometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
         
         const starMaterial = new THREE.PointsMaterial({
-            size: 2,
+            size: this.isMobile ? 1.5 : 2,
             sizeAttenuation: true,
             vertexColors: true,
             transparent: true,
@@ -392,55 +410,64 @@ class SpaceVoyage {
     }
 
     setupEventListeners() {
-        // 键盘控制
+        // 键盘事件
         document.addEventListener('keydown', (event) => {
             switch (event.code) {
-                case 'KeyW': this.moveForward = true; break;
-                case 'KeyS': this.moveBackward = true; break;
-                case 'KeyA': this.moveLeft = true; break;
-                case 'KeyD': this.moveRight = true; break;
-                case 'Space': 
+                case 'KeyW':
+                    this.moveForward = true;
+                    break;
+                case 'KeyA':
+                    this.moveLeft = true;
+                    break;
+                case 'KeyS':
+                    this.moveBackward = true;
+                    break;
+                case 'KeyD':
+                    this.moveRight = true;
+                    break;
+                case 'Space':
                     event.preventDefault();
-                    this.moveUp = true; 
+                    this.moveUp = true;
                     break;
                 case 'ControlLeft':
-                case 'ControlRight':
-                    event.preventDefault();
                     this.moveDown = true;
                     break;
                 case 'ShiftLeft':
-                case 'ShiftRight':
                     this.isAccelerating = true;
-                    break;
-                case 'Escape':
-                    this.controls.unlock();
                     break;
             }
         });
 
         document.addEventListener('keyup', (event) => {
             switch (event.code) {
-                case 'KeyW': this.moveForward = false; break;
-                case 'KeyS': this.moveBackward = false; break;
-                case 'KeyA': this.moveLeft = false; break;
-                case 'KeyD': this.moveRight = false; break;
-                case 'Space': this.moveUp = false; break;
+                case 'KeyW':
+                    this.moveForward = false;
+                    break;
+                case 'KeyA':
+                    this.moveLeft = false;
+                    break;
+                case 'KeyS':
+                    this.moveBackward = false;
+                    break;
+                case 'KeyD':
+                    this.moveRight = false;
+                    break;
+                case 'Space':
+                    this.moveUp = false;
+                    break;
                 case 'ControlLeft':
-                case 'ControlRight':
                     this.moveDown = false;
                     break;
                 case 'ShiftLeft':
-                case 'ShiftRight':
                     this.isAccelerating = false;
                     break;
             }
         });
 
-        // 鼠标交互
-        document.addEventListener('mousemove', (event) => {
-            this.mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-            this.mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
-        });
+        // 移动端虚拟控制器事件
+        if (this.isMobile) {
+            this.setupMobileControls();
+        }
 
         // 窗口大小调整
         window.addEventListener('resize', () => {
@@ -450,84 +477,198 @@ class SpaceVoyage {
         });
     }
 
-    updateMovement() {
-        if (!this.controls.isLocked) return;
+    setupMobileControls() {
+        const joystick = document.getElementById('virtual-joystick');
+        const knob = document.getElementById('joystick-knob');
+        const upBtn = document.getElementById('mobile-up');
+        const downBtn = document.getElementById('mobile-down');
+        const boostBtn = document.getElementById('mobile-boost');
 
+        // 虚拟摇杆事件
+        let joystickCenter = { x: 0, y: 0 };
+        let maxDistance = 40; // 摇杆最大距离
+
+        const handleJoystickStart = (event) => {
+            event.preventDefault();
+            this.joystickActive = true;
+            const rect = joystick.getBoundingClientRect();
+            joystickCenter.x = rect.left + rect.width / 2;
+            joystickCenter.y = rect.top + rect.height / 2;
+        };
+
+        const handleJoystickMove = (event) => {
+            if (!this.joystickActive) return;
+            event.preventDefault();
+
+            const clientX = event.touches ? event.touches[0].clientX : event.clientX;
+            const clientY = event.touches ? event.touches[0].clientY : event.clientY;
+
+            const deltaX = clientX - joystickCenter.x;
+            const deltaY = clientY - joystickCenter.y;
+            const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+
+            if (distance <= maxDistance) {
+                knob.style.transform = `translate(calc(-50% + ${deltaX}px), calc(-50% + ${deltaY}px))`;
+                this.joystickDirection.x = deltaX / maxDistance;
+                this.joystickDirection.y = deltaY / maxDistance;
+            } else {
+                const angle = Math.atan2(deltaY, deltaX);
+                const x = Math.cos(angle) * maxDistance;
+                const y = Math.sin(angle) * maxDistance;
+                knob.style.transform = `translate(calc(-50% + ${x}px), calc(-50% + ${y}px))`;
+                this.joystickDirection.x = x / maxDistance;
+                this.joystickDirection.y = y / maxDistance;
+            }
+
+            // 根据摇杆方向设置移动状态
+            this.moveForward = this.joystickDirection.y < -0.2;
+            this.moveBackward = this.joystickDirection.y > 0.2;
+            this.moveLeft = this.joystickDirection.x < -0.2;
+            this.moveRight = this.joystickDirection.x > 0.2;
+        };
+
+        const handleJoystickEnd = (event) => {
+            event.preventDefault();
+            this.joystickActive = false;
+            knob.style.transform = 'translate(-50%, -50%)';
+            this.joystickDirection = { x: 0, y: 0 };
+            this.moveForward = false;
+            this.moveBackward = false;
+            this.moveLeft = false;
+            this.moveRight = false;
+        };
+
+        // 触摸事件
+        joystick.addEventListener('touchstart', handleJoystickStart);
+        joystick.addEventListener('touchmove', handleJoystickMove);
+        joystick.addEventListener('touchend', handleJoystickEnd);
+
+        // 鼠标事件（用于调试）
+        joystick.addEventListener('mousedown', handleJoystickStart);
+        document.addEventListener('mousemove', handleJoystickMove);
+        document.addEventListener('mouseup', handleJoystickEnd);
+
+        // 移动端按钮事件
+        upBtn.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            this.moveUp = true;
+        });
+        upBtn.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            this.moveUp = false;
+        });
+
+        downBtn.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            this.moveDown = true;
+        });
+        downBtn.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            this.moveDown = false;
+        });
+
+        boostBtn.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            this.isAccelerating = true;
+        });
+        boostBtn.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            this.isAccelerating = false;
+        });
+    }
+
+    updateMovement() {
         const speed = this.isAccelerating ? this.accelerateSpeed : this.normalSpeed;
-        const direction = new THREE.Vector3();
         
-        this.camera.getWorldDirection(direction);
-        const right = new THREE.Vector3();
-        right.crossVectors(direction, this.camera.up).normalize();
-        
-        if (this.moveForward) {
-            this.controls.getObject().position.addScaledVector(direction, speed);
-        }
-        if (this.moveBackward) {
-            this.controls.getObject().position.addScaledVector(direction, -speed);
-        }
-        if (this.moveLeft) {
-            this.controls.getObject().position.addScaledVector(right, -speed);
-        }
-        if (this.moveRight) {
-            this.controls.getObject().position.addScaledVector(right, speed);
-        }
-        if (this.moveUp) {
-            this.controls.getObject().position.y += speed;
-        }
-        if (this.moveDown) {
-            this.controls.getObject().position.y -= speed;
+        if (!this.isMobile && this.controls) {
+            // 桌面端使用PointerLockControls
+            const velocity = new THREE.Vector3();
+            
+            if (this.moveForward) velocity.z -= speed;
+            if (this.moveBackward) velocity.z += speed;
+            if (this.moveLeft) velocity.x -= speed;
+            if (this.moveRight) velocity.x += speed;
+            if (this.moveUp) velocity.y += speed;
+            if (this.moveDown) velocity.y -= speed;
+            
+            this.controls.moveForward(velocity.z);
+            this.controls.moveRight(velocity.x);
+            this.controls.getObject().position.y += velocity.y;
+        } else if (this.isMobile) {
+            // 移动端直接控制相机位置
+            const velocity = new THREE.Vector3();
+            
+            if (this.moveForward) velocity.z -= speed;
+            if (this.moveBackward) velocity.z += speed;
+            if (this.moveLeft) velocity.x -= speed;
+            if (this.moveRight) velocity.x += speed;
+            if (this.moveUp) velocity.y += speed;
+            if (this.moveDown) velocity.y -= speed;
+            
+            // 应用相机的旋转矩阵到移动向量
+            velocity.applyMatrix4(this.camera.matrixWorld);
+            velocity.sub(this.camera.getWorldPosition(new THREE.Vector3()));
+            
+            this.camera.position.add(velocity);
         }
     }
 
     checkPlanetIntersection() {
-        this.raycaster.setFromCamera(new THREE.Vector2(0, 0), this.camera);
+        let cameraPosition;
+        let cameraDirection = new THREE.Vector3();
         
-        const targets = this.isInBlogSpace ? this.blogStars : this.planets;
-        const intersects = this.raycaster.intersectObjects(targets);
+        if (!this.isMobile && this.controls) {
+            cameraPosition = this.controls.getObject().position;
+            this.controls.getDirection(cameraDirection);
+        } else {
+            cameraPosition = this.camera.position;
+            this.camera.getWorldDirection(cameraDirection);
+        }
         
-        const crosshair = document.getElementById('crosshair');
-        const planetInfo = document.getElementById('planet-info');
+        this.raycaster.set(cameraPosition, cameraDirection);
+        
+        let intersectableObjects = [];
+        if (this.currentMode === 'main') {
+            intersectableObjects = this.planets.map(p => p.mesh);
+        } else if (this.currentMode === 'blog') {
+            intersectableObjects = this.blogStars.map(s => s.mesh);
+        }
+        
+        const intersects = this.raycaster.intersectObjects(intersectableObjects);
         
         if (intersects.length > 0) {
-            const target = intersects[0].object;
+            const intersectedObject = intersects[0].object;
+            let targetData = null;
             
-            // 更新准星样式
-            crosshair.classList.add('targeting');
-            
-            // 显示星球信息
-            const data = target.userData;
-            if (data.type === 'article') {
-                // 文章信息
-                document.getElementById('planet-name').textContent = data.displayTitle || data.title;
-                document.getElementById('planet-description').innerHTML = `
-                    <div style="line-height: 1.4;">
-                        <div style="margin-bottom: 0.5rem; color: #64b5f6; font-weight: bold;">
-                            ${data.displayCategory || data.category}
-                        </div>
-                        <div style="margin-bottom: 0.5rem; font-size: 0.9rem; color: #b0bec5;">
-                            📅 ${data.displayDate || data.date}
-                            ${data.readingTime ? ` • ⏱️ ${data.readingTime}` : ''}
-                        </div>
-                        <div style="font-size: 0.9rem; line-height: 1.3;">
-                            ${data.summary ? data.summary.substring(0, 100) + '...' : '点击查看详细内容'}
-                        </div>
-                    </div>
-                `;
-                document.getElementById('enter-btn').textContent = '📖 阅读文章';
-            } else {
-                // 星球信息
-                document.getElementById('planet-name').textContent = data.name;
-                document.getElementById('planet-description').textContent = data.description;
-                document.getElementById('enter-btn').textContent = data.type === 'blog' ? '🌌 进入博客太空' : '🌍 进入星球';
+            if (this.currentMode === 'main') {
+                targetData = this.planets.find(p => p.mesh === intersectedObject);
+            } else if (this.currentMode === 'blog') {
+                targetData = this.blogStars.find(s => s.mesh === intersectedObject);
             }
             
-            planetInfo.classList.add('show');
-            this.targetPlanet = target;
+            if (targetData && (!this.targetPlanet || this.targetPlanet !== targetData)) {
+                this.targetPlanet = targetData;
+                
+                // 显示信息面板
+                const planetInfo = document.querySelector('.planet-info');
+                if (this.currentMode === 'main') {
+                    document.querySelector('.planet-name').textContent = targetData.name;
+                    document.querySelector('.planet-description').textContent = targetData.description;
+                } else if (this.currentMode === 'blog') {
+                    document.querySelector('.planet-name').textContent = targetData.title;
+                    document.querySelector('.planet-description').textContent = `分类: ${targetData.category} | ${targetData.date}`;
+                }
+                planetInfo.classList.add('show');
+                
+                // 显示瞄准状态
+                document.querySelector('.crosshair').classList.add('targeting');
+            }
         } else {
-            crosshair.classList.remove('targeting');
-            planetInfo.classList.remove('show');
-            this.targetPlanet = null;
+            if (this.targetPlanet) {
+                this.targetPlanet = null;
+                document.querySelector('.planet-info').classList.remove('show');
+                document.querySelector('.crosshair').classList.remove('targeting');
+            }
         }
     }
 

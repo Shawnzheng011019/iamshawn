@@ -380,21 +380,186 @@
                 font-size: 2rem;
             }
             
-            .controls-info,
-            .planet-info {
+            .solar-system {
+                width: 150px;
+                height: 150px;
+            }
+            
+            .progress-bar {
+                width: 250px;
+            }
+            
+            .controls-info {
+                bottom: 10px;
+                left: 10px;
+                right: 10px;
+                padding: 12px;
                 font-size: 0.8rem;
-                padding: 10px;
+                text-align: center;
+            }
+            
+            .planet-info {
+                top: 10px;
+                right: 10px;
+                left: 10px;
+                max-width: none;
+                padding: 15px;
             }
             
             .modal-content {
                 max-width: 95%;
-                max-height: 90%;
+                max-height: 85%;
                 padding: 20px;
+                margin: 10px;
+            }
+            
+            .crosshair {
+                width: 40px;
+                height: 40px;
+            }
+        }
+
+        /* 移动端虚拟控制器 */
+        .mobile-controls {
+            position: fixed;
+            bottom: 20px;
+            width: 100%;
+            height: 200px;
+            pointer-events: none;
+            z-index: 100;
+            display: none;
+        }
+
+        .mobile-controls.show {
+            display: block;
+        }
+
+        .virtual-joystick {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            width: 120px;
+            height: 120px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            pointer-events: auto;
+            touch-action: none;
+        }
+
+        .joystick-knob {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 40px;
+            height: 40px;
+            background: rgba(100, 181, 246, 0.8);
+            border: 2px solid #64b5f6;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            transition: all 0.1s ease;
+        }
+
+        .mobile-buttons {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            pointer-events: auto;
+        }
+
+        .mobile-btn {
+            width: 60px;
+            height: 60px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            color: #fff;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            touch-action: manipulation;
+            user-select: none;
+        }
+
+        .mobile-btn:active {
+            background: rgba(100, 181, 246, 0.3);
+            transform: scale(0.95);
+        }
+
+        .mobile-info {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.9);
+            color: #fff;
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            z-index: 1001;
+            display: none;
+        }
+
+        .mobile-info.show {
+            display: block;
+        }
+
+        .mobile-info h3 {
+            margin-bottom: 15px;
+            color: #64b5f6;
+        }
+
+        .mobile-info button {
+            background: #2196f3;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 25px;
+            margin-top: 15px;
+            cursor: pointer;
+        }
+
+        /* 降低移动端粒子数量 */
+        @media (max-width: 768px) {
+            body {
+                cursor: default;
             }
         }
     </style>
 </head>
 <body>
+    <!-- 移动端提示信息 -->
+    <div id="mobile-info" class="mobile-info">
+        <h3>🚀 太空漫游</h3>
+        <p>在移动设备上体验太空探索</p>
+        <p>使用左侧虚拟摇杆移动</p>
+        <p>右侧按钮控制上升/下降和加速</p>
+        <button onclick="closeMobileInfo()">开始探索</button>
+    </div>
+
+    <!-- 移动端虚拟控制器 -->
+    <div id="mobile-controls" class="mobile-controls">
+        <div class="virtual-joystick" id="virtual-joystick">
+            <div class="joystick-knob" id="joystick-knob"></div>
+        </div>
+        
+        <div class="mobile-buttons">
+            <div class="mobile-btn" id="mobile-up">
+                <i class="fa-solid fa-arrow-up"></i>
+            </div>
+            <div class="mobile-btn" id="mobile-boost">
+                <i class="fa-solid fa-rocket"></i>
+            </div>
+            <div class="mobile-btn" id="mobile-down">
+                <i class="fa-solid fa-arrow-down"></i>
+            </div>
+        </div>
+    </div>
+
     <!-- 加载屏幕 -->
     <div id="loading-screen">
         <div class="loading-content">
@@ -468,5 +633,26 @@
     </div>
 
     <script src="space-voyage.js"></script>
+    
+    <script>
+        // 移动端信息关闭函数
+        function closeMobileInfo() {
+            document.getElementById('mobile-info').classList.remove('show');
+        }
+        
+        // 检测移动端设备
+        function isMobileDevice() {
+            return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || 
+                   window.innerWidth <= 768;
+        }
+        
+        // 页面加载完成后检查是否为移动端
+        document.addEventListener('DOMContentLoaded', function() {
+            if (isMobileDevice()) {
+                document.getElementById('mobile-info').classList.add('show');
+                document.getElementById('mobile-controls').classList.add('show');
+            }
+        });
+    </script>
 </body>
 </html> 
