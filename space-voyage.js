@@ -1382,7 +1382,7 @@ function getAboutContent() {
         <div style="max-width: 700px;">
             <h1 style="color: #64b5f6; margin-bottom: 1.5rem;">关于我</h1>
             <div style="line-height: 1.8; color: #e0e0e0;">
-                <p style="margin-bottom: 1rem;">你好，我是郑啸，目前是中国石油大学（华东）计算机科学与技术专业的硕士研究生，专注于自然语言处理和大语言模型领域的研究与开发。</p>
+                <p style="margin-bottom: 1rem;">你好，我是陶皓，目前是中国石油大学（华东）计算机科学与技术专业的硕士研究生，专注于自然语言处理和大语言模型领域的研究与开发。</p>
                 <p style="margin-bottom: 1rem;">我对技术有着强烈的好奇心和热情，特别是在RAG系统开发、MCP系统开发以及大语言模型的微调和部署方面有丰富的实践经验。我善于将理论知识与实际应用相结合，解决复杂的技术挑战。</p>
                 <p style="margin-bottom: 1rem;">在学术研究中，我致力于探索多模态大小模型融合架构和类脑脉冲大模型架构，以解决大模型推理成本高和能效比低的问题。</p>
                 <p style="margin-bottom: 1rem;">作为一名后端开发工程师，我熟练掌握Django、PostgreSQL、FastAPI等技术栈，能够独立设计和实现高性能的后端系统。我注重代码质量和工程规范，善于团队协作和技术沟通。</p>

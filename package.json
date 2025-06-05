@@ -1,7 +1,7 @@
 {
   "name": "zhengxiao-portfolio",
   "version": "1.0.0",
-  "description": "郑啸的个人主页和博客系统",
+  "description": "陶皓的个人主页和博客系统",
   "main": "index.html",
   "scripts": {
     "dev": "python3 -m http.server 8000",
@@ -15,7 +15,7 @@
     "personal-website",
     "static-site"
   ],
-  "author": "郑啸 (Zheng Xiao)",
+  "author": "陶皓 (Zheng Xiao)",
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
