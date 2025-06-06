@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>博客搜索框测试</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" rel="stylesheet">
+    <style>
+        .search-container {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+        #search-input {
+            transition: all 0.15s ease-in-out;
+        }
+        #search-input:focus {
+            outline: none;
+            border-color: #165DFF;
+            box-shadow: 0 0 0 3px rgba(22, 93, 255, 0.1);
+        }
+        @media (max-width: 768px) {
+            .search-container {
+                width: 100% !important;
+            }
+            #search-input {
+                width: 100% !important;
+                font-size: 16px;
+                min-height: 44px;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 p-8">
+    <div class="max-w-4xl mx-auto">
+        <h1 class="text-3xl font-bold text-center mb-8">博客搜索框测试</h1>
+        
+        <!-- 桌面端测试 -->
+        <div class="bg-white p-6 rounded-lg shadow-sm mb-6">
+            <h2 class="text-xl font-semibold mb-4">桌面端布局</h2>
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div>
+                    <h3 class="text-lg font-bold mb-2">最新文章</h3>
+                    <p class="text-gray-600">多CDN加速访问，确保国内外用户都能稳定阅读</p>
+                </div>
+                <div class="search-container w-full md:w-auto">
+                    <input 
+                        type="text" 
+                        id="search-input-1" 
+                        placeholder="搜索文章..." 
+                        class="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 w-full md:w-64"
+                    >
+                    <i class="fa-solid fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- 移动端测试 -->
+        <div class="bg-white p-6 rounded-lg shadow-sm mb-6">
+            <h2 class="text-xl font-semibold mb-4">移动端模拟（强制全宽）</h2>
+            <div style="max-width: 375px; margin: 0 auto; border: 1px solid #ddd; padding: 16px; border-radius: 8px;">
+                <div class="flex flex-col gap-4">
+                    <div>
+                        <h3 class="text-lg font-bold mb-2">最新文章</h3>
+                        <p class="text-gray-600 text-sm">多CDN加速访问</p>
+                    </div>
+                    <div class="search-container" style="width: 100%;">
+                        <input 
+                            type="text" 
+                            id="search-input-2" 
+                            placeholder="搜索文章..." 
+                            style="width: 100%; padding: 12px 16px 12px 40px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 16px; min-height: 44px;"
+                        >
+                        <i class="fa-solid fa-search" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #9CA3AF;"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 功能测试 -->
+        <div class="bg-white p-6 rounded-lg shadow-sm">
+            <h2 class="text-xl font-semibold mb-4">功能测试</h2>
+            <p class="mb-4">输入内容测试搜索框功能：</p>
+            <div id="search-result" class="p-4 bg-gray-100 rounded min-h-[60px]">
+                在上方搜索框中输入内容...
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 测试搜索功能
+        document.getElementById('search-input-1').addEventListener('input', function() {
+            const value = this.value;
+            document.getElementById('search-result').innerHTML = 
+                value ? `搜索内容: "${value}"` : '在上方搜索框中输入内容...';
+        });
+
+        document.getElementById('search-input-2').addEventListener('input', function() {
+            const value = this.value;
+            document.getElementById('search-result').innerHTML = 
+                value ? `移动端搜索: "${value}"` : '在上方搜索框中输入内容...';
+        });
+
+        // 检查响应式行为
+        window.addEventListener('resize', function() {
+            console.log('窗口大小:', window.innerWidth, 'x', window.innerHeight);
+        });
+    </script>
+</body>
+</html> 

@@ -54,6 +54,26 @@
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         
+        /* 搜索框基础样式 */
+        #search-input {
+            width: 16rem;
+            padding: 0.5rem 1rem 0.5rem 2.5rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.5rem;
+            font-size: 14px;
+            outline: none;
+            transition: all 0.15s ease-in-out;
+        }
+        #search-input:focus {
+            border-color: #165DFF;
+            box-shadow: 0 0 0 3px rgba(22, 93, 255, 0.1);
+        }
+        .search-container {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+        
         /* 图片加载优化 */
         .post-image {
             background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
@@ -95,6 +115,29 @@
         @media (max-width: 768px) {
             .post-image {
                 height: 160px;
+            }
+            
+            /* 搜索框移动端优化 */
+            #search-input {
+                font-size: 16px; /* 防止iOS缩放 */
+                width: 100% !important; /* 移动端占满宽度 */
+                min-height: 44px; /* 确保足够的触摸区域 */
+            }
+            
+            /* 搜索框容器移动端优化 */
+            .search-container {
+                width: 100% !important;
+                position: relative;
+            }
+            
+            /* 搜索图标移动端调整 */
+            .search-container .fa-search {
+                position: absolute;
+                left: 12px !important;
+                top: 50%;
+                transform: translateY(-50%);
+                color: #9CA3AF;
+                pointer-events: none;
             }
         }
     </style>
@@ -149,10 +192,48 @@
         
         // 延迟加载Tailwind
         function loadTailwind() {
-            const script = document.createElement('script');
-            script.src = 'https://cdn.tailwindcss.com';
-            script.async = true;
-            document.head.appendChild(script);
+            try {
+                const script = document.createElement('script');
+                script.src = 'https://cdn.tailwindcss.com';
+                script.async = true;
+                script.onload = function() {
+                    console.log('Tailwind CSS加载成功');
+                    // 应用配置
+                    if (window.tailwind && window.tailwindConfig) {
+                        window.tailwind.config = window.tailwindConfig;
+                    }
+                };
+                script.onerror = function() {
+                    console.error('Tailwind CSS加载失败，使用备用样式');
+                    // 添加基础样式作为备用
+                    const style = document.createElement('style');
+                    style.innerHTML = `
+                        .text-primary { color: #165DFF !important; }
+                        .bg-primary { background-color: #165DFF !important; }
+                        .border { border: 1px solid #e5e7eb !important; }
+                        .rounded-lg { border-radius: 0.5rem !important; }
+                        .shadow-sm { box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05) !important; }
+                        .hover\\:shadow-lg:hover { box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1) !important; }
+                        .transition-colors { transition: color 0.15s ease-in-out !important; }
+                        .hidden { display: none !important; }
+                        .flex { display: flex !important; }
+                        .items-center { align-items: center !important; }
+                        .justify-center { justify-content: center !important; }
+                        .text-center { text-align: center !important; }
+                        .mb-4 { margin-bottom: 1rem !important; }
+                        .py-2 { padding-top: 0.5rem !important; padding-bottom: 0.5rem !important; }
+                        .px-4 { padding-left: 1rem !important; padding-right: 1rem !important; }
+                        @media (max-width: 768px) {
+                            .md\\:w-64 { width: 100% !important; }
+                            .md\\:w-auto { width: 100% !important; }
+                        }
+                    `;
+                    document.head.appendChild(style);
+                };
+                document.head.appendChild(script);
+            } catch (error) {
+                console.error('创建Tailwind脚本失败:', error);
+            }
         }
         
         // 页面关键内容加载后再加载Tailwind
@@ -231,12 +312,12 @@
                         <h2 class="text-2xl font-bold mb-2">最新文章</h2>
                         <p class="text-gray-600">多CDN加速访问，确保国内外用户都能稳定阅读</p>
                     </div>
-                    <div class="relative">
+                    <div class="relative search-container w-full md:w-auto">
                         <input 
                             type="text" 
                             id="search-input" 
                             placeholder="搜索文章..." 
-                            class="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary w-64"
+                            class="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary w-full md:w-64"
                         >
                         <i class="fa-solid fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
                     </div>
@@ -360,27 +441,65 @@
     <!-- 延迟加载博客脚本 -->
     <script>
         function loadBlogScript() {
-            const script = document.createElement('script');
-            script.src = 'blog/js/blog.js';
-            script.async = true;
-            script.onload = hideLoading;
-            document.body.appendChild(script);
+            try {
+                const script = document.createElement('script');
+                script.src = 'blog/js/blog.js';
+                script.async = true;
+                script.onload = function() {
+                    console.log('博客脚本加载成功');
+                    hideLoading();
+                };
+                script.onerror = function() {
+                    console.error('博客脚本加载失败');
+                    hideLoading();
+                    // 显示错误提示
+                    const blogPosts = document.getElementById('blog-posts');
+                    if (blogPosts) {
+                        blogPosts.innerHTML = `
+                            <div class="col-span-full text-center py-12">
+                                <div class="text-5xl text-red-300 mb-4"><i class="fa-solid fa-exclamation-triangle"></i></div>
+                                <h3 class="text-xl font-bold text-red-600 mb-2">博客脚本加载失败</h3>
+                                <p class="text-gray-400 mb-4">请检查网络连接或稍后重试</p>
+                                <button onclick="location.reload()" class="bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors">
+                                    重新加载
+                                </button>
+                            </div>
+                        `;
+                    }
+                };
+                document.body.appendChild(script);
+            } catch (error) {
+                console.error('创建博客脚本失败:', error);
+                hideLoading();
+            }
         }
         
         function loadNetworkMonitor() {
-            const script = document.createElement('script');
-            script.src = 'blog/js/network-status.js';
-            script.async = true;
-            document.body.appendChild(script);
+            try {
+                const script = document.createElement('script');
+                script.src = 'blog/js/network-status.js';
+                script.async = true;
+                script.onload = function() {
+                    console.log('网络监控脚本加载成功');
+                };
+                script.onerror = function() {
+                    console.warn('网络监控脚本加载失败，但不影响主要功能');
+                };
+                document.body.appendChild(script);
+            } catch (error) {
+                console.warn('网络监控脚本创建失败:', error);
+            }
         }
         
         // 页面加载完成后加载脚本
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', () => {
+                console.log('DOM加载完成，开始加载博客脚本');
                 loadBlogScript();
                 loadNetworkMonitor();
             });
         } else {
+            console.log('DOM已就绪，立即加载博客脚本');
             loadBlogScript();
             loadNetworkMonitor();
         }
