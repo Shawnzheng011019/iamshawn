@@ -18,9 +18,37 @@
     <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" as="style">
     <link rel="preload" href="../style.css" as="style">
     
+    <!-- 立即执行脚本，移除可能的太空漫游样式 -->
+    <script>
+        (function() {
+            // 立即移除可能影响的样式类
+            if (document.body) {
+                document.body.classList.remove('space-voyage-active');
+            }
+            // 确保DOM加载后再次移除
+            document.addEventListener('DOMContentLoaded', function() {
+                document.body.classList.remove('space-voyage-active');
+                // 强制重置样式
+                document.body.style.cursor = 'auto';
+                document.documentElement.style.overflow = 'auto';
+                document.body.style.overflow = 'auto';
+            });
+        })();
+    </script>
+    
     <!-- 关键CSS内联 -->
     <style>
+        /* 强制重置样式，确保文章页面正常显示 */
+        html, body {
+            height: auto !important;
+            overflow-x: hidden !important;
+            overflow-y: auto !important;
+            scroll-behavior: smooth !important;
+            cursor: auto !important;
+        }
+        
         /* 关键样式内联以避免FOUC */
+        body { cursor: auto !important; }
         .font-inter { font-family: 'Inter', system-ui, -apple-system, sans-serif; }
         .bg-light { background-color: #F9FAFB; }
         .text-dark { color: #1D2939; }
@@ -264,13 +292,80 @@
     <!-- Markdown解析器 -->
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script>
-        // 数据源配置
+        // 内嵌文章数据作为备用
+        const EMBEDDED_POSTS_DATA = [
+            {
+                "id": "vector-database-selection-guide",
+                "title": "向量数据库选型指南：选择最适合您需求的解决方案",
+                "date": "2025-01-20",
+                "category": "数据库技术",
+                "tags": ["向量数据库", "Milvus", "Pinecone", "Qdrant", "Weaviate", "RAG", "AI应用"],
+                "summary": "深入对比主流向量数据库的性能、功能和成本，为不同规模的AI应用提供详细的选型建议和部署指南。",
+                "cover": "posts/2025-01-20-vector-database-selection-guide/cover.png",
+                "readingTime": "25 分钟",
+                "path": "posts/2025-01-20-vector-database-selection-guide/README.md",
+                "status": "published"
+            },
+            {
+                "id": "ai-content-humanization-guide",
+                "title": "AI写作反检测终极指南：让你的内容人味儿十足",
+                "date": "2025-01-16",
+                "category": "AI工具技巧",
+                "tags": ["AI写作", "AIGC检测", "提示词工程", "智能体配置", "内容创作", "反检测技巧"],
+                "summary": "在AI内容泛滥的时代，如何让机器写出的文字具备人类的温度？本文将揭秘通过智能体配置和提示词工程，让AI生成内容巧妙规避检测的实战技巧。",
+                "cover": "posts/2025-01-16-ai-content-humanization-guide/cover.png",
+                "readingTime": "20 分钟",
+                "path": "posts/2025-01-16-ai-content-humanization-guide/README.md",
+                "status": "published"
+            },
+            {
+                "id": "ai-agent-protocols-comparison",
+                "title": "AI代理协议大对决：Function Calling vs MCP vs A2A",
+                "date": "2025-01-02",
+                "category": "人工智能",
+                "tags": ["AI代理", "MCP", "Function Calling", "A2A", "大语言模型", "协议对比"],
+                "summary": "深入分析三大AI代理协议：OpenAI的Function Calling、Anthropic的MCP和Google的A2A，为开发者选择最适合的AI代理架构提供指导。",
+                "cover": "posts/2025-01-02-ai-agent-protocols-comparison/cover.png",
+                "readingTime": "30 分钟",
+                "path": "posts/2025-01-02-ai-agent-protocols-comparison/README.md",
+                "status": "published"
+            },
+            {
+                "id": "mcp-protocol-comprehensive-guide",
+                "title": "MCP协议深度解析：构建AI Agent的新标准",
+                "date": "2025-05-09",
+                "category": "AI协议",
+                "tags": ["MCP", "AI Agent", "协议", "通信标准", "Anthropic", "Model Context Protocol"],
+                "summary": "Model Context Protocol (MCP) 作为新兴的AI Agent通信标准，正在重新定义AI应用与外部系统的集成方式。本文深入解析MCP的技术细节、架构设计和实际应用场景。",
+                "cover": "posts/2025-05-09-mcp-protocol-comprehensive-guide/cover.png",
+                "readingTime": "35 分钟",
+                "path": "posts/2025-05-09-mcp-protocol-comprehensive-guide/README.md",
+                "status": "published"
+            }
+        ];
+
+        // 数据源配置 - 改进顺序和错误处理
         const DATA_SOURCES = [
-            '../',
-            'https://cdn.jsdelivr.net/gh/Shawnzheng011019/iamshawn@main',
-            'https://fastly.jsdelivr.net/gh/Shawnzheng011019/iamshawn@main',
-            'https://gitee.com/Shawnzheng011019/iamshawn/raw/master',
-            'https://raw.githubusercontent.com/Shawnzheng011019/iamshawn/main'
+            {
+                name: 'local',
+                baseUrl: '../',
+                priority: 1
+            },
+            {
+                name: 'jsdelivr-cdn',
+                baseUrl: 'https://cdn.jsdelivr.net/gh/Shawnzheng011019/iamshawn@main/',
+                priority: 2
+            },
+            {
+                name: 'fastly-jsdelivr',
+                baseUrl: 'https://fastly.jsdelivr.net/gh/Shawnzheng011019/iamshawn@main/',
+                priority: 3
+            },
+            {
+                name: 'github-raw',
+                baseUrl: 'https://raw.githubusercontent.com/Shawnzheng011019/iamshawn/main/',
+                priority: 4
+            }
         ];
 
         // 从URL获取文章ID
@@ -283,17 +378,29 @@
         async function loadArticle() {
             const articleId = getArticleIdFromURL();
             if (!articleId) {
-                showError('未指定文章ID');
+                showError('未指定文章ID，将跳转到博客主页');
+                setTimeout(() => {
+                    window.location.href = '../blog.html';
+                }, 2000);
                 return;
             }
 
             showLoading();
             
             try {
-                // 首先获取文章列表找到对应文章
-                const article = await findArticle(articleId);
+                // 首先从内嵌数据中查找文章
+                let article = EMBEDDED_POSTS_DATA.find(post => post.id === articleId);
+                
+                // 如果内嵌数据中没有找到，再从远程数据源获取
                 if (!article) {
-                    showError('未找到指定文章');
+                    article = await findArticleFromRemote(articleId);
+                }
+                
+                if (!article) {
+                    showError(`未找到文章 "${articleId}"，将跳转到博客主页`);
+                    setTimeout(() => {
+                        window.location.href = '../blog.html';
+                    }, 3000);
                     return;
                 }
 
@@ -305,21 +412,33 @@
                 
             } catch (error) {
                 console.error('加载文章失败:', error);
-                showError('文章加载失败：' + error.message);
+                showError(`文章加载失败：${error.message}。将跳转到博客主页`);
+                setTimeout(() => {
+                    window.location.href = '../blog.html';
+                }, 3000);
             }
         }
 
-        // 查找文章
-        async function findArticle(articleId) {
+        // 从远程数据源查找文章
+        async function findArticleFromRemote(articleId) {
             for (const source of DATA_SOURCES) {
                 try {
-                    const response = await fetch(`${source}posts/posts.json`);
+                    const response = await fetch(`${source.baseUrl}posts/posts.json`, {
+                        method: 'GET',
+                        headers: {
+                            'Accept': 'application/json'
+                        }
+                    });
                     if (response.ok) {
                         const posts = await response.json();
-                        return posts.find(post => post.id === articleId);
+                        const article = posts.find(post => post.id === articleId);
+                        if (article) {
+                            console.log(`从 ${source.name} 找到文章:`, article.title);
+                            return article;
+                        }
                     }
                 } catch (error) {
-                    console.warn(`从 ${source} 获取文章列表失败:`, error);
+                    console.warn(`从 ${source.name} 获取文章列表失败:`, error);
                 }
             }
             return null;
@@ -329,16 +448,29 @@
         async function fetchArticleContent(path) {
             for (const source of DATA_SOURCES) {
                 try {
-                    const url = path.startsWith('http') ? path : `${source}${path}`;
-                    const response = await fetch(url);
+                    const url = path.startsWith('http') ? path : `${source.baseUrl}${path}`;
+                    const response = await fetch(url, {
+                        method: 'GET',
+                        headers: {
+                            'Accept': 'text/markdown, text/plain, */*'
+                        }
+                    });
                     if (response.ok) {
-                        console.log(`从 ${source} 加载文章成功`);
-                        return await response.text();
+                        const content = await response.text();
+                        console.log(`从 ${source.name} 加载文章内容成功`);
+                        return content;
                     }
                 } catch (error) {
-                    console.warn(`从 ${source} 加载文章失败:`, error);
+                    console.warn(`从 ${source.name} 加载文章内容失败:`, error);
                 }
             }
+            
+            // 如果所有数据源都失败，返回错误占位内容
+            const article = EMBEDDED_POSTS_DATA.find(post => post.path === path);
+            if (article) {
+                return `# ${article.title}\n\n${article.summary}\n\n抱歉，暂时无法加载完整的文章内容。请稍后重试或访问博客主页查看其他文章。`;
+            }
+            
             throw new Error('所有数据源都无法加载文章内容');
         }
 
@@ -426,4 +558,5 @@
         document.addEventListener('DOMContentLoaded', loadArticle);
     </script>
 </body>
+</html> 
 </html> 

@@ -35,6 +35,9 @@
             background: #000;
             color: #fff;
             overflow: hidden;
+        }
+
+        body.space-voyage-active {
             cursor: crosshair;
         }
 
@@ -717,7 +720,7 @@
             <button class="enter-btn" id="enter-btn" onclick="enterPlanet()">进入星球</button>
         </div>
 
-        <a href="index.html" class="back-to-main">
+        <a href="index.html" class="back-to-main" onclick="document.body.classList.remove('space-voyage-active')">
             <i class="fa-solid fa-arrow-left"></i>
             返回主页
         </a>

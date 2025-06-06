@@ -54,6 +54,9 @@ class SpaceVoyage {
     }
 
     async init() {
+        // 激活太空漫游鼠标样式
+        document.body.classList.add('space-voyage-active');
+        
         await this.showLoadingScreen();
         this.setupScene();
         this.setupCamera();
@@ -1306,7 +1309,7 @@ function showArticleModal(articleData) {
                 
                 <div style="text-align: center; margin-top: 2rem;">
                     <a href="${articleUrl}" 
-                       onclick="closeModal(); return true;" 
+                       onclick="handleBlogLinkClick(); return true;" 
                        style="display: inline-flex; align-items: center; gap: 0.5rem; background: linear-gradient(45deg, #2196f3, #64b5f6); color: white; padding: 12px 24px; border-radius: 25px; text-decoration: none; font-weight: bold; transition: all 0.3s ease;">
                         <i class="fa-solid fa-book-open"></i>
                         ${linkText}
@@ -1370,9 +1373,34 @@ function closeModal() {
     }
 }
 
+function handleBlogLinkClick() {
+    try {
+        // 移除太空漫游样式类
+        document.body.classList.remove('space-voyage-active');
+        
+        // 重置鼠标样式
+        document.body.style.cursor = 'auto';
+        
+        // 关闭模态框
+        closeModal();
+        
+        // 添加一个小延迟以确保样式重置
+        setTimeout(() => {
+            document.documentElement.style.overflow = 'auto';
+            document.body.style.overflow = 'auto';
+        }, 100);
+        
+        console.log('博客链接点击处理完成');
+    } catch (error) {
+        console.error('处理博客链接点击时出错:', error);
+    }
+}
+
 function backToMainSpace() {
     const voyage = window.spaceVoyage;
     if (voyage && voyage.isInBlogSpace) {
+        // 重新激活太空漫游鼠标样式
+        document.body.classList.add('space-voyage-active');
         voyage.createMainSpace();
     }
 }
@@ -1437,7 +1465,7 @@ function getInternshipContent() {
                         <a href="https://zilliz.com.cn/about" target="_blank" style="color: #64b5f6; text-decoration: none; font-size: 0.9rem;">
                             了解更多 <i class="fa-solid fa-external-link-alt"></i>
                         </a>
-                        <a href="docs-viewer.html" style="color: #64b5f6; text-decoration: none; font-size: 0.9rem;">
+                        <a href="docs-viewer.html" onclick="handleBlogLinkClick()" style="color: #64b5f6; text-decoration: none; font-size: 0.9rem;">
                             查看技术文档 <i class="fa-solid fa-file-alt"></i>
                         </a>
                     </div>

@@ -2,6 +2,12 @@
 body {
     font-family: 'Inter', system-ui, sans-serif;
     scroll-behavior: smooth;
+    cursor: auto !important; /* 确保所有页面鼠标显示正常 */
+}
+
+/* 仅在太空漫游页面激活crosshair鼠标样式 */
+body.space-voyage-active {
+    cursor: crosshair !important;
 }
 
 /* 动画效果 */

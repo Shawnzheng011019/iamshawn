@@ -23,7 +23,17 @@
     
     <!-- 关键CSS内联 -->
     <style>
+        /* 强制重置样式，确保博客页面正常显示 */
+        html, body {
+            height: auto !important;
+            overflow-x: hidden !important;
+            overflow-y: auto !important;
+            scroll-behavior: smooth !important;
+            cursor: auto !important;
+        }
+        
         /* 关键样式内联以避免FOUC */
+        body { cursor: auto !important; }
         .font-inter { font-family: 'Inter', system-ui, -apple-system, sans-serif; }
         .bg-light { background-color: #F9FAFB; }
         .text-dark { color: #1D2939; }
@@ -88,6 +98,24 @@
             }
         }
     </style>
+    
+    <!-- 立即执行脚本，移除可能的太空漫游样式 -->
+    <script>
+        (function() {
+            // 立即移除可能影响的样式类
+            if (document.body) {
+                document.body.classList.remove('space-voyage-active');
+            }
+            // 确保DOM加载后再次移除
+            document.addEventListener('DOMContentLoaded', function() {
+                document.body.classList.remove('space-voyage-active');
+                // 强制重置样式
+                document.body.style.cursor = 'auto';
+                document.documentElement.style.overflow = 'auto';
+                document.body.style.overflow = 'auto';
+            });
+        })();
+    </script>
     
     <!-- 字体加载 -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
