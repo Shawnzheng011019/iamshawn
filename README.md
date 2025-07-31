@@ -3,7 +3,7 @@
 ## 🌐 访问地址
 
 ### 主要访问方式
-1. **自定义域名**（推荐）：待绑定自定义域名
+1. **自定义域名**（推荐）：iamshawn.top
 2. **GitHub Pages**：`https://shawnzheng011019.github.io/iamshawn`
 3. **Vercel**：海外用户可直接访问Vercel链接
 
@@ -247,8 +247,4 @@ open http://localhost:8000
 
 ## 📄 许可证
 
-本项目采用 MIT 许可证。详情请参阅 [LICENSE](LICENSE) 文件。
-
----
-
-**🌟 特色亮点**：全球首个支持多数据源智能切换的GitHub驱动博客系统，确保在任何网络环境下都能稳定访问！ 
+本项目采用 Apache 2.0 许可证。详情请参阅 [LICENSE](LICENSE) 文件。
